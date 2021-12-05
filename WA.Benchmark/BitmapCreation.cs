@@ -15,7 +15,7 @@ namespace WA.Benchmark
         public void Setup()
         {
             byte[] binary = null;
-            string path = @"E:\SS\bmp\WA2_Special_2021_11_19_19_58_09_364.bmp";
+            string path = @"..\..\..\..\Temp\image\big.bmp";
             using (var stream = File.OpenRead(path))
             {
                 binary = new byte[stream.Length];

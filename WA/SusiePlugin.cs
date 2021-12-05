@@ -180,7 +180,7 @@ namespace WA
 
             // test
             {
-                string jpg = @"E:\SS\World of Warcraft\Screenshots\WoWScrnShot_010115_165113.jpg";
+                string jpg = @"..\..\..\..\Temp\image\no_animation.gif";
                 var spath = _stringConverter.Encode(jpg);
 
                 byte[] binary = null;

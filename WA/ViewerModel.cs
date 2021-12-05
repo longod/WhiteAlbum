@@ -70,16 +70,14 @@ namespace WA
         {
             // 起動時に、全プラグインをロードすると致命的なので、対応フォーマットが判明したらその軽量なデータベースを作っておき、次回以降はそれをみて必要なやつのみロードするとかが必要か
             // x86 dllを読めるようにしないといけない 現実的にはx86アプリにする…x64がいいんだけれど
-            using (new SusiePlugin(@"D:\Projects\spi32008\ifjpeg.spi"))
+            using (new SusiePlugin(@"..\..\..\..\Temp\spi\spi32008\ifgif.spi"))
             {
             }
 
             // アーカイブ内の特定ファイルを展開するには、実パスとアーカイブ内の仮想パスもサポートする必要がある
 
             byte[] binary = null;
-            string path = @"E:\SS\bmp\WA2_Special_2021_11_19_19_58_09_364.bmp";
-            //string path = @"E:\SS\png\EoCApp_2018_02_16_00_03_48_837.png";
-            //string path = @"E:\SS\World of Warcraft\Screenshots\WoWScrnShot_010115_165113.jpg";
+            string path = @"..\..\..\..\Temp\image\big.bmp";
             using (var stream = File.OpenRead(path))
             {
                 binary = new byte[stream.Length];
