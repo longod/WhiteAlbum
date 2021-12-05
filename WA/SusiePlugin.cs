@@ -2,20 +2,25 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-// http://www2f.biglobe.ne.jp/~kana/spi_api/index.html
-
 namespace WA
 {
     namespace Susie
     {
+        // https://www.digitalpad.co.jp/~takechin/
+        // spec: http://www2f.biglobe.ne.jp/~kana/spi_api/index.html
+        // Susie, 元のアプリケーションとそのプラグインが開発された時期的に、文字セットはunicodeではない。恐らくほとんど全てのプラグインが文字セットをsjis前提としているはずである
+        // そのため文字列のやりとりにはバイト列として扱う
+
         // common
         // int _export PASCAL GetPluginInfo (int infono, LPSTR buf, int buflen);
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
         delegate Int32 GetPluginInfo(Int32 infono, Byte[] buf, Int32 buflen);
 
         // int _export PASCAL IsSupported (LPSTR filename, DWORD dw);
+        // dw はwin32ファイルハンドルか、最小2kbの先頭からのバイナリメモリ
+        // Susieでは後者のバイナリメモリとしてしか使われていないので、後者のみをサポートする
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
-        delegate Int32 IsSupported(Byte[] filename, UInt32 dw);
+        delegate Int32 IsSupported(Byte[] filename, Byte[] dw);
 
         // int _export PASCAL ConfigurationDlg (HWND parent, int fnc)
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
@@ -131,27 +136,31 @@ namespace WA
         private PluginType pluginType;
         private PluginTarget pluginTarget;
 
-        // common
-        private Susie.GetPluginInfo GetPluginInfo = null;
-        private Susie.IsSupported IsSupported = null;
-        private Susie.ConfigurationDlg ConfigurationDlg = null;
+        struct Function
+        {
+            // common
+            internal Susie.GetPluginInfo GetPluginInfo;
+            internal Susie.IsSupported IsSupported;
+            internal Susie.ConfigurationDlg ConfigurationDlg;
 
-        // IN
-        private Susie.GetPictureInfo GetPictureInfo = null;
-        private Susie.GetPicture GetPicture = null;
-        private Susie.GetPreview GetPreview = null;
+            // IN
+            internal Susie.GetPictureInfo GetPictureInfo;
+            internal Susie.GetPicture GetPicture;
+            internal Susie.GetPreview GetPreview;
 
-        // AM
-        private Susie.GetArchiveInfo GetArchiveInfo = null;
-        private Susie.GetFileInfo GetFileInfo = null;
-        private Susie.GetFile GetFile = null;
+            // AM
+            internal Susie.GetArchiveInfo GetArchiveInfo;
+            internal Susie.GetFileInfo GetFileInfo;
+            internal Susie.GetFile GetFile;
+        }
+        Function func;
 
         private static readonly string extension = ".spi";
 
         private const int pluginVersionNum = 0;
         private const int pluginNameNum = 1;
 
-        private const int scratchSize = 2048; // 2 kbytes
+        private const int minPeekSize = 2048; // 2 kbytes
 
 
         public SusiePlugin(string path)
@@ -160,15 +169,56 @@ namespace WA
             handle = NativeLibrary.Load(path);
 
             // get mandatory function
-            GetPluginInfo = GetFunction<Susie.GetPluginInfo>(handle, Susie.ExportName.GetPluginInfo);
+            func.GetPluginInfo = GetFunction<Susie.GetPluginInfo>(handle, Susie.ExportName.GetPluginInfo);
 
             GetPluginVersion();
+
+
+            // test
+            {
+                string jpg = @"E:\SS\World of Warcraft\Screenshots\WoWScrnShot_010115_165113.jpg";
+                var spath = StringConverter.SJIS.Encode(jpg);
+
+                byte[] binary = null;
+                using (var stream = System.IO.File.OpenRead(jpg))
+                {
+                    binary = new byte[stream.Length];
+                    stream.Read(binary); // or async
+                }
+                IsSupported(spath, binary);
+
+            }
+
+        }
+
+        private bool IsSupported(byte[] path, byte[] binary)
+        {
+            byte[] peek;
+            if (binary.Length < minPeekSize)
+            {
+                throw new ArgumentException($"binary.Length larger than {minPeekSize} (has {binary.Length}).");
+
+                //peek = new byte[minPeekSize];
+                //// todo benchmark copy moethods
+                //Buffer.BlockCopy(binary, 0, peek, 0, binary.Length);
+            }
+            else
+            {
+                peek = binary;
+            }
+
+            if (func.IsSupported == null)
+            {
+                func.IsSupported = GetFunction<Susie.IsSupported>(handle, Susie.ExportName.IsSupported);
+            }
+            var result = func.IsSupported(path, peek);
+            return result != 0;
         }
 
         private void GetPluginVersion()
         {
             byte[] buf = new byte[32]; // or stackalloc
-            var length = GetPluginInfo(pluginVersionNum, buf, buf.Length);
+            var length = func.GetPluginInfo(pluginVersionNum, buf, buf.Length);
             if (length != 4)
             {
                 throw new Exception("failed to get plugin info");
