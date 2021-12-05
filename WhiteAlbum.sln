@@ -7,13 +7,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WA.Viewer", "WA.Viewer\WA.V
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WA", "WA\WA.csproj", "{1EFF531D-35F3-42B2-ADB2-310E9F444246}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WA.Test", "WA.Test\WA.Test.csproj", "{03B1051A-4B9E-4F12-8749-B6AA3C9DFE12}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WA.Test", "WA.Test\WA.Test.csproj", "{03B1051A-4B9E-4F12-8749-B6AA3C9DFE12}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WA.Benchmark", "WA.Benchmark\WA.Benchmark.csproj", "{41417FDE-3CDC-4710-9E4E-F72A10142145}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WA.Benchmark", "WA.Benchmark\WA.Benchmark.csproj", "{41417FDE-3CDC-4710-9E4E-F72A10142145}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D0849EC8-C5F7-4DA2-B62B-E481409A988D}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		WA.ruleset = WA.ruleset
 	EndProjectSection
 EndProject
 Global

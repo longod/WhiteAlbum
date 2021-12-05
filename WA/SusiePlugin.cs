@@ -1,9 +1,10 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using System.Text;
+﻿// (c) longod, MIT License
 
 namespace WA
 {
+    using System;
+    using System.Runtime.InteropServices;
+
     namespace Susie
     {
         // https://www.digitalpad.co.jp/~takechin/
@@ -14,43 +15,43 @@ namespace WA
         // common
         // int _export PASCAL GetPluginInfo (int infono, LPSTR buf, int buflen);
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
-        delegate Int32 GetPluginInfo(Int32 infono, Byte[] buf, Int32 buflen);
+        internal delegate Int32 GetPluginInfo(Int32 infono, Byte[] buf, Int32 buflen);
 
         // int _export PASCAL IsSupported (LPSTR filename, DWORD dw);
         // dw はwin32ファイルハンドルか、最小2kbの先頭からのバイナリメモリ
         // Susieでは後者のバイナリメモリとしてしか使われていないので、後者のみをサポートする
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
-        delegate Int32 IsSupported(Byte[] filename, Byte[] dw);
+        internal delegate Int32 IsSupported(Byte[] filename, Byte[] dw);
 
         // int _export PASCAL ConfigurationDlg (HWND parent, int fnc)
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
-        delegate Int32 ConfigurationDlg(IntPtr parent, Int32 fnc);
+        internal delegate Int32 ConfigurationDlg(IntPtr parent, Int32 fnc);
 
         // 00IN Plug-in
         // int _export PASCAL GetPictureInfo (LPSTR buf, long len, unsigned int flag, PictureInfo *lpInfo);
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
-        delegate Int32 GetPictureInfo(Byte[] buf, Int32 len, UInt32 flag, PictureInfo info);
+        internal delegate Int32 GetPictureInfo(Byte[] buf, Int32 len, UInt32 flag, PictureInfo info);
 
         // int _export PASCAL GetPicture (LPSTR buf, long len, unsigned int flag, HANDLE *pHBInfo, HANDLE *pHBm, FARPROC lpPrgressCallback, long lData);
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
-        delegate Int32 GetPicture(Byte[] buf, Int32 len, UInt32 flag, IntPtr pHBInfo, IntPtr pHBm, IntPtr lpPrgressCallback, Int32 lData);
+        internal delegate Int32 GetPicture(Byte[] buf, Int32 len, UInt32 flag, IntPtr pHBInfo, IntPtr pHBm, IntPtr lpPrgressCallback, Int32 lData);
 
         // int _export PASCAL GetPreview (LPSTR buf, long len, unsigned int flag, HANDLE *pHBInfo, HANDLE *pHBm, FARPROC lpPrgressCallback, long lData);
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
-        delegate Int32 GetPreview(Byte[] buf, Int32 len, UInt32 flag, IntPtr pHBInfo, IntPtr pHBm, IntPtr lpPrgressCallback, Int32 lData);
+        internal delegate Int32 GetPreview(Byte[] buf, Int32 len, UInt32 flag, IntPtr pHBInfo, IntPtr pHBm, IntPtr lpPrgressCallback, Int32 lData);
 
         // 00AM Plug-in
         // int _export PASCAL GetArchiveInfo (LPSTR buf, long len, unsigned int flag, HLOCAL *lphInf)
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
-        delegate Int32 GetArchiveInfo(Byte[] buf, Int32 len, UInt32 flag, IntPtr lphInf);
+        internal delegate Int32 GetArchiveInfo(Byte[] buf, Int32 len, UInt32 flag, IntPtr lphInf);
 
         // int _export PASCAL GetFileInfo (LPSTR buf, long len, LPSTR filename, unsigned int flag, fileInfo *lpInfo)
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
-        delegate Int32 GetFileInfo(Byte[] buf, Int32 len, Byte[] filename, UInt32 flag, FileInfo lpInfo);
+        internal delegate Int32 GetFileInfo(Byte[] buf, Int32 len, Byte[] filename, UInt32 flag, FileInfo lpInfo);
 
         // int _export PASCAL GetFile (LPSTR src, long len, LPSTR dest, unsigned int flag, FARPROC prgressCallback, long lData)
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
-        delegate Int32 GetFile(Byte[] src, Int32 len, Byte[] dest, UInt32 flag, IntPtr prgressCallback, Int32 lData);
+        internal delegate Int32 GetFile(Byte[] src, Int32 len, Byte[] dest, UInt32 flag, IntPtr prgressCallback, Int32 lData);
 
         internal static class ExportName
         {
@@ -67,7 +68,7 @@ namespace WA
 
         // unsafe じゃないとだめかも
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public class PictureInfo
+        internal class PictureInfo
         {
             public Int32 left;       // long 画像を展開する位置
             public Int32 top;        // long 画像を展開する位置
@@ -81,7 +82,7 @@ namespace WA
 
         // unsafe じゃないとだめかも
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        class FileInfo
+        internal class FileInfo
         {
             public Byte[] method = new Byte[8];     // unsigned char 圧縮法の種類
             public UInt32 position;                 // unsigned long  ファイル上での位置
@@ -93,7 +94,7 @@ namespace WA
             public UInt32 crc;                      // unsigned long CRC
         }
 
-        enum ReturnCode
+        internal enum ReturnCode
         {
             Success = 0,                // 正常終了
             NotImplemented = -1,        // その機能はインプリメントされていない
@@ -109,7 +110,7 @@ namespace WA
 
     }
 
-    interface IPlugin
+    internal interface IPlugin
     {
     }
 
@@ -118,25 +119,22 @@ namespace WA
         private enum PluginType
         {
             ImportFilter,
-            ExportFilter,
+            ExportFilter, // 存在しない？
             ArchiveExtractor,
         }
 
         private enum PluginTarget
         {
-            Normal,
-            MultiPicture,
+            Normal, // 恐らく事実上 ImportFilter と固定
+            MultiPicture, // 恐らく事実上 ArchiveExtractor と固定
         }
 
+        private IntPtr _handle = default;
+        private int _version = 0;
+        private PluginType _pluginType;
+        private PluginTarget _pluginTarget;
 
-
-        private IntPtr handle = default;
-
-        private int version = 0;
-        private PluginType pluginType;
-        private PluginTarget pluginTarget;
-
-        struct Function
+        private struct Function
         {
             // common
             internal Susie.GetPluginInfo GetPluginInfo;
@@ -153,31 +151,32 @@ namespace WA
             internal Susie.GetFileInfo GetFileInfo;
             internal Susie.GetFile GetFile;
         }
-        Function func;
 
-        private static readonly string extension = ".spi";
+        private Function _func;
 
-        private const int pluginVersionNum = 0;
-        private const int pluginNameNum = 1;
+        private readonly StringConverter _stringConverter = null;
 
-        private const int minPeekSize = 2048; // 2 kbytes
+        private static readonly string _extension = ".spi";
 
+        private const int _pluginVersionNum = 0;
+        private const int _pluginNameNum = 1;
+
+        private const int _minPeekSize = 2048; // 2 kbytes
 
         public SusiePlugin(string path)
         {
-
-            handle = NativeLibrary.Load(path);
+            _stringConverter = StringConverter.SJIS;
+            _handle = NativeLibrary.Load(path);
 
             // get mandatory function
-            func.GetPluginInfo = GetFunction<Susie.GetPluginInfo>(handle, Susie.ExportName.GetPluginInfo);
+            _func.GetPluginInfo = GetFunction<Susie.GetPluginInfo>(_handle, Susie.ExportName.GetPluginInfo);
 
             GetPluginVersion();
-
 
             // test
             {
                 string jpg = @"E:\SS\World of Warcraft\Screenshots\WoWScrnShot_010115_165113.jpg";
-                var spath = StringConverter.SJIS.Encode(jpg);
+                var spath = _stringConverter.Encode(jpg);
 
                 byte[] binary = null;
                 using (var stream = System.IO.File.OpenRead(jpg))
@@ -186,17 +185,37 @@ namespace WA
                     stream.Read(binary); // or async
                 }
                 IsSupported(spath, binary);
-
             }
+        }
 
+
+        public void Free()
+        {
+            if (_handle != default)
+            {
+                NativeLibrary.Free(_handle);
+                _handle = default;
+            }
+        }
+
+        public void Dispose()
+        {
+            Free();
+        }
+
+        private static T GetFunction<T>(IntPtr handle, string name)
+        {
+            // https://qiita.com/kenichiuda/items/613766f56e5ecd1de856
+            var func = NativeLibrary.GetExport(handle, name);
+            return Marshal.GetDelegateForFunctionPointer<T>(func);
         }
 
         private bool IsSupported(byte[] path, byte[] binary)
         {
             byte[] peek;
-            if (binary.Length < minPeekSize)
+            if (binary.Length < _minPeekSize)
             {
-                throw new ArgumentException($"binary.Length larger than {minPeekSize} (has {binary.Length}).");
+                throw new ArgumentException($"binary.Length larger than {_minPeekSize} (has {binary.Length}).");
 
                 //peek = new byte[minPeekSize];
                 //// todo benchmark copy moethods
@@ -207,18 +226,19 @@ namespace WA
                 peek = binary;
             }
 
-            if (func.IsSupported == null)
+            if (_func.IsSupported == null)
             {
-                func.IsSupported = GetFunction<Susie.IsSupported>(handle, Susie.ExportName.IsSupported);
+                _func.IsSupported = GetFunction<Susie.IsSupported>(_handle, Susie.ExportName.IsSupported);
             }
-            var result = func.IsSupported(path, peek);
+            var result = _func.IsSupported(path, peek);
             return result != 0;
         }
+
 
         private void GetPluginVersion()
         {
             byte[] buf = new byte[32]; // or stackalloc
-            var length = func.GetPluginInfo(pluginVersionNum, buf, buf.Length);
+            var length = _func.GetPluginInfo(_pluginVersionNum, buf, buf.Length);
             if (length != 4)
             {
                 throw new Exception("failed to get plugin info");
@@ -226,59 +246,36 @@ namespace WA
 
             // ascii number 0 to 9
             // sjisだが二桁のascii数字なので、そのままオフセットして求める
-            version = ((buf[0] - 0x30) * 10) + (buf[1] - 0x30);
+            _version = ((buf[0] - 0x30) * 10) + (buf[1] - 0x30);
 
             // ascii alphabet A to Z
             // sjisだが、ascii範囲内なので、そのままキャストして判別する
             switch ((char)buf[2])
             {
                 case 'I':
-                    pluginType = PluginType.ImportFilter;
+                    _pluginType = PluginType.ImportFilter;
                     break;
                 case 'X':
-                    pluginType = PluginType.ExportFilter;
+                    _pluginType = PluginType.ExportFilter;
                     break;
                 case 'A':
-                    pluginType = PluginType.ArchiveExtractor;
+                    _pluginType = PluginType.ArchiveExtractor;
                     break;
                 default:
                     throw new Exception("failed to get plugin version [2]");
-                    break;
             }
 
             switch ((char)buf[3])
             {
                 case 'N':
-                    pluginTarget = PluginTarget.Normal;
+                    _pluginTarget = PluginTarget.Normal;
                     break;
                 case 'M':
-                    pluginTarget = PluginTarget.MultiPicture;
+                    _pluginTarget = PluginTarget.MultiPicture;
                     break;
                 default:
                     throw new Exception("failed to get plugin version [3]");
-                    break;
             }
-        }
-
-        private static T GetFunction<T>(IntPtr handle, string name)
-        {
-            // https://qiita.com/kenichiuda/items/613766f56e5ecd1de856
-            var func = NativeLibrary.GetExport(handle, name);
-            return Marshal.GetDelegateForFunctionPointer<T>(func);
-        }
-
-        public void Free()
-        {
-            if (handle != default)
-            {
-                NativeLibrary.Free(handle);
-                handle = default;
-            }
-        }
-
-        public void Dispose()
-        {
-            Free();
         }
     }
 }

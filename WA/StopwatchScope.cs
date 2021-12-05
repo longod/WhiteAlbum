@@ -1,18 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
+﻿// (c) longod, MIT License
 
 namespace WA
 {
+    using System;
+    using System.Diagnostics;
+
     public struct StopwatchScope : IDisposable
     {
+        private Stopwatch _sw;
+        private string _marker;
+
         public StopwatchScope(string marker)
         {
             _marker = marker;
             _sw = new Stopwatch();
             _sw.Start();
         }
+
         public void Dispose()
         {
             if (_sw != null)
@@ -20,9 +24,6 @@ namespace WA
                 _sw.Stop();
                 Trace.WriteLine($"{_marker}: {_sw.ElapsedMilliseconds}ms");
             }
-
         }
-        Stopwatch _sw;
-        string _marker;
     }
 }

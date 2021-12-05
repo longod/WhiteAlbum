@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
+﻿// (c) longod, MIT License
 
 namespace WA
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Windows.Media.Imaging;
+
     // backends
     // wpf, windowhost, d3d12
     interface IRenderer
