@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "WA": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

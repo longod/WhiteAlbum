@@ -34,7 +34,8 @@ namespace WA
 
         // int _export PASCAL GetPicture (LPSTR buf, long len, unsigned int flag, HANDLE *pHBInfo, HANDLE *pHBm, FARPROC lpPrgressCallback, long lData);
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
-        internal delegate Int32 GetPicture(Byte[] buf, Int32 len, UInt32 flag, IntPtr pHBInfo, IntPtr pHBm, IntPtr lpPrgressCallback, Int32 lData);
+        //internal unsafe delegate Int32 GetPicture(Byte[] buf, Int32 len, UInt32 flag, void** pHBInfo, void** pHBm, ProgressCallback lpPrgressCallback, Int32 lData);
+        internal unsafe delegate Int32 GetPicture(byte* buf, Int32 len, UInt32 flag, void** pHBInfo, void** pHBm, ProgressCallback lpPrgressCallback, Int32 lData);
 
         // int _export PASCAL GetPreview (LPSTR buf, long len, unsigned int flag, HANDLE *pHBInfo, HANDLE *pHBm, FARPROC lpPrgressCallback, long lData);
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
@@ -52,6 +53,10 @@ namespace WA
         // int _export PASCAL GetFile (LPSTR src, long len, LPSTR dest, unsigned int flag, FARPROC prgressCallback, long lData)
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
         internal delegate Int32 GetFile(Byte[] src, Int32 len, Byte[] dest, UInt32 flag, IntPtr prgressCallback, Int32 lData);
+
+        // int PASCAL ProgressCallback(int nNum, int nDenom, long lData)
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        internal delegate Int32 ProgressCallback(Int32 nNum, Int32 nDenom, Int32 lData);
 
         internal static class ExportName
         {
@@ -184,7 +189,11 @@ namespace WA
                     binary = new byte[stream.Length];
                     stream.Read(binary); // or async
                 }
-                IsSupported(spath, binary);
+
+                if (IsSupported(spath, binary))
+                {
+                    var image = GetPicture(binary);
+                }
             }
         }
 
@@ -209,31 +218,6 @@ namespace WA
             var func = NativeLibrary.GetExport(handle, name);
             return Marshal.GetDelegateForFunctionPointer<T>(func);
         }
-
-        private bool IsSupported(byte[] path, byte[] binary)
-        {
-            byte[] peek;
-            if (binary.Length < _minPeekSize)
-            {
-                throw new ArgumentException($"binary.Length larger than {_minPeekSize} (has {binary.Length}).");
-
-                //peek = new byte[minPeekSize];
-                //// todo benchmark copy moethods
-                //Buffer.BlockCopy(binary, 0, peek, 0, binary.Length);
-            }
-            else
-            {
-                peek = binary;
-            }
-
-            if (_func.IsSupported == null)
-            {
-                _func.IsSupported = GetFunction<Susie.IsSupported>(_handle, Susie.ExportName.IsSupported);
-            }
-            var result = _func.IsSupported(path, peek);
-            return result != 0;
-        }
-
 
         private void GetPluginVersion()
         {
@@ -277,5 +261,64 @@ namespace WA
                     throw new Exception("failed to get plugin version [3]");
             }
         }
+
+        private bool IsSupported(byte[] path, byte[] binary)
+        {
+            byte[] peek;
+            if (binary.Length < _minPeekSize)
+            {
+                throw new ArgumentException($"binary.Length larger than {_minPeekSize} (has {binary.Length}).");
+
+                //peek = new byte[minPeekSize];
+                //// todo benchmark copy moethods
+                //Buffer.BlockCopy(binary, 0, peek, 0, binary.Length);
+            }
+            else
+            {
+                peek = binary;
+            }
+
+            if (_func.IsSupported == null)
+            {
+                _func.IsSupported = GetFunction<Susie.IsSupported>(_handle, Susie.ExportName.IsSupported);
+            }
+
+            var result = _func.IsSupported(path, peek);
+            return result != 0;
+        }
+
+        private byte[] GetPicture(byte[] binary)
+        {
+            if (_func.GetPicture == null)
+            {
+                _func.GetPicture = GetFunction<Susie.GetPicture>(_handle, Susie.ExportName.GetPicture);
+            }
+
+            uint flag = 1;// on memory
+            unsafe
+            {
+                fixed (byte* p = binary)
+                {
+                    //IntPtr ptr = (IntPtr)p;
+                    void* pHBInfo = null;
+                    void* pHBm = null;
+                    try
+                    {
+                        var result = _func.GetPicture(p, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
+                    }
+                    catch (AccessViolationException e)
+                    {
+                    }
+                }
+
+                return null;
+            }
+        }
+
+        private static int AlwaysContinueProgressCallback(int nNum, int nDenom, int lData)
+        {
+            return 0; // always continue
+        }
+
     }
 }
