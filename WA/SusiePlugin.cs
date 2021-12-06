@@ -55,7 +55,8 @@ namespace WA
         internal delegate Int32 GetFile(Byte[] src, Int32 len, Byte[] dest, UInt32 flag, IntPtr prgressCallback, Int32 lData);
 
         // int PASCAL ProgressCallback(int nNum, int nDenom, long lData)
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        // Cdecl ではなく StdCall
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         internal delegate Int32 ProgressCallback(Int32 nNum, Int32 nDenom, Int32 lData);
 
         internal static class ExportName
@@ -73,7 +74,7 @@ namespace WA
 
         // unsafe じゃないとだめかも
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        internal class PictureInfo
+        internal struct PictureInfo
         {
             public Int32 left;       // long 画像を展開する位置
             public Int32 top;        // long 画像を展開する位置
@@ -87,16 +88,35 @@ namespace WA
 
         // unsafe じゃないとだめかも
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        internal class FileInfo
+        internal struct FileInfo
         {
-            public Byte[] method = new Byte[8];     // unsigned char 圧縮法の種類
-            public UInt32 position;                 // unsigned long  ファイル上での位置
-            public UInt32 compsize;                 // unsigned long  圧縮されたサイズ
-            public UInt32 filesize;                 // unsigned long  元のファイルサイズ
-            public Int32 timestamp;                 // time_t ファイルの更新日時
-            public Byte[] path = new Byte[200];     // char  相対パス
-            public Byte[] filename = new Byte[200]; // char ファイルネーム
-            public UInt32 crc;                      // unsigned long CRC
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
+            public Byte[] method;   // unsigned char[8] 圧縮法の種類
+            public UInt32 position; // unsigned long  ファイル上での位置
+            public UInt32 compsize; // unsigned long  圧縮されたサイズ
+            public UInt32 filesize; // unsigned long  元のファイルサイズ
+            public Int32 timestamp; // time_t ファイルの更新日時
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 200)]
+            public Byte[] path;     // char[200]  相対パス
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 200)]
+            public Byte[] filename; // char[200] ファイルネーム
+            public UInt32 crc;      // unsigned long CRC
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        internal struct BitMapInfo
+        {
+            public UInt32 biSize; // DWORD
+            public Int32 biWidth; // LONG
+            public Int32 biHeight; // LONG
+            public UInt16 biPlanes; // WORD
+            public UInt16 biBitCount; // WORD
+            public UInt32 biCompression; // DWORD
+            public UInt32 biSizeImage;  // DWORD
+            public Int32 biXPelsPerMeter; // LONG
+            public Int32 biYPelsPerMeter; //LONG
+            public UInt32 biClrUsed; // DWORD
+            public UInt32 biClrImportant; // DWORD
         }
 
         internal enum ReturnCode
@@ -173,9 +193,6 @@ namespace WA
             _stringConverter = StringConverter.SJIS;
             _handle = NativeLibrary.Load(path);
 
-            // get mandatory function
-            _func.GetPluginInfo = GetFunction<Susie.GetPluginInfo>(_handle, Susie.ExportName.GetPluginInfo);
-
             GetPluginVersion();
 
             // test
@@ -221,6 +238,12 @@ namespace WA
 
         private void GetPluginVersion()
         {
+            // get mandatory function
+            if (_func.GetPluginInfo == null)
+            {
+                _func.GetPluginInfo = GetFunction<Susie.GetPluginInfo>(_handle, Susie.ExportName.GetPluginInfo);
+            }
+
             byte[] buf = new byte[32]; // or stackalloc
             var length = _func.GetPluginInfo(_pluginVersionNum, buf, buf.Length);
             if (length != 4)
@@ -287,6 +310,7 @@ namespace WA
             return result != 0;
         }
 
+        // [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions] // coreは効かないはず
         private byte[] GetPicture(byte[] binary)
         {
             if (_func.GetPicture == null)
@@ -300,14 +324,30 @@ namespace WA
                 fixed (byte* p = binary)
                 {
                     //IntPtr ptr = (IntPtr)p;
+                    //IntPtr ptr;
                     void* pHBInfo = null;
                     void* pHBm = null;
                     try
                     {
                         var result = _func.GetPicture(p, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
+                        var ptr = NativeMethods.LocalLock(pHBInfo);
+                        var info = (Susie.BitMapInfo*)ptr;
+                        System.Diagnostics.Trace.WriteLine(info->biSize);
+                        NativeMethods.LocalUnlock(pHBInfo);
                     }
                     catch (AccessViolationException e)
                     {
+                    }
+                    finally
+                    {
+                        if (pHBInfo != null)
+                        {
+                            NativeMethods.LocalFree(pHBInfo);
+                        }
+                        if (pHBm != null)
+                        {
+                            NativeMethods.LocalFree(pHBm);
+                        }
                     }
                 }
 
@@ -319,6 +359,5 @@ namespace WA
         {
             return 0; // always continue
         }
-
     }
 }

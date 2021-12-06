@@ -1,0 +1,95 @@
+﻿// Susie 32bit Plug-in
+// stab of import filter
+#include "spi.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
+    int GetPluginInfo(int infono, LPSTR buf, int buflen) {
+        switch (infono)
+        {
+        case 0: // plugin version
+            if (buflen >= 4) {
+                buf[0] = '0';
+                buf[1] = '0';
+                buf[2] = 'I';
+                buf[3] = 'N';
+                return 4;
+            }
+        default:
+            break;
+        }
+        return 0;
+    }
+    int IsSupported(LPSTR filename, DWORD dw) {
+        return 1;
+    }
+
+    int ConfigurationDlg(HWND parent, int fnc) {
+        return 0;
+    }
+
+    int GetPictureInfo(LPSTR buf, long len, unsigned int flag, PictureInfo* lpInfo) {
+        return 0;
+    }
+    int GetPicture(LPSTR buf, long len, unsigned int flag, HANDLE* pHBInfo, HANDLE* pHBm,
+        FARPROC lpPrgressCallback, long lData) {
+
+        HLOCAL bmpinfo = LocalAlloc(LMEM_ZEROINIT | LMEM_MOVEABLE, sizeof(BITMAPINFO));
+        //HLOCAL bmp = LocalAlloc(LMEM_ZEROINIT | LMEM_MOVEABLE, 32);
+
+        BITMAPINFOHEADER* bmpinfo_mem = (BITMAPINFOHEADER*)LocalLock(bmpinfo);
+        //LPVOID bmp_mem = (LPVOID)LocalLock(bmp);
+
+        // int PASCAL ProgressCallback(int nNum, int nDenom, long lData)
+        //lpPrgressCallback(0, 1, lData);
+
+        //memset(bmpinfo_mem, 0, sizeof(BITMAPINFOHEADER));
+        bmpinfo_mem->biSize = sizeof(BITMAPINFOHEADER);
+        //auto* ptr = (uint8_t*)bmp_mem;
+
+        LocalUnlock(bmpinfo);
+        //LocalUnlock(bmp);
+
+        *pHBInfo = bmpinfo;
+        //*pHBm = bmp;
+
+        return 0;
+    }
+    int GetPreview(LPSTR buf, long len, unsigned int flag, HANDLE* pHBInfo, HANDLE* pHBm,
+        FARPROC lpPrgressCallback, long lData) {
+        return 0;
+    }
+
+    int GetArchiveInfo(LPSTR buf, long len, unsigned int flag, HLOCAL* lphInf) {
+        return 0;
+    }
+
+    int GetFileInfo(LPSTR buf, long len, LPSTR filename, unsigned int flag, fileInfo* lpInfo) {
+        return 0;
+    }
+
+    int GetFile(LPSTR src, long len, LPSTR dest, unsigned int flag, FARPROC prgressCallback, long lData) {
+        return 0;
+    }
+
+    BOOL APIENTRY DllMain(HMODULE hModule,
+        DWORD  ul_reason_for_call,
+        LPVOID lpReserved
+    )
+    {
+        switch (ul_reason_for_call)
+        {
+        case DLL_PROCESS_ATTACH:
+        case DLL_THREAD_ATTACH:
+        case DLL_THREAD_DETACH:
+        case DLL_PROCESS_DETACH:
+            break;
+        }
+        return TRUE;
+    }
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
