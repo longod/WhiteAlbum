@@ -17,6 +17,33 @@ extern "C" {
                 buf[3] = 'N';
                 return 4;
             }
+        case 1: // plugin name
+        {
+            const char pluginName[] = "null plugin";
+            const int count = ARRAYSIZE(pluginName); // not byte-size but equals
+            if (buflen >= count) {
+                memcpy(buf, pluginName, count);
+                return count;
+            }
+        }
+        case 2: // plugin extension
+        {
+            const char ext[] = "*.*";
+            const int count = ARRAYSIZE(ext); // not byte-size but equals
+            if (buflen >= count) {
+                memcpy(buf, ext, count);
+                return count;
+            }
+        }
+        case 3: // plugin format
+        {
+            const char format[] = "all";
+            const int count = ARRAYSIZE(format); // not byte-size but equals
+            if (buflen >= count) {
+                memcpy(buf, format, count);
+                return count;
+            }
+        }
         default:
             break;
         }

@@ -63,20 +63,61 @@ namespace WA
 
     }
 
+    // 特定の画像フォーマットによらない画像情報
+    // 最終的な表示イメージ変換に必要な情報を含む
+    public readonly struct ImageDesc
+    {
+        public readonly uint Width;
+        public readonly uint Height;
+        public readonly ushort DepthOrArray;
+        public readonly ushort MipLevels;
+        // dimension
+        // format
+        // origin
+    }
+
+    public static class WpfUtility
+    {
+        public const int DefaultDpi = 96; // どこかに定義ないのか
+    }
+
+    public class Config
+    {
+        public List<string> PluginDirectories = new List<string>() { @"..\..\..\..\Temp\spi\" };
+    }
+
+    public class ViewerModelArgs
+    {
+        public string Path;
+    }
 
     public class ViewerModel
     {
+
+        public ViewerModel(ViewerModelArgs args)
+        {
+            if (args == null)
+            {
+            }
+        }
+
         public ViewerModel()
         {
+
+            //PluginManager pm = new PluginManager();
+            //pm.FindPlugins();
+            //pm.LoadAllPlugins();
+
             // 起動時に、全プラグインをロードすると致命的なので、対応フォーマットが判明したらその軽量なデータベースを作っておき、次回以降はそれをみて必要なやつのみロードするとかが必要か
             // x86 dllを読めるようにしないといけない 現実的にはx86アプリにする…x64がいいんだけれど
-            using (new SusiePlugin(@"..\..\..\..\Debug\ifnull.spi"))
-            {
-            }
+            // 一応、out-of-process com serverでいける https://qiita.com/mima_ita/items/57d7c1101543e214b1d6
+            //using (new SusiePlugin(@"..\..\..\..\Debug\ifnull.spi"))
+            //{
+            //}
 
-            using (new SusiePlugin(@"..\..\..\..\Temp\spi\spi32008\ifgif.spi"))
-            {
-            }
+            //using (new SusiePlugin(@"..\..\..\..\Temp\spi\spi32008\ifgif.spi"))
+            //{
+            //}
 
             // アーカイブ内の特定ファイルを展開するには、実パスとアーカイブ内の仮想パスもサポートする必要がある
 
@@ -88,7 +129,7 @@ namespace WA
                 var ret = stream.Read(binary); // or async
             }
 
-            var ext = Path.GetExtension(path);
+            //var ext = Path.GetExtension(path);
 
             // exrみたいなストリーミング表示可能なフォーマットはロードしながらできるんだろうか…
 
@@ -142,6 +183,7 @@ namespace WA
             bmp.EndInit();
             return bmp;
         }
+
         public static BitmapSource CreateBitmapFrame(byte[] binary)
         {
             return BitmapFrame.Create(new MemoryStream(binary), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);

@@ -103,6 +103,7 @@ namespace WA
             public UInt32 crc;      // unsigned long CRC
         }
 
+        // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-bitmapinfoheader
         [StructLayout(LayoutKind.Sequential, Pack = 4)]
         internal struct BitMapInfo
         {
@@ -158,6 +159,7 @@ namespace WA
         private int _version = 0;
         private PluginType _pluginType;
         private PluginTarget _pluginTarget;
+        private string _pluginName;
 
         private struct Function
         {
@@ -195,7 +197,11 @@ namespace WA
 
             GetPluginVersion();
 
+
             // test
+            //GetPluginName();
+            //System.Diagnostics.Trace.WriteLine(_pluginName);
+#if false
             {
                 string jpg = @"..\..\..\..\Temp\image\no_animation.gif";
                 var spath = _stringConverter.Encode(jpg);
@@ -212,6 +218,7 @@ namespace WA
                     var image = GetPicture(binary);
                 }
             }
+#endif
         }
 
 
@@ -246,7 +253,7 @@ namespace WA
 
             byte[] buf = new byte[32]; // or stackalloc
             var length = _func.GetPluginInfo(_pluginVersionNum, buf, buf.Length);
-            if (length != 4)
+            if (length > 6) // 4byts固定だが、終端を含めてさらに余分に返すケースがある
             {
                 throw new Exception("failed to get plugin info");
             }
@@ -282,6 +289,32 @@ namespace WA
                     break;
                 default:
                     throw new Exception("failed to get plugin version [3]");
+            }
+        }
+
+        private void GetPluginName()
+        {
+            if (_pluginName != null)
+            {
+                return;
+            }
+
+            // get mandatory function
+            if (_func.GetPluginInfo == null)
+            {
+                _func.GetPluginInfo = GetFunction<Susie.GetPluginInfo>(_handle, Susie.ExportName.GetPluginInfo);
+            }
+
+            byte[] buf = new byte[256]; // or stackalloc
+            var length = _func.GetPluginInfo(_pluginNameNum, buf, buf.Length);
+            if (length > 0)
+            {
+                _pluginName = _stringConverter.Decode(buf, length);
+            }
+            else
+            {
+                // Not Implemented
+                _pluginName = "Not Implemented";
             }
         }
 
@@ -327,27 +360,33 @@ namespace WA
                     //IntPtr ptr;
                     void* pHBInfo = null;
                     void* pHBm = null;
-                    try
+
+                    var result = _func.GetPicture(p, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
+
+                    if (pHBInfo != null)
                     {
-                        var result = _func.GetPicture(p, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
-                        var ptr = NativeMethods.LocalLock(pHBInfo);
-                        var info = (Susie.BitMapInfo*)ptr;
+                        var info = (Susie.BitMapInfo*)NativeMethods.LocalLock(pHBInfo);
                         System.Diagnostics.Trace.WriteLine(info->biSize);
+                        // convert image desc
+                        //ImageDesc
                         NativeMethods.LocalUnlock(pHBInfo);
                     }
-                    catch (AccessViolationException e)
+
+                    if (pHBm != null)
                     {
+                        var info = NativeMethods.LocalLock(pHBm);
+                        // copy managed memory
+                        NativeMethods.LocalUnlock(pHBm);
                     }
-                    finally
+
+                    if (pHBInfo != null)
                     {
-                        if (pHBInfo != null)
-                        {
-                            NativeMethods.LocalFree(pHBInfo);
-                        }
-                        if (pHBm != null)
-                        {
-                            NativeMethods.LocalFree(pHBm);
-                        }
+                        NativeMethods.LocalFree(pHBInfo);
+                    }
+
+                    if (pHBm != null)
+                    {
+                        NativeMethods.LocalFree(pHBm);
                     }
                 }
 

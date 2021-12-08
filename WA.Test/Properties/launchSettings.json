@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "WA.Viewer": {
+    "WA.Test": {
       "commandName": "Project",
       "nativeDebugging": true
     }
