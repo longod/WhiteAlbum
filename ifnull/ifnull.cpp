@@ -63,6 +63,8 @@ extern "C" {
     int GetPicture(LPSTR buf, long len, unsigned int flag, HANDLE* pHBInfo, HANDLE* pHBm,
         FARPROC lpPrgressCallback, long lData) {
 
+        ((PrgressCallback)lpPrgressCallback)(0, 1, lData);
+
         HLOCAL bmpinfo = LocalAlloc(LMEM_ZEROINIT | LMEM_MOVEABLE, sizeof(BITMAPINFO));
         //HLOCAL bmp = LocalAlloc(LMEM_ZEROINIT | LMEM_MOVEABLE, 32);
 
@@ -81,6 +83,7 @@ extern "C" {
 
         *pHBInfo = bmpinfo;
         //*pHBm = bmp;
+        ((PrgressCallback)lpPrgressCallback)(1, 1, lData);
 
         return 0;
     }

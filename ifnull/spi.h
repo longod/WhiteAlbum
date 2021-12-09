@@ -70,6 +70,7 @@ extern "C" {
     SPI_API int GetFileInfo(LPSTR buf, long len, LPSTR filename, unsigned int flag, fileInfo* lpInfo);
     SPI_API int GetFile(LPSTR src, long len, LPSTR dest, unsigned int flag, FARPROC prgressCallback, long lData);
 
+    typedef int (PASCAL* PrgressCallback)(int nNum, int nDenom, long lData);
 
 #ifdef __cplusplus
 }

@@ -5,6 +5,7 @@ namespace WA
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Threading.Tasks;
     using System.Windows.Media.Imaging;
 
     // backends
@@ -88,18 +89,37 @@ namespace WA
 
     public class ViewerModelArgs
     {
-        public string Path;
+        public string Path; // filesystem path
+        public string VirtualPath; // relative path in archive
     }
 
     public class ViewerModel
     {
+        // filesystem path
+        public string LogicalPath { get; set; }
+
+        // relative path in archive
+        public string VirtualPath { get; set; }
+
 
         public ViewerModel(ViewerModelArgs args)
         {
-            if (args == null)
+            using (new StopwatchScope("ViewerModel"))
             {
+                if (args != null)
+                {
+                    LogicalPath = args.Path;
+                    VirtualPath = args.VirtualPath;
+                }
+
+                // bindingの更新通知とかでつまると嫌なので最初はいきなり
+                // 反映されない
+                //ProcessAsync();
+                // 反映される
+                Task.Run(() => ProcessAsync());
             }
         }
+
 
         public ViewerModel()
         {
@@ -190,5 +210,81 @@ namespace WA
         }
 
         public BitmapSource Image { get; set; }
+
+        public async Task ProcessAsync()
+        {
+            // load
+            if (File.Exists(LogicalPath))
+            {
+                // アーカイブの場合、全部読む必要は無く、対応するかどうかファイルハンドルなど渡して調べてもらうのが良いが、まだ考慮しない
+                // ファイルの場合、先頭から順次非同期ロードして、n kbのヘッダを読んだ段階でサポートしているかどうかさらに非同期で調べたい
+                // キャッシュとか前後領域の先読みストリーミングとか色々あるけれど、最小構成から
+
+                // ひとまずフルオンメモリー
+                using (new StopwatchScope("Process File Async"))
+                {
+                    FileLoader loader = new FileLoader(LogicalPath);
+                    await loader.LoadAsync();
+                    var decoder = await FindDecoderAsync(loader);
+                    var bmp = await decoder.DecodeAsync(loader);
+                    Image = bmp;
+                }
+
+            }
+            else if (Directory.Exists(LogicalPath))
+            {
+                // special case
+                // directory loader
+            }
+            else
+            {
+
+            }
+
+        }
+
+        private async Task<BMPDecoder> FindDecoderAsync(FileLoader loader)
+        {
+            // find decoder extension and header
+            return new BMPDecoder();
+        }
+
+        class BMPDecoder
+        {
+            // renderer backendの多用化を考えると、この段階ではBitmapSource じゃない中間フォーマットを返して欲しい
+            // bitmap info, image desc, stream, span
+            internal async Task<BitmapSource> DecodeAsync(FileLoader loader)
+            {
+                //return BitmapFrame.Create(new MemoryStream(binary), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                return BitmapFrame.Create(loader.Stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+            }
+        }
+
+        // may be disposable
+        class FileLoader
+        {
+            private FileInfo _file;
+            private byte[] _binary;
+
+            public FileLoader(string path)
+            {
+                _file = new FileInfo(path);
+            }
+
+            public Stream Stream => new MemoryStream(_binary);
+
+            // peekAsync
+            // ここで2kbだけ読んで処理してつづきを読むとか
+
+            public async ValueTask<int> LoadAsync()
+            {
+                _binary = null;
+                using (var stream = File.OpenRead(_file.FullName))
+                {
+                    _binary = new byte[stream.Length];
+                    return await stream.ReadAsync(_binary); // or async
+                }
+            }
+        }
     }
 }

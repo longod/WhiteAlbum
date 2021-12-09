@@ -15,7 +15,8 @@
 
         private string[] _pluginPaths = null;
 
-        class SameNameFileInfoEQ : IEqualityComparer<FileInfo>
+        // 主キー重複の場合、タイムスタンプを次に優先する可能性もある
+        private class SameNameFileInfoEQ : IEqualityComparer<FileInfo>
         {
             public bool Equals([AllowNull] FileInfo x, [AllowNull] FileInfo y)
             {
