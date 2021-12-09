@@ -64,6 +64,7 @@
                     catch (DllNotFoundException e)
                     {
                         // 多分 dependency dllが読めていない
+                        System.Diagnostics.Trace.WriteLine(e.Message);
                     }
                 }
             }

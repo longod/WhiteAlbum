@@ -17,6 +17,7 @@ namespace WA
     // dotnet, C# dll, C++ dll, susie
     interface IDecoder
     {
+        IntermediateImage Decode(FileLoader loader);
     }
 
     // file loader
@@ -76,6 +77,11 @@ namespace WA
         // format
         // origin
     }
+    public class IntermediateImage
+    {
+        public ImageDesc desc;
+        public byte[] binary;
+    }
 
     public static class WpfUtility
     {
@@ -112,6 +118,14 @@ namespace WA
                     VirtualPath = args.VirtualPath;
                 }
 
+                // register builtin types
+                _imageDecoders.Add(".bmp", new BuiltInDecoder(typeof(BmpBitmapDecoder)));
+                _imageDecoders.Add(".png", new BuiltInDecoder(typeof(PngBitmapDecoder)));
+                _imageDecoders.Add(".jpg", new BuiltInDecoder(typeof(JpegBitmapDecoder)));
+                _imageDecoders.Add(".git", new BuiltInDecoder(typeof(GifBitmapDecoder)));
+                _imageDecoders.Add(".tif", new BuiltInDecoder(typeof(TiffBitmapDecoder)));
+                _imageDecoders.Add(".wmp", new BuiltInDecoder(typeof(WmpBitmapDecoder)));
+
                 // bindingの更新通知とかでつまると嫌なので最初はいきなり
                 // 反映されない
                 //ProcessAsync();
@@ -119,7 +133,6 @@ namespace WA
                 Task.Run(() => ProcessAsync());
             }
         }
-
 
         public ViewerModel()
         {
@@ -223,11 +236,19 @@ namespace WA
                 // ひとまずフルオンメモリー
                 using (new StopwatchScope("Process File Async"))
                 {
-                    FileLoader loader = new FileLoader(LogicalPath);
-                    await loader.LoadAsync();
-                    var decoder = await FindDecoderAsync(loader);
-                    var bmp = await decoder.DecodeAsync(loader);
-                    Image = bmp;
+                    using (var loader = new FileLoader(LogicalPath))
+                    {
+                        await loader.LoadAsync();
+                        var decoder = await FindDecoderAsync(loader);
+                        if (decoder != null)
+                        {
+                            var bmp = await decoder.TryDecodeAsync(loader);
+
+                            // while archive -> traverse virtual path then decode final image
+
+                            Image = bmp;
+                        }
+                    }
                 }
 
             }
@@ -236,54 +257,132 @@ namespace WA
                 // special case
                 // directory loader
             }
-            else
-            {
-
-            }
 
         }
 
-        private async Task<BMPDecoder> FindDecoderAsync(FileLoader loader)
+        private async Task<ImageDecoder> FindDecoderAsync(FileLoader loader)
         {
             // find decoder extension and header
-            return new BMPDecoder();
+            // tood async
+
+            // 拡張子にマッピングされたデコーダーがヒットするかどうか
+            var ext = loader.Extension;
+            if (_imageDecoders.TryGetValue(ext, out var imageDecoder))
+            {
+                return imageDecoder;
+            }
+
+            // ヒットしない、プラグインで該当するかどうか解決を試みる
+            // 解決できる場合は、対応する拡張子にマッピングする
+
+            //return new BmpDecoder();
+            //return new PngDecoderPlugin();
+            return null;
         }
 
-        class BMPDecoder
+        private Dictionary<string, ImageDecoder> _imageDecoders = new Dictionary<string, ImageDecoder>();
+
+        // extensionに対応したdecoderセット
+        internal class ImageDecoder
+        {
+            private List<IDecoder> _decoders;
+
+            internal virtual async Task<BitmapSource> TryDecodeAsync(FileLoader loader)
+            {
+                var image = await Task.Run(() =>
+                {
+                    foreach (var d in _decoders)
+                    {
+                        var desc = d.Decode(loader);
+                        if (desc != null)
+                        {
+                            return desc;
+                        }
+                    }
+
+                    return null;
+                });
+
+                if (image != null)
+                {
+                    var source = await Convert(image);
+                    return source;
+                }
+
+                return null;
+            }
+
+            // renderer backendの多用化を考えると、この段階ではBitmapSource じゃない中間フォーマットを返して欲しい
+            // bitmap info, image desc, stream, span
+            private Task<BitmapSource> Convert(IntermediateImage image)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal void RegisterDecoder(IDecoder decoder)
+            {
+                _decoders.Add(decoder);
+            }
+        }
+
+
+        // built-in
+        internal class BmpDecoder : ImageDecoder
         {
             // renderer backendの多用化を考えると、この段階ではBitmapSource じゃない中間フォーマットを返して欲しい
             // bitmap info, image desc, stream, span
-            internal async Task<BitmapSource> DecodeAsync(FileLoader loader)
+            internal override async Task<BitmapSource> TryDecodeAsync(FileLoader loader)
             {
                 //return BitmapFrame.Create(new MemoryStream(binary), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-                return BitmapFrame.Create(loader.Stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                return BitmapFrame.Create(loader.Stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnDemand);
+
+                // fallback
+                //return await base.TryDecodeAsync(loader);
             }
         }
 
-        // may be disposable
-        class FileLoader
+        // built-in
+        internal class PngDecoder : ImageDecoder
         {
-            private FileInfo _file;
-            private byte[] _binary;
-
-            public FileLoader(string path)
+            // renderer backendの多用化を考えると、この段階ではBitmapSource じゃない中間フォーマットを返して欲しい
+            // bitmap info, image desc, stream, span
+            internal override async Task<BitmapSource> TryDecodeAsync(FileLoader loader)
             {
-                _file = new FileInfo(path);
+                PngBitmapDecoder decoder = null;
+                decoder = new PngBitmapDecoder(loader.Stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnDemand);
+                decoder = new PngBitmapDecoder(loader.Stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnDemand);
+                return decoder.Frames[0];
+
+                // fallback
+                //return await base.TryDecodeAsync(loader);
+            }
+        }
+
+
+        internal class BuiltInDecoder : ImageDecoder
+        {
+            private System.Reflection.ConstructorInfo _constructor;
+            private object[] _args = new object[] { null, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnDemand };
+
+            internal BuiltInDecoder(Type bitmapDecoder)
+            {
+                // cacheしておきたい
+                _constructor = bitmapDecoder.GetConstructor(new Type[] { typeof(Stream), typeof(BitmapCreateOptions), typeof(BitmapCacheOption) });
             }
 
-            public Stream Stream => new MemoryStream(_binary);
-
-            // peekAsync
-            // ここで2kbだけ読んで処理してつづきを読むとか
-
-            public async ValueTask<int> LoadAsync()
+            // boxingしまくりで遅そう…
+            internal override async Task<BitmapSource> TryDecodeAsync(FileLoader loader)
             {
-                _binary = null;
-                using (var stream = File.OpenRead(_file.FullName))
+                _args[0] = loader.Stream;
+                BitmapDecoder decoder = null;
+                using (new StopwatchScope("TryDecodeAsync"))
                 {
-                    _binary = new byte[stream.Length];
-                    return await stream.ReadAsync(_binary); // or async
+                    decoder = (BitmapDecoder)_constructor.Invoke(_args);
                 }
+                return decoder.Frames[0];
+
+                // fallback
+                //return await base.TryDecodeAsync(loader);
             }
         }
     }

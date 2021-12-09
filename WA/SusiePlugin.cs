@@ -1,5 +1,7 @@
 ﻿// (c) longod, MIT License
 
+// TODO WA.Susie に分離する
+
 namespace WA
 {
     using System;
