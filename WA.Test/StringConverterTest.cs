@@ -1,4 +1,5 @@
 ﻿using System;
+using WA.Susie;
 using Xunit;
 
 namespace WA.Test

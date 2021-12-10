@@ -5,16 +5,15 @@ namespace WA
     using System;
     using System.Collections.Generic;
     using System.Text;
+    using WA.Susie;
 
     internal class SusiePluginDecoder : IDecoder
     {
         private SusiePlugin _plugin;
-        private readonly StringConverter _stringConverter = null;
 
         internal SusiePluginDecoder(SusiePlugin plugin)
         {
             _plugin = plugin;
-            _stringConverter = StringConverter.SJIS;
         }
 
         public void Dispose()
@@ -25,7 +24,7 @@ namespace WA
         public bool Decode(FileLoader loader, out IntermediateImage image)
         {
             byte[] binary = null;
-            Susie.BitMapInfo info;
+            Susie.BitMapInfoHeader info;
             if (_plugin.GetPicture(loader.Binary, out binary, out info))
             {
                 image = new IntermediateImage();
@@ -44,9 +43,7 @@ namespace WA
 
         public bool IsSupported(FileLoader loader)
         {
-            // FIXME 何度も変換されるので効率が悪い。キャッシュとか
-            var path = _stringConverter.Encode(loader.Path);
-            return _plugin.IsSupported(path, loader.Binary);
+            return _plugin.IsSupported(loader.Path, loader.Binary);
         }
     }
 }

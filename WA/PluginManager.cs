@@ -68,7 +68,7 @@
                         SusiePluginDecoder decoder = null;
                         try
                         {
-                            decoder = new SusiePluginDecoder(new SusiePlugin(path));
+                            decoder = new SusiePluginDecoder(new Susie.SusiePlugin(path));
                         }
                         catch (DllNotFoundException e)
                         {

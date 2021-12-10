@@ -1,6 +1,6 @@
 ﻿// (c) longod, MIT License
 
-namespace WA
+namespace WA.Susie
 {
     using System.Runtime.InteropServices;
 
