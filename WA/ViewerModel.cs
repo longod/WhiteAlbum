@@ -17,10 +17,11 @@ namespace WA
     // dotnet, C# dll, C++ dll, susie
     interface IDecoder
     {
+        // renderer backendの多用化を考えると、この段階ではBitmapSource じゃない中間フォーマットを返して欲しい
+        // bitmap info, image desc, stream, span
         IntermediateImage Decode(FileLoader loader);
     }
 
-    // file loader
     interface IFileLoader
     {
     }
@@ -51,18 +52,8 @@ namespace WA
     }
 
     // management decoer and decoded image
-    public class ResourceManager
+    public class CacheManager
     {
-    }
-
-    public class FileSystemFactory
-    {
-        // directoryどうする extじゃなくてパス？
-        IEnumerable<FileSystem> Find(string ext)
-        {
-            return null;
-        }
-
     }
 
     // 特定の画像フォーマットによらない画像情報
@@ -119,17 +110,16 @@ namespace WA
                 }
 
                 // register builtin types
-                _imageDecoders.Add(".bmp", new BuiltInDecoder(typeof(BmpBitmapDecoder)));
-                _imageDecoders.Add(".png", new BuiltInDecoder(typeof(PngBitmapDecoder)));
-                _imageDecoders.Add(".jpg", new BuiltInDecoder(typeof(JpegBitmapDecoder)));
-                _imageDecoders.Add(".git", new BuiltInDecoder(typeof(GifBitmapDecoder)));
-                _imageDecoders.Add(".tif", new BuiltInDecoder(typeof(TiffBitmapDecoder)));
-                _imageDecoders.Add(".wmp", new BuiltInDecoder(typeof(WmpBitmapDecoder)));
+                bool enabledBuiltInDecoders = false;
+                if (enabledBuiltInDecoders)
+                {
+                    RegisterBuiltInDecoders();
+                }
 
-                // bindingの更新通知とかでつまると嫌なので最初はいきなり
-                // 反映されない
+                // 多分コンストラクタ後に呼び出した方がよい
+                // viewに反映されない
                 //ProcessAsync();
-                // 反映される
+                // viewに反映される
                 Task.Run(() => ProcessAsync());
             }
         }
@@ -162,13 +152,8 @@ namespace WA
                 var ret = stream.Read(binary); // or async
             }
 
-            //var ext = Path.GetExtension(path);
-
             // exrみたいなストリーミング表示可能なフォーマットはロードしながらできるんだろうか…
 
-            //var decoder = new JpegBitmapDecoder(new MemoryStream(binary), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-            //var decoder = new PngBitmapDecoder(new MemoryStream(binary), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-            //decoder.Frames[0]
 
             Image = CreateBitmapFrame(binary);
 
@@ -196,25 +181,6 @@ namespace WA
             }
 #endif
 
-        }
-
-        public static BitmapSource CreateBitmapSource(byte[] binary)
-        {
-            throw new NotImplementedException();
-        }
-
-
-        public static BitmapSource CreateBitmapImage(byte[] binary)
-        {
-            BitmapImage bmp = new BitmapImage();
-            bmp.BeginInit();
-            bmp.CacheOption = BitmapCacheOption.OnLoad;
-            //bmp.CreateOptions = BitmapCreateOptions.DelayCreation; // 遅延にしたいが、多分binding見直さないとでない。通知が必要のはず。
-            //bmp.DecodePixelWidth = 640;
-            //bmp.DecodePixelHeight = 360;
-            bmp.StreamSource = new MemoryStream(binary);
-            bmp.EndInit();
-            return bmp;
         }
 
         public static BitmapSource CreateBitmapFrame(byte[] binary)
@@ -267,123 +233,46 @@ namespace WA
 
             // 拡張子にマッピングされたデコーダーがヒットするかどうか
             var ext = loader.Extension;
-            if (_imageDecoders.TryGetValue(ext, out var imageDecoder))
+            ImageDecoder instance = null;
+            if (_imageDecoders.TryGetValue(ext, out instance))
             {
-                return imageDecoder;
+                bool continueFinding = false; // みつかっても残りのプラグインを調べるかどうか
+                if (!continueFinding)
+                {
+                    return instance;
+                }
             }
 
             // ヒットしない、プラグインで該当するかどうか解決を試みる
             // 解決できる場合は、対応する拡張子にマッピングする
+            // この拡張子でマッピング済みということがplugin maneger側にも分からないと、continueFinding時に同じものがでてくる
+            var decoder = await _pluginManager.ResolveAsync(loader);
+            if (decoder != null)
+            {
+                if (instance == null)
+                {
+                    instance = new ImageDecoder();
+                }
 
-            //return new BmpDecoder();
-            //return new PngDecoderPlugin();
-            return null;
+                instance.RegisterDecoder(decoder);
+                _imageDecoders.Add(ext, instance);
+            }
+
+            return instance;
         }
 
         private Dictionary<string, ImageDecoder> _imageDecoders = new Dictionary<string, ImageDecoder>();
+        private PluginManager _pluginManager = new PluginManager();
 
-        // extensionに対応したdecoderセット
-        internal class ImageDecoder
+        private void RegisterBuiltInDecoders()
         {
-            private List<IDecoder> _decoders;
-
-            internal virtual async Task<BitmapSource> TryDecodeAsync(FileLoader loader)
-            {
-                var image = await Task.Run(() =>
-                {
-                    foreach (var d in _decoders)
-                    {
-                        var desc = d.Decode(loader);
-                        if (desc != null)
-                        {
-                            return desc;
-                        }
-                    }
-
-                    return null;
-                });
-
-                if (image != null)
-                {
-                    var source = await Convert(image);
-                    return source;
-                }
-
-                return null;
-            }
-
-            // renderer backendの多用化を考えると、この段階ではBitmapSource じゃない中間フォーマットを返して欲しい
-            // bitmap info, image desc, stream, span
-            private Task<BitmapSource> Convert(IntermediateImage image)
-            {
-                throw new NotImplementedException();
-            }
-
-            internal void RegisterDecoder(IDecoder decoder)
-            {
-                _decoders.Add(decoder);
-            }
+            _imageDecoders.Add(".bmp", new BuiltInImageDecoder(typeof(BmpBitmapDecoder)));
+            _imageDecoders.Add(".png", new BuiltInImageDecoder(typeof(PngBitmapDecoder)));
+            _imageDecoders.Add(".jpg", new BuiltInImageDecoder(typeof(JpegBitmapDecoder)));
+            _imageDecoders.Add(".git", new BuiltInImageDecoder(typeof(GifBitmapDecoder)));
+            _imageDecoders.Add(".tif", new BuiltInImageDecoder(typeof(TiffBitmapDecoder)));
+            _imageDecoders.Add(".wmp", new BuiltInImageDecoder(typeof(WmpBitmapDecoder)));
         }
 
-
-        // built-in
-        internal class BmpDecoder : ImageDecoder
-        {
-            // renderer backendの多用化を考えると、この段階ではBitmapSource じゃない中間フォーマットを返して欲しい
-            // bitmap info, image desc, stream, span
-            internal override async Task<BitmapSource> TryDecodeAsync(FileLoader loader)
-            {
-                //return BitmapFrame.Create(new MemoryStream(binary), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-                return BitmapFrame.Create(loader.Stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnDemand);
-
-                // fallback
-                //return await base.TryDecodeAsync(loader);
-            }
-        }
-
-        // built-in
-        internal class PngDecoder : ImageDecoder
-        {
-            // renderer backendの多用化を考えると、この段階ではBitmapSource じゃない中間フォーマットを返して欲しい
-            // bitmap info, image desc, stream, span
-            internal override async Task<BitmapSource> TryDecodeAsync(FileLoader loader)
-            {
-                PngBitmapDecoder decoder = null;
-                decoder = new PngBitmapDecoder(loader.Stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnDemand);
-                decoder = new PngBitmapDecoder(loader.Stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnDemand);
-                return decoder.Frames[0];
-
-                // fallback
-                //return await base.TryDecodeAsync(loader);
-            }
-        }
-
-
-        internal class BuiltInDecoder : ImageDecoder
-        {
-            private System.Reflection.ConstructorInfo _constructor;
-            private object[] _args = new object[] { null, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnDemand };
-
-            internal BuiltInDecoder(Type bitmapDecoder)
-            {
-                // cacheしておきたい
-                _constructor = bitmapDecoder.GetConstructor(new Type[] { typeof(Stream), typeof(BitmapCreateOptions), typeof(BitmapCacheOption) });
-            }
-
-            // boxingしまくりで遅そう…
-            internal override async Task<BitmapSource> TryDecodeAsync(FileLoader loader)
-            {
-                _args[0] = loader.Stream;
-                BitmapDecoder decoder = null;
-                using (new StopwatchScope("TryDecodeAsync"))
-                {
-                    decoder = (BitmapDecoder)_constructor.Invoke(_args);
-                }
-                return decoder.Frames[0];
-
-                // fallback
-                //return await base.TryDecodeAsync(loader);
-            }
-        }
     }
 }

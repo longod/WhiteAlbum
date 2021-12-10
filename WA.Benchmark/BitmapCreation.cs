@@ -28,13 +28,13 @@ namespace WA.Benchmark
         [Benchmark]
         public void CreateBitmapImage()
         {
-            ViewerModel.CreateBitmapImage(_binary);
+            //ViewerModel.CreateBitmapImage(_binary);
         }
 
         [Benchmark]
         public void CreateBitmapFrame()
         {
-            ViewerModel.CreateBitmapFrame(_binary);
+            //ViewerModel.CreateBitmapFrame(_binary);
         }
 
     }

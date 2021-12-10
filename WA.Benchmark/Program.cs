@@ -33,7 +33,7 @@ namespace WA.Benchmark
 #endif
 
             BenchmarkRunner.Run<MemoryCopying>(config);
-            BenchmarkRunner.Run<BitmapCreation>(config);
+            //BenchmarkRunner.Run<BitmapCreation>(config);
         }
     }
 }

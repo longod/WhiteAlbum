@@ -6,6 +6,7 @@
     using System.Text;
     using System.Linq;
     using System.Diagnostics.CodeAnalysis;
+    using System.Threading.Tasks;
 
     public class PluginManager
     {
@@ -85,6 +86,11 @@
             }
 
             return plugins;
+        }
+
+        internal async Task<IEnumerable<IDecoder>> ResolveAsync(FileLoader loader, bool all = false)
+        {
+            throw new NotImplementedException();
         }
     }
 }
