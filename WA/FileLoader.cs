@@ -20,6 +20,10 @@ namespace WA
 
         // temp
         internal Stream Stream => new MemoryStream(_binary, false);
+        // temp, spanとかmemoryとかで要件を満たしてほしい
+        internal byte[] Binary => _binary;
+
+        public string Path => _file.FullName;
 
         public void Dispose()
         {

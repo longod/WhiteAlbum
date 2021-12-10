@@ -4,7 +4,9 @@ namespace WA
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel;
     using System.IO;
+    using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
     using System.Windows.Media.Imaging;
 
@@ -15,11 +17,12 @@ namespace WA
     }
 
     // dotnet, C# dll, C++ dll, susie
-    interface IDecoder
+    interface IDecoder : IDisposable
     {
         // renderer backendの多用化を考えると、この段階ではBitmapSource じゃない中間フォーマットを返して欲しい
         // bitmap info, image desc, stream, span
-        IntermediateImage Decode(FileLoader loader);
+        bool Decode(FileLoader loader, out IntermediateImage image);
+        bool IsSupported(FileLoader loader);
     }
 
     interface IFileLoader
@@ -58,12 +61,12 @@ namespace WA
 
     // 特定の画像フォーマットによらない画像情報
     // 最終的な表示イメージ変換に必要な情報を含む
-    public readonly struct ImageDesc
+    public struct ImageDesc
     {
-        public readonly uint Width;
-        public readonly uint Height;
-        public readonly ushort DepthOrArray;
-        public readonly ushort MipLevels;
+        public uint Width;
+        public uint Height;
+        public ushort DepthOrArray;
+        public ushort MipLevels;
         // dimension
         // format
         // origin
@@ -90,7 +93,8 @@ namespace WA
         public string VirtualPath; // relative path in archive
     }
 
-    public class ViewerModel
+    // modelにINotifyPropertyChanged つかうのはふつうなのか？
+    public class ViewerModel : INotifyPropertyChanged
     {
         // filesystem path
         public string LogicalPath { get; set; }
@@ -108,7 +112,6 @@ namespace WA
                     LogicalPath = args.Path;
                     VirtualPath = args.VirtualPath;
                 }
-
                 // register builtin types
                 bool enabledBuiltInDecoders = false;
                 if (enabledBuiltInDecoders)
@@ -120,7 +123,7 @@ namespace WA
                 // viewに反映されない
                 //ProcessAsync();
                 // viewに反映される
-                Task.Run(() => ProcessAsync());
+                //Task.Run(() => ProcessAsync());
             }
         }
 
@@ -188,7 +191,20 @@ namespace WA
             return BitmapFrame.Create(new MemoryStream(binary), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
         }
 
-        public BitmapSource Image { get; set; }
+        private BitmapSource _image;
+        public BitmapSource Image
+        {
+            get { return _image; }
+            set
+            {
+                if (value != _image)
+                {
+                    _image = value;
+                    NotifyPropertyChanged("Image");
+                }
+
+            }
+        }
 
         public async Task ProcessAsync()
         {
@@ -209,9 +225,6 @@ namespace WA
                         if (decoder != null)
                         {
                             var bmp = await decoder.TryDecodeAsync(loader);
-
-                            // while archive -> traverse virtual path then decode final image
-
                             Image = bmp;
                         }
                     }
@@ -262,8 +275,9 @@ namespace WA
         }
 
         private Dictionary<string, ImageDecoder> _imageDecoders = new Dictionary<string, ImageDecoder>();
-        private PluginManager _pluginManager = new PluginManager();
 
+        // todo call dispose
+        private PluginManager _pluginManager = new PluginManager();
         private void RegisterBuiltInDecoders()
         {
             _imageDecoders.Add(".bmp", new BuiltInImageDecoder(typeof(BmpBitmapDecoder)));
@@ -272,6 +286,16 @@ namespace WA
             _imageDecoders.Add(".git", new BuiltInImageDecoder(typeof(GifBitmapDecoder)));
             _imageDecoders.Add(".tif", new BuiltInImageDecoder(typeof(TiffBitmapDecoder)));
             _imageDecoders.Add(".wmp", new BuiltInImageDecoder(typeof(WmpBitmapDecoder)));
+        }
+
+        // INotifyPropertyChanged
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
+        {
+            if (PropertyChanged != null)
+            {
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+            }
         }
 
     }

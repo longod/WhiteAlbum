@@ -8,13 +8,15 @@
     using System.Diagnostics.CodeAnalysis;
     using System.Threading.Tasks;
 
-    public class PluginManager
+    public class PluginManager : IDisposable
     {
-        private List<string> _pluginDirectories = new List<string>() { @"..\..\..\..\Temp\spi\" };
+        private List<string> _pluginDirectories = new List<string>() { @"..\..\..\..\Temp\spi\spi32008" };
 
         private bool _searchSubDirectory = true; // directory単位で持つかも
 
         private string[] _pluginPaths = null;
+
+        private List<IDecoder> _loadedDecoder = new List<IDecoder>();
 
         // 主キー重複の場合、タイムスタンプを次に優先する可能性もある
         private class SameNameFileInfoEQ : IEqualityComparer<FileInfo>
@@ -39,35 +41,50 @@
             _pluginDirectories = pluginDirectories;
         }
 
-        public void FindPlugins()
+        public async Task FindPlugins()
         {
             var eq = new SameNameFileInfoEQ();
             using (new StopwatchScope("FindPlugins"))
             {
-                _pluginPaths = _pluginDirectories.SelectMany(x => SearchPlugin(new DirectoryInfo(x), _searchSubDirectory))
-                    .Distinct(eq) // unique
-                    .Select(x => x.FullName)
-                    .ToArray();
+                await Task.Run(() =>
+               {
+                   _pluginPaths = _pluginDirectories.SelectMany(x => SearchPlugin(new DirectoryInfo(x), _searchSubDirectory))
+                       .Distinct(eq) // unique
+                       .Select(x => x.FullName)
+                       .ToArray();
+               });
             }
         }
 
         // test
-        public void LoadAllPlugins()
+        public async Task LoadAllPlugins()
         {
             using (new StopwatchScope("LoadAllPlugins"))
             {
-                foreach (var path in _pluginPaths)
+                await Task.Run(() =>
                 {
-                    try
+                    foreach (var path in _pluginPaths)
                     {
-                        new SusiePlugin(path);
+                        SusiePluginDecoder decoder = null;
+                        try
+                        {
+                            decoder = new SusiePluginDecoder(new SusiePlugin(path));
+                        }
+                        catch (DllNotFoundException e)
+                        {
+                            // 多分 dependency dllが読めていない
+                            System.Diagnostics.Trace.WriteLine(e.Message);
+                            decoder?.Dispose();
+                            decoder = null;
+                        }
+
+                        if (decoder != null)
+                        {
+                            _loadedDecoder.Add(decoder);
+                        }
+
                     }
-                    catch (DllNotFoundException e)
-                    {
-                        // 多分 dependency dllが読めていない
-                        System.Diagnostics.Trace.WriteLine(e.Message);
-                    }
-                }
+                });
             }
         }
 
@@ -88,9 +105,34 @@
             return plugins;
         }
 
-        internal async Task<IEnumerable<IDecoder>> ResolveAsync(FileLoader loader, bool all = false)
+        internal async Task<IDecoder> ResolveAsync(FileLoader loader/*, bool enumerateAll = false*/)
         {
-            throw new NotImplementedException();
+            using (new StopwatchScope("ResolveAsync"))
+            {
+                // test
+                await FindPlugins();
+                await LoadAllPlugins();
+
+                foreach (var d in _loadedDecoder)
+                {
+                    if (d.IsSupported(loader))
+                    {
+                        // todo どこかに対応付けをしておく
+                        return d;
+                    }
+                }
+
+            }
+
+            return null;
+        }
+
+        public void Dispose()
+        {
+            foreach (var d in _loadedDecoder)
+            {
+                d.Dispose();
+            }
         }
     }
 }

@@ -37,11 +37,11 @@ namespace WA
         // int _export PASCAL GetPicture (LPSTR buf, long len, unsigned int flag, HANDLE *pHBInfo, HANDLE *pHBm, FARPROC lpPrgressCallback, long lData);
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
         //internal unsafe delegate Int32 GetPicture(Byte[] buf, Int32 len, UInt32 flag, void** pHBInfo, void** pHBm, ProgressCallback lpPrgressCallback, Int32 lData);
-        internal unsafe delegate Int32 GetPicture(byte* buf, Int32 len, UInt32 flag, void** pHBInfo, void** pHBm, ProgressCallback lpPrgressCallback, Int32 lData);
+        internal unsafe delegate Int32 GetPicture(Byte[] buf, Int32 len, UInt32 flag, void** pHBInfo, void** pHBm, ProgressCallback lpPrgressCallback, Int32 lData);
 
         // int _export PASCAL GetPreview (LPSTR buf, long len, unsigned int flag, HANDLE *pHBInfo, HANDLE *pHBm, FARPROC lpPrgressCallback, long lData);
         [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
-        internal delegate Int32 GetPreview(Byte[] buf, Int32 len, UInt32 flag, IntPtr pHBInfo, IntPtr pHBm, IntPtr lpPrgressCallback, Int32 lData);
+        internal unsafe delegate Int32 GetPreview(Byte[] buf, Int32 len, UInt32 flag, void** pHBInfo, void** pHBm, ProgressCallback lpPrgressCallback, Int32 lData);
 
         // 00AM Plug-in
         // int _export PASCAL GetArchiveInfo (LPSTR buf, long len, unsigned int flag, HLOCAL *lphInf)
@@ -104,6 +104,8 @@ namespace WA
             public Byte[] filename; // char[200] ファイルネーム
             public UInt32 crc;      // unsigned long CRC
         }
+
+        // can readonly?
 
         // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-bitmapinfoheader
         [StructLayout(LayoutKind.Sequential, Pack = 4)]
@@ -320,7 +322,7 @@ namespace WA
             }
         }
 
-        private bool IsSupported(byte[] path, byte[] binary)
+        internal bool IsSupported(byte[] path, byte[] binary)
         {
             byte[] peek;
             if (binary.Length < _minPeekSize)
@@ -346,59 +348,72 @@ namespace WA
         }
 
         // [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions] // coreは効かないはず
-        private byte[] GetPicture(byte[] binary)
+
+        private static int AlwaysContinueProgressCallback(int nNum, int nDenom, int lData)
+        {
+            return 0; // always continue
+        }
+
+        internal bool GetPicture(byte[] binary, out byte[] image, out Susie.BitMapInfo info)
         {
             if (_func.GetPicture == null)
             {
                 _func.GetPicture = GetFunction<Susie.GetPicture>(_handle, Susie.ExportName.GetPicture);
             }
+            const uint flag = 1;// 0: filehandle, 1:on memory
 
-            uint flag = 1;// on memory
+            image = null;
+            info = default;
+
             unsafe
             {
-                fixed (byte* p = binary)
+                //IntPtr ptr = (IntPtr)p;
+                //IntPtr ptr;
+                void* pHBInfo = null;
+                void* pHBm = null;
+
+                var result = _func.GetPicture(binary, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
+                if (result == 0)
                 {
-                    //IntPtr ptr = (IntPtr)p;
-                    //IntPtr ptr;
-                    void* pHBInfo = null;
-                    void* pHBm = null;
-
-                    var result = _func.GetPicture(p, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
-
                     if (pHBInfo != null)
                     {
-                        var info = (Susie.BitMapInfo*)NativeMethods.LocalLock(pHBInfo);
-                        System.Diagnostics.Trace.WriteLine(info->biSize);
-                        // convert image desc
-                        //ImageDesc
+                        var ptr = (Susie.BitMapInfo*)NativeMethods.LocalLock(pHBInfo);
+
+                        Susie.BitMapInfo bi = default;
+                        System.Runtime.CompilerServices.Unsafe.Copy(ref bi, ptr);
+                        info = bi;
+
                         NativeMethods.LocalUnlock(pHBInfo);
                     }
 
                     if (pHBm != null)
                     {
-                        var info = NativeMethods.LocalLock(pHBm);
+                        var ptr = NativeMethods.LocalLock(pHBm);
                         // copy managed memory
+
+                        image = new byte[info.biSizeImage];
+                        fixed (void* p = image)
+                        {
+                            System.Runtime.CompilerServices.Unsafe.CopyBlock(p, ptr, info.biSizeImage);
+                        }
+
                         NativeMethods.LocalUnlock(pHBm);
-                    }
-
-                    if (pHBInfo != null)
-                    {
-                        NativeMethods.LocalFree(pHBInfo);
-                    }
-
-                    if (pHBm != null)
-                    {
-                        NativeMethods.LocalFree(pHBm);
                     }
                 }
 
-                return null;
-            }
-        }
+                if (pHBInfo != null)
+                {
+                    NativeMethods.LocalFree(pHBInfo);
+                }
 
-        private static int AlwaysContinueProgressCallback(int nNum, int nDenom, int lData)
-        {
-            return 0; // always continue
+                if (pHBm != null)
+                {
+                    NativeMethods.LocalFree(pHBm);
+                }
+
+                return result == 0;
+            }
+            return false;
         }
     }
 }

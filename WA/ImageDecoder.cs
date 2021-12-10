@@ -5,6 +5,7 @@ namespace WA
     using System.Collections.Generic;
     using System.Text;
     using System.Threading.Tasks;
+    using System.Windows.Media;
     using System.Windows.Media.Imaging;
 
 
@@ -24,10 +25,9 @@ namespace WA
             {
                 foreach (var d in _decoders)
                 {
-                    var desc = d.Decode(loader);
-                    if (desc != null)
+                    if (d.Decode(loader, out var im))
                     {
-                        return desc;
+                        return im;
                     }
                 }
 
@@ -46,24 +46,52 @@ namespace WA
         private async Task<BitmapSource> Convert(IntermediateImage image)
         {
             // temp
-            return await Task.Run(() => BitmapSource.Create(
-                (int)image.desc.Width,
-                (int)image.desc.Height,
-                WpfUtility.DefaultDpi,
-                WpfUtility.DefaultDpi,
-                System.Windows.Media.PixelFormats.Default,
-                BitmapPalettes.BlackAndWhite,
-                image.binary,
-                0));
+            int rawStride = ((int)image.desc.Width * System.Windows.Media.PixelFormats.Bgr24.BitsPerPixel + 7) / 8;
+
+            var bmp = await Task.Run(() =>
+            {
+                var b = BitmapSource.Create(
+                  (int)image.desc.Width,
+                  (int)image.desc.Height,
+                  WpfUtility.DefaultDpi,
+                  WpfUtility.DefaultDpi,
+                  System.Windows.Media.PixelFormats.Bgr24,
+                  null,
+                  image.binary,
+                  rawStride);
+                var tb = new TransformedBitmap(b, new ScaleTransform(1.0, -1.0));
+                tb.Freeze();
+                return tb;
+            }
+            );
+            // BitmapSourceは Must create DependencySource on same Thread as the DependencyObject
+            // を発生させるので、freezeする
+            // これを継承した生成器や、decoderはdispatcherでUIスレッドで作られるようにされていると思われるが、
+            // BitmapSourceはそこをケアしていないのだろう
+            // どこかの生成器でリークしているかも
+            // https://pierre3.hatenablog.com/entry/2015/10/25/001207
+
+            // BitmapSourceの基点は左上だが、本来のbmp formatのpositive heightは左下基点で反転してしまう
+            // 事前にメモリを反転して詰め直すか、scale transformで行なう
+            // exif も追々考慮する必要がある
+            return bmp;
         }
 
         internal void RegisterDecoder(IDecoder decoder)
         {
+            if (_decoders == null)
+            {
+                _decoders = new List<IDecoder>();
+            }
             _decoders.Add(decoder);
         }
 
         internal void RegisterDecoder(IEnumerable<IDecoder> decoder)
         {
+            if (_decoders == null)
+            {
+                _decoders = new List<IDecoder>();
+            }
             _decoders.AddRange(decoder);
         }
     }
