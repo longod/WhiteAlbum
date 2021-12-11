@@ -8,7 +8,7 @@ namespace WA.Susie
     // https://qiita.com/kob58im/items/e40081491a75204ccb6e
     internal static class NativeMethods
     {
-        const string Kernel32 = "kernel32.dll";
+        private const string Kernel32 = "kernel32.dll";
 
         [DllImport(Kernel32, CharSet = CharSet.Auto)]
         internal static extern unsafe void* LocalLock(void* hMem);
@@ -18,6 +18,5 @@ namespace WA.Susie
 
         [DllImport(Kernel32, CharSet = CharSet.Auto)]
         internal static extern unsafe bool LocalFree(void* hMem);
-
     }
 }

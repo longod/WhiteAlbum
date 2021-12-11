@@ -71,6 +71,7 @@ namespace WA
         // format
         // origin
     }
+
     public class IntermediateImage
     {
         public ImageDesc desc;
@@ -118,12 +119,6 @@ namespace WA
                 {
                     RegisterBuiltInDecoders();
                 }
-
-                // 多分コンストラクタ後に呼び出した方がよい
-                // viewに反映されない
-                //ProcessAsync();
-                // viewに反映される
-                //Task.Run(() => ProcessAsync());
             }
         }
 

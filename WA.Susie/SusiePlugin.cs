@@ -1,7 +1,5 @@
 ﻿// (c) longod, MIT License
 
-// TODO WA.Susie に分離する
-
 namespace WA.Susie
 {
     using System;
@@ -62,7 +60,6 @@ namespace WA.Susie
         private Function _func;
         private List<Tuple<string, string>> _fileFormats;
 
-
         private static int AlwaysContinueProgressCallback(int nNum, int nDenom, int lData)
         {
             return 0; // always continue
@@ -79,8 +76,8 @@ namespace WA.Susie
             _handle = NativeLibrary.Load(path);
 
             GetPluginVersion();
-            //GetPluginName();
-            //GetFileFormats();
+            GetPluginName();
+            GetFileFormats();
         }
 
         public void Dispose()
@@ -91,18 +88,9 @@ namespace WA.Susie
         public bool IsSupported(string path, byte[] binary)
         {
             var mbpath = _stringConverter.Encode(path);
-            byte[] peek;
             if (binary.Length < _minPeekSize)
             {
                 throw new ArgumentException($"binary.Length larger than {_minPeekSize} (has {binary.Length}).");
-
-                //peek = new byte[minPeekSize];
-                //// todo benchmark copy moethods
-                //Buffer.BlockCopy(binary, 0, peek, 0, binary.Length);
-            }
-            else
-            {
-                peek = binary;
             }
 
             if (_func.IsSupported == null)
@@ -110,8 +98,14 @@ namespace WA.Susie
                 _func.IsSupported = GetFunction<API.IsSupported>(_handle);
             }
 
-            var result = _func.IsSupported(mbpath, peek);
-            return result != 0;
+            unsafe
+            {
+                fixed (void* p = mbpath)
+                {
+                    var result = _func.IsSupported(p, binary);
+                    return result != 0;
+                }
+            }
         }
 
         public bool GetPicture(byte[] binary, out byte[] image, out BitMapInfoHeader info)
@@ -152,8 +146,8 @@ namespace WA.Susie
                     if (pHBm != null)
                     {
                         var ptr = NativeMethods.LocalLock(pHBm);
-                        // copy to managed memory
 
+                        // copy to managed memory
                         image = new byte[info.biSizeImage];
                         fixed (void* p = image)
                         {
@@ -256,7 +250,7 @@ namespace WA.Susie
             else
             {
                 // Not Implemented
-                //_pluginName = "Not Implemented";
+                // _pluginName = "Not Implemented";
                 throw new Exception("failed to get plugin name");
             }
         }
@@ -273,6 +267,7 @@ namespace WA.Susie
             {
                 _func.GetPluginInfo = GetFunction<API.GetPluginInfo>(_handle);
             }
+
             _fileFormats = new List<Tuple<string, string>>();
 
             byte[] buf = new byte[256]; // or stackalloc
@@ -299,7 +294,8 @@ namespace WA.Susie
 
                     offset += 2;
                 }
-            } while (length > 0);
+            }
+            while (length > 0);
         }
 
         // placeholder
@@ -392,6 +388,5 @@ namespace WA.Susie
 
             throw new NotImplementedException();
         }
-
     }
 }

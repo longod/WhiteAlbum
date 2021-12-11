@@ -20,7 +20,7 @@ namespace WA.Susie.API
     // dw はwin32ファイルハンドルか、最小2kbの先頭からのバイナリメモリ
     // Susieでは後者のバイナリメモリとしてしか使われていないので、後者のみをサポートする
     [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
-    internal delegate Int32 IsSupported(Byte[] filename, Byte[] dw);
+    internal unsafe delegate Int32 IsSupported(void* filename, Byte[] dw);
 
     // int _export PASCAL ConfigurationDlg (HWND parent, int fnc)
     [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
@@ -57,6 +57,8 @@ namespace WA.Susie.API
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     internal delegate Int32 ProgressCallback(Int32 nNum, Int32 nDenom, Int32 lData);
 
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+#pragma warning disable SA1310 // Field names should not contain underscore
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     internal struct PictureInfo
     {
@@ -69,6 +71,7 @@ namespace WA.Susie.API
         public Int16 colorDepth; // short 画素当たりのbit数
         public IntPtr hInfo;     // HLOCAL 画像内のテキスト情報
     }
+#pragma warning restore SA1310 // Field names should not contain underscore
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     internal struct FileInfo
@@ -85,6 +88,7 @@ namespace WA.Susie.API
         public Byte[] filename; // char[200] ファイルネーム
         public UInt32 crc;      // unsigned long CRC
     }
+#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 
     internal enum ReturnCode
     {
