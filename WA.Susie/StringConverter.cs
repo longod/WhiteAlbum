@@ -8,33 +8,24 @@ namespace WA.Susie
 
     public class StringConverter
     {
-        private Encoding _target;
-        private Encoding _original = Encoding.Unicode;
         private Decoder _decoder;
         private Encoder _encoder;
-        private Dictionary<string, byte[]> _cache = new Dictionary<string, byte[]>();
+        private Dictionary<string, byte[]> _cache;
 
-        public StringConverter(string codePage)
+        public StringConverter(string codePage, int cacheCapacity = 256)
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); // for sjis
-            _target = Encoding.GetEncoding(codePage);
-            _decoder = _target.GetDecoder();
-            _encoder = _target.GetEncoder();
+            var encoding = Encoding.GetEncoding(codePage);
+            _decoder = encoding.GetDecoder();
+            _encoder = encoding.GetEncoder();
+
+            if (cacheCapacity > 0)
+            {
+                _cache = new Dictionary<string, byte[]>(cacheCapacity);
+            }
         }
 
         public static StringConverter SJIS { get; } = new StringConverter("shift-jis");
-
-        [Obsolete]
-        public string Decode(byte[] encodedBinaary)
-        {
-            return Decode(encodedBinaary, encodedBinaary.Length);
-        }
-
-        [Obsolete]
-        public string Decode(byte[] encodedBinary, int length)
-        {
-            return Decode(encodedBinary.AsSpan(0, length));
-        }
 
         public string Decode(ReadOnlySpan<byte> src)
         {
@@ -47,10 +38,9 @@ namespace WA.Susie
             return desc.ToString();
         }
 
-        // FIXME プラグイン探索で何度も同じ文字を変換されるので効率が悪い。キャッシュとか
         public ReadOnlySpan<byte> Encode(string text)
         {
-            if (_cache.TryGetValue(text, out var v))
+            if (_cache != null && _cache.TryGetValue(text, out var v))
             {
                 return v;
             }

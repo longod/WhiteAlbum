@@ -44,12 +44,6 @@ namespace WA.Susie
             internal API.GetFile GetFile;
         }
 
-        private const int _pluginVersionNum = 0;
-        private const int _pluginNameNum = 1;
-        private const int _pluginFileFormatNum = 2;
-        private const int _minPeekSize = 2048; // 2 kbytes
-        private const string _extension = ".spi";
-
         private readonly StringConverter _stringConverter = null;
 
         private IntPtr _handle;
@@ -76,8 +70,9 @@ namespace WA.Susie
             _handle = NativeLibrary.Load(path);
 
             GetPluginVersion();
-            GetPluginName();
-            GetFileFormats();
+
+            // GetPluginName();
+            // GetFileFormats();
         }
 
         public void Dispose()
@@ -88,9 +83,9 @@ namespace WA.Susie
         public bool IsSupported(string path, byte[] binary)
         {
             var mbpath = _stringConverter.Encode(path);
-            if (binary.Length < _minPeekSize)
+            if (binary.Length < API.Constant.MinFileSize)
             {
-                throw new ArgumentException($"binary.Length larger than {_minPeekSize} (has {binary.Length}).");
+                throw new ArgumentException($"binary.Length larger than {API.Constant.MinFileSize} (has {binary.Length}).");
             }
 
             if (_func.IsSupported == null)
@@ -100,11 +95,16 @@ namespace WA.Susie
 
             unsafe
             {
-                fixed (void* p = mbpath)
+                int result = 0;
+                fixed (void* ptr = mbpath)
                 {
-                    var result = _func.IsSupported(p, binary);
-                    return result != 0;
+                    fixed (void* bin = binary)
+                    {
+                        result = _func.IsSupported(ptr, bin);
+                    }
                 }
+
+                return result != 0;
             }
         }
 
@@ -129,8 +129,12 @@ namespace WA.Susie
             {
                 void* pHBInfo = null;
                 void* pHBm = null;
+                int result = 0;
+                fixed (void* ptr = binary)
+                {
+                    result = _func.GetPicture(ptr, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
+                }
 
-                var result = _func.GetPicture(binary, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
                 if (result == 0)
                 {
                     if (pHBInfo != null)
@@ -186,14 +190,20 @@ namespace WA.Susie
                 _func.GetPluginInfo = GetFunction<API.GetPluginInfo>(_handle);
             }
 
-            byte[] buf = new byte[32]; // or stackalloc
-            var length = _func.GetPluginInfo(_pluginVersionNum, buf, buf.Length);
-            if (length < 4)
+            Span<byte> buf = stackalloc byte[16]; // or stackalloc
+            unsafe
             {
-                throw new Exception("failed to get plugin info");
-            }
+                fixed (void* ptr = buf)
+                {
+                    var length = _func.GetPluginInfo(API.Constant.PluginVersion, ptr, buf.Length);
 
-            length = 4; // 4byts固定だが、終端を含めてさらに余分に返すケースがある, 6 byteまで確認
+                    // 4byts固定のはずだが、終端を含めてさらに余分に返すケースがある, 6 byteまで確認
+                    if (length < 4)
+                    {
+                        throw new Exception("failed to get plugin info");
+                    }
+                }
+            }
 
             // ascii number 0 to 9
             // sjisだが二桁のascii数字なので、そのままオフセットして求める
@@ -241,17 +251,25 @@ namespace WA.Susie
                 _func.GetPluginInfo = GetFunction<API.GetPluginInfo>(_handle);
             }
 
-            byte[] buf = new byte[256]; // or stackalloc
-            var length = _func.GetPluginInfo(_pluginNameNum, buf, buf.Length);
-            if (length > 0)
+            unsafe
             {
-                _pluginName = _stringConverter.Decode(buf, length);
-            }
-            else
-            {
-                // Not Implemented
-                // _pluginName = "Not Implemented";
-                throw new Exception("failed to get plugin name");
+                Span<byte> buf = stackalloc byte[256]; // or stackalloc
+                int length = 0;
+                fixed (void* ptr = buf)
+                {
+                    length = _func.GetPluginInfo(API.Constant.PluginName, ptr, buf.Length);
+                }
+
+                if (length > 0)
+                {
+                    _pluginName = _stringConverter.Decode(buf.Slice(0, length));
+                }
+                else
+                {
+                    // Not Implemented
+                    // _pluginName = "Not Implemented";
+                    throw new Exception("failed to get plugin name");
+                }
             }
         }
 
@@ -270,32 +288,38 @@ namespace WA.Susie
 
             _fileFormats = new List<Tuple<string, string>>();
 
-            byte[] buf = new byte[256]; // or stackalloc
-
-            int offset = 0;
-            int length = 0;
-            do
+            unsafe
             {
-                length = _func.GetPluginInfo(_pluginFileFormatNum + offset, buf, buf.Length);
-                if (length > 0)
-                {
-                    var ext = _stringConverter.Decode(buf, length);
-                    length = _func.GetPluginInfo(_pluginFileFormatNum + offset + 1, buf, buf.Length);
-                    if (length > 0)
-                    {
-                        var format = _stringConverter.Decode(buf, length);
-                        _fileFormats.Add(new Tuple<string, string>(ext, format));
-                    }
-                    else
-                    {
-                        // ペアで存在するはず
-                        throw new Exception("failed to get plugin file format name");
-                    }
+                Span<byte> buf = new byte[256]; // or stackalloc
 
-                    offset += 2;
+                fixed (void* ptr = buf)
+                {
+                    int offset = 0;
+                    int length = 0;
+                    do
+                    {
+                        length = _func.GetPluginInfo(API.Constant.PluginFileFormat + offset, ptr, buf.Length);
+                        if (length > 0)
+                        {
+                            var ext = _stringConverter.Decode(buf.Slice(0, length));
+                            length = _func.GetPluginInfo(API.Constant.PluginFileFormat + offset + 1, ptr, buf.Length);
+                            if (length > 0)
+                            {
+                                var format = _stringConverter.Decode(buf.Slice(0, length));
+                                _fileFormats.Add(new Tuple<string, string>(ext, format));
+                            }
+                            else
+                            {
+                                // ペアで存在するはず
+                                throw new Exception("failed to get plugin file format name");
+                            }
+
+                            offset += 2;
+                        }
+                    }
+                    while (length > 0);
                 }
             }
-            while (length > 0);
         }
 
         // placeholder

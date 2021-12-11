@@ -49,7 +49,7 @@ extern "C" {
     enum {
         SUSIE_CONFIGDLG_ABOUT = 0,
         SUSIE_CONFIGDLG_SETTING,
-        SUSIE_CONFIGDLG_RESERVED
+        SUSIE_CONFIGDLG_RESERVED,
     };
 
     /* Common Function */

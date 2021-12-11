@@ -3,6 +3,11 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# VSCode settings
+.vscode/
+# Smart Command Line Arguments extension
+*.args.json
+# store temporary stuffs
 [Tt]emp/
 
 # User-specific files
