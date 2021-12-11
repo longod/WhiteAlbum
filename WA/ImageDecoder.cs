@@ -3,6 +3,7 @@ namespace WA
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
     using System.Windows.Media;
@@ -17,7 +18,7 @@ namespace WA
     // bitmap info, image desc, stream, span
     internal class ImageDecoder
     {
-        private List<IDecoder> _decoders;
+        private List<IPluginProxy> _decoders;
 
         internal virtual async Task<BitmapSource> TryDecodeAsync(FileLoader loader)
         {
@@ -43,23 +44,34 @@ namespace WA
             return null;
         }
 
-        private async Task<BitmapSource> Convert(IntermediateImage image)
+        private async Task<BitmapSource> Convert(DecodedImage image)
         {
-            // temp
-            int rawStride = ((int)image.desc.Width * System.Windows.Media.PixelFormats.Bgr24.BitsPerPixel + 7) / 8;
+            // fixme temp
+            //int rawStride = ((int)image.Width * image.BitsPerPixel + 7) / 8;
 
             var bmp = await Task.Run(() =>
             {
+                PixelFormat format = GetPixelFormat(image);
+                BitmapPalette plaette = GetBitmapPalette(image);
+                Transform transform = GetTransform(image);
+
+                var stride = (((image.Width * image.BitsPerPixel) + 31u) & ~31u) >> 3;
                 var b = BitmapSource.Create(
-                  (int)image.desc.Width,
-                  (int)image.desc.Height,
+                  (int)image.Width,
+                  (int)image.Height,
                   WpfUtility.DefaultDpi,
                   WpfUtility.DefaultDpi,
-                  System.Windows.Media.PixelFormats.Bgr24,
-                  null,
-                  image.binary,
-                  rawStride);
-                var tb = new TransformedBitmap(b, new ScaleTransform(1.0, -1.0));
+                  format,
+                  plaette,
+                  image.Binary,
+                  (int)stride);
+                if (transform == null)
+                {
+                    b.Freeze();
+                    return b;
+                }
+
+                var tb = new TransformedBitmap(b, transform);
                 tb.Freeze();
                 return tb;
             }
@@ -77,20 +89,78 @@ namespace WA
             return bmp;
         }
 
-        internal void RegisterDecoder(IDecoder decoder)
+        private Transform GetTransform(DecodedImage image)
+        {
+            RotateTransform rotate = null;
+            switch (image.Rotation)
+            {
+                case DecodedImage.ImageRotation.None:
+                    break;
+                case DecodedImage.ImageRotation.Degree90:
+                    rotate = new RotateTransform(90.0f);
+                    break;
+                case DecodedImage.ImageRotation.Degree180:
+                    rotate = new RotateTransform(180.0f);
+                    break;
+                case DecodedImage.ImageRotation.Degree270:
+                    rotate = new RotateTransform(270.0f);
+                    break;
+                default:
+                    break;
+            }
+
+            ScaleTransform scale = null;
+            switch (image.Orientation)
+            {
+                case DecodedImage.ImageOrientation.TopLeft:
+                    break;
+                case DecodedImage.ImageOrientation.BottomLeft:
+                    scale = new ScaleTransform(1.0, -1.0);
+                    break;
+                default:
+                    break;
+            }
+
+            if (rotate == null)
+            {
+                return scale;
+            }
+            else if (scale == null)
+            {
+                return rotate;
+            }
+            else
+            {
+                // TODO multiply, how?
+            }
+
+            return null;
+        }
+
+        private static BitmapPalette GetBitmapPalette(DecodedImage image)
+        {
+            return null;
+        }
+
+        private static PixelFormat GetPixelFormat(DecodedImage image)
+        {
+            return PixelFormats.Bgr24;
+        }
+
+        internal void RegisterDecoder(IPluginProxy decoder)
         {
             if (_decoders == null)
             {
-                _decoders = new List<IDecoder>();
+                _decoders = new List<IPluginProxy>();
             }
             _decoders.Add(decoder);
         }
 
-        internal void RegisterDecoder(IEnumerable<IDecoder> decoder)
+        internal void RegisterDecoder(IEnumerable<IPluginProxy> decoder)
         {
             if (_decoders == null)
             {
-                _decoders = new List<IDecoder>();
+                _decoders = new List<IPluginProxy>();
             }
             _decoders.AddRange(decoder);
         }

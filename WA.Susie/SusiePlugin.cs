@@ -6,7 +6,7 @@ namespace WA.Susie
     using System.Collections.Generic;
     using System.Runtime.InteropServices;
 
-    // todo
+    // todo susie以外のプラグインに対応する場合にインターフェイスを揃えたい
     internal interface IPlugin : IDisposable
     {
     }
@@ -334,7 +334,7 @@ namespace WA.Susie
         }
 
         // placeholder
-        private void GetPictureInfo()
+        public bool GetPictureInfo()
         {
             if (_pluginType != PluginType.ImportFilter)
             {
@@ -346,7 +346,7 @@ namespace WA.Susie
                 _func.GetPictureInfo = GetFunction<API.GetPictureInfo>(_handle);
             }
 
-            throw new NotImplementedException();
+            return false;
         }
 
         // placeholder

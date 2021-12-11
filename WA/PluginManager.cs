@@ -16,7 +16,7 @@
 
         private string[] _pluginPaths = null;
 
-        private List<IDecoder> _loadedDecoder = new List<IDecoder>();
+        private List<IPluginProxy> _loadedDecoder = new List<IPluginProxy>();
 
         // 主キー重複の場合、タイムスタンプを次に優先する可能性もある
         private class SameNameFileInfoEQ : IEqualityComparer<FileInfo>
@@ -34,41 +34,53 @@
 
         public PluginManager()
         {
+            System.Diagnostics.Trace.WriteLine($"find plugins: {_pluginDirectories}");
         }
 
         public PluginManager(List<string> pluginDirectories)
         {
             _pluginDirectories = pluginDirectories;
+            System.Diagnostics.Trace.WriteLine($"find plugins: {_pluginDirectories}");
         }
 
-        public async Task FindPlugins()
+        public async Task FindPlugins(bool rescan = false)
         {
-            var eq = new SameNameFileInfoEQ();
-            using (new StopwatchScope("FindPlugins"))
+            if (!rescan && _pluginPaths != null)
             {
-                await Task.Run(() =>
-               {
-                   _pluginPaths = _pluginDirectories.SelectMany(x => SearchPlugin(new DirectoryInfo(x), _searchSubDirectory))
-                       .Distinct(eq) // unique
-                       .Select(x => x.FullName)
-                       .ToArray();
-               });
+                return;
             }
+
+            await Task.Run(() =>
+            {
+                using (new StopwatchScope("FindPlugins"))
+                {
+                    _pluginPaths = _pluginDirectories.SelectMany(x => SearchPlugin(new DirectoryInfo(x), _searchSubDirectory))
+                        // .Distinct(new SameNameFileInfoEQ()) // unique
+                        .Select(x => x.FullName)
+                        .ToArray();
+                }
+            });
+
+            // FIXME exe直起動(no debugger), use pluginで表示されない
+            // プラグインが見つかっていなさそう
+            // loggerがないとキツイ
+            System.Diagnostics.Trace.WriteLine($"find plugins: {_pluginPaths.Length}");
         }
 
         // test
         public async Task LoadAllPlugins()
         {
-            using (new StopwatchScope("LoadAllPlugins"))
+            await Task.Run(() =>
             {
-                await Task.Run(() =>
+                using (new StopwatchScope("LoadAllPlugins"))
                 {
+
                     foreach (var path in _pluginPaths)
                     {
-                        SusiePluginDecoder decoder = null;
+                        SusiePluginProxy decoder = null;
                         try
                         {
-                            decoder = new SusiePluginDecoder(new Susie.SusiePlugin(path));
+                            decoder = new SusiePluginProxy(new Susie.SusiePlugin(path));
                         }
                         catch (DllNotFoundException e)
                         {
@@ -84,14 +96,17 @@
                         }
 
                     }
-                });
-            }
+                }
+            });
         }
 
         private static IEnumerable<FileInfo> SearchPlugin(DirectoryInfo directory, bool searchSubDirectory)
         {
+            System.Diagnostics.Trace.WriteLine($" {directory.Exists}");
+            System.Diagnostics.Trace.WriteLine($" {directory.FullName}");
+
             // ディレクトリ単位でソート
-            var plugins = directory.EnumerateFiles("*.spi").OrderBy(x => x.Name).AsEnumerable();
+            var plugins = directory.EnumerateFiles(Susie.API.Constant.SearchPattern).OrderBy(x => x.Name).AsEnumerable();
 
             if (searchSubDirectory)
             {
@@ -105,26 +120,30 @@
             return plugins;
         }
 
-        internal async Task<IDecoder> ResolveAsync(FileLoader loader/*, bool enumerateAll = false*/)
+        internal async Task<IPluginProxy> ResolveAsync(FileLoader loader/*, bool enumerateAll = false*/)
         {
             using (new StopwatchScope("ResolveAsync"))
             {
-                // test
+                // fixme test load all plugins (not on demand)
                 await FindPlugins();
                 await LoadAllPlugins();
 
-                foreach (var d in _loadedDecoder)
+                var d = await Task.Run(() =>
                 {
-                    if (d.IsSupported(loader))
+                    foreach (var d in _loadedDecoder)
                     {
-                        // todo どこかに対応付けをしておく
-                        return d;
+                        if (d.IsSupported(loader))
+                        {
+                            // todo どこかに対応付けをしておく
+                            return d;
+                        }
                     }
-                }
 
+                    return null;
+                });
+
+                return d;
             }
-
-            return null;
         }
 
         public void Dispose()
@@ -133,6 +152,7 @@
             {
                 d.Dispose();
             }
+            _loadedDecoder.Clear();
         }
     }
 }

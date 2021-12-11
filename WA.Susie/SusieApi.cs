@@ -60,6 +60,7 @@ namespace WA.Susie.API
         public const int MinFileSize = 2048; // 2 kbytes
 
         public const string Extension = ".spi";
+        public const string SearchPattern = "*.spi";
 
         // GetPluginInfo
         internal const Int32 PluginVersion = 0;
@@ -122,7 +123,7 @@ namespace WA.Susie.API
         Success = 0,                // 正常終了
         NotImplemented = -1,        // その機能はインプリメントされていない
         FailedToProcess = 1,        // コールバック関数が非0を返したので展開を中止した
-        UnkinownFormat = 2,         // 未知のフォーマット
+        UnknownFormat = 2,         // 未知のフォーマット
         CorruptedData = 3,          // データが壊れている
         FailedToAllocateMemory = 4, // メモリーが確保できない
         MemoryError = 5,            // メモリーエラー(Lock出来ない、等)

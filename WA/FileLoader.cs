@@ -10,17 +10,20 @@ namespace WA
     {
         private FileInfo _file;
         private byte[] _binary;
+        private int _minFileSize = 0;
 
-        internal FileLoader(string path)
+        internal FileLoader(string path, int minFileSize)
         {
             _file = new FileInfo(path);
+            _minFileSize = minFileSize;
         }
 
         internal string Extension => _file.Extension.ToLower();
 
-        // temp
+        // fixme temp
         internal Stream Stream => new MemoryStream(_binary, false);
-        // temp, spanとかmemoryとかで要件を満たしてほしい
+
+        // fixme temp, use readonlymemory
         internal byte[] Binary => _binary;
 
         public string Path => _file.FullName;

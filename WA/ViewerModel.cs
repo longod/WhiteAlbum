@@ -12,90 +12,58 @@ namespace WA
 
     // backends
     // wpf, windowhost, d3d12
-    interface IRenderer
-    {
-    }
+    // interface IRenderer
+    // {
+    // }
 
-    // dotnet, C# dll, C++ dll, susie
-    interface IDecoder : IDisposable
-    {
-        // renderer backendの多用化を考えると、この段階ではBitmapSource じゃない中間フォーマットを返して欲しい
-        // bitmap info, image desc, stream, span
-        bool Decode(FileLoader loader, out IntermediateImage image);
-        bool IsSupported(FileLoader loader);
-    }
-
-    interface IFileLoader
-    {
-    }
+    // interface IFileLoader
+    // {
+    // }
 
     // パス（ファイル、ディレクトリ、アーカイブ）を与えるとそれぞれに応じた処理をする
-    class FileSystem
-    {
-        //void Open(string path);
-        //bool IsDirectory { get; }
-    }
+    // class FileSystem
+    // {
+    //     void Open(string path);
+    //     bool IsDirectory { get; }
+    // }
 
     // loaded raw binary image
-    public class RawBinary
-    {
-        string _path;
-        byte[] _bin;// or memory stream
-    }
-
-
-    // presentable decoded image
-    public class DecodedImage
-    {
-    }
+    // public class RawBinary
+    // {
+    //     string _path;
+    //     byte[] _bin;// or memory stream
+    // }
 
     // management loader and raw binary
-    public class FileManager
-    {
-    }
+    // public class FileManager
+    // {
+    // }
 
     // management decoer and decoded image
-    public class CacheManager
-    {
-    }
-
-    // 特定の画像フォーマットによらない画像情報
-    // 最終的な表示イメージ変換に必要な情報を含む
-    public struct ImageDesc
-    {
-        public uint Width;
-        public uint Height;
-        public ushort DepthOrArray;
-        public ushort MipLevels;
-        // dimension
-        // format
-        // origin
-    }
-
-    public class IntermediateImage
-    {
-        public ImageDesc desc;
-        public byte[] binary;
-    }
+    // public class CacheManager
+    // {
+    // }
 
     public static class WpfUtility
     {
         public const int DefaultDpi = 96; // どこかに定義ないのか
     }
 
-    public class Config
+    public class AppConfig
     {
         public List<string> PluginDirectories = new List<string>() { @"..\..\..\..\Temp\spi\" };
+        public bool EnabledBuiltInDecoders = false;
     }
 
     public class ViewerModelArgs
     {
         public string Path; // filesystem path
         public string VirtualPath; // relative path in archive
+        public AppConfig Config = new AppConfig();
     }
 
     // modelにINotifyPropertyChanged つかうのはふつうなのか？
-    public class ViewerModel : INotifyPropertyChanged
+    public class ViewerModel : INotifyPropertyChanged, IDisposable
     {
         // filesystem path
         public string LogicalPath { get; set; }
@@ -103,6 +71,11 @@ namespace WA
         // relative path in archive
         public string VirtualPath { get; set; }
 
+        // 起動時に、全プラグインをロードすると致命的なので、対応フォーマットが判明したらその軽量なデータベースを作っておき、次回以降はそれをみて必要なやつのみロードするとかが必要か
+        // x86 dllを読めるようにしないといけない 現実的にはx86アプリにする…x64がいいんだけれど
+        // 一応、out-of-process com serverでいける https://qiita.com/mima_ita/items/57d7c1101543e214b1d6
+
+        // todo replace array to span or memory
 
         public ViewerModel(ViewerModelArgs args)
         {
@@ -112,81 +85,17 @@ namespace WA
                 {
                     LogicalPath = args.Path;
                     VirtualPath = args.VirtualPath;
+
+                    if (args.Config.EnabledBuiltInDecoders)
+                    {
+                        RegisterBuiltInDecoders();
+                    }
                 }
-                // register builtin types
-                bool enabledBuiltInDecoders = false;
-                if (enabledBuiltInDecoders)
-                {
-                    RegisterBuiltInDecoders();
-                }
             }
-        }
-
-        public ViewerModel()
-        {
-
-            //PluginManager pm = new PluginManager();
-            //pm.FindPlugins();
-            //pm.LoadAllPlugins();
-
-            // 起動時に、全プラグインをロードすると致命的なので、対応フォーマットが判明したらその軽量なデータベースを作っておき、次回以降はそれをみて必要なやつのみロードするとかが必要か
-            // x86 dllを読めるようにしないといけない 現実的にはx86アプリにする…x64がいいんだけれど
-            // 一応、out-of-process com serverでいける https://qiita.com/mima_ita/items/57d7c1101543e214b1d6
-            //using (new SusiePlugin(@"..\..\..\..\Debug\ifnull.spi"))
-            //{
-            //}
-
-            //using (new SusiePlugin(@"..\..\..\..\Temp\spi\spi32008\ifgif.spi"))
-            //{
-            //}
-
-            // アーカイブ内の特定ファイルを展開するには、実パスとアーカイブ内の仮想パスもサポートする必要がある
-
-            byte[] binary = null;
-            string path = @"..\..\..\..\Temp\image\big.bmp";
-            using (var stream = File.OpenRead(path))
-            {
-                binary = new byte[stream.Length];
-                var ret = stream.Read(binary); // or async
-            }
-
-            // exrみたいなストリーミング表示可能なフォーマットはロードしながらできるんだろうか…
-
-
-            Image = CreateBitmapFrame(binary);
-
-#if false
-            // https://docs.microsoft.com/ja-jp/dotnet/desktop/wpf/advanced/optimizing-performance-2d-graphics-and-imaging?view=netframeworkdesktop-4.8
-            using (new StopwatchScope("Create BitmapImage"))
-            {
-                // BitmapFrame とどっちがはやい？->todo bench
-
-                BitmapImage bmp = new BitmapImage();
-                bmp.BeginInit();
-                bmp.CacheOption = BitmapCacheOption.OnLoad;
-                //bmp.CreateOptions = BitmapCreateOptions.DelayCreation; // 遅延にしたいが、多分binding見直さないとでない。通知が必要のはず。
-                //bmp.DecodePixelWidth = 640;
-                //bmp.DecodePixelHeight = 360;
-                bmp.StreamSource = new MemoryStream(binary);
-                bmp.EndInit();
-
-                // これらはxaml Imageに対して設定するんじゃないの
-                //RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.LowQuality);
-                //RenderOptions.SetCachingHint(image, CachingHint.Cache);
-                //RenderOptions.SetCacheInvalidationThresholdMinimum(image, 0.5);
-                //RenderOptions.SetCacheInvalidationThresholdMaximum(image, 2.0);
-                Image = bmp;
-            }
-#endif
-
-        }
-
-        public static BitmapSource CreateBitmapFrame(byte[] binary)
-        {
-            return BitmapFrame.Create(new MemoryStream(binary), BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
         }
 
         private BitmapSource _image;
+
         public BitmapSource Image
         {
             get { return _image; }
@@ -195,9 +104,8 @@ namespace WA
                 if (value != _image)
                 {
                     _image = value;
-                    NotifyPropertyChanged("Image");
+                    NotifyPropertyChanged(nameof(Image));
                 }
-
             }
         }
 
@@ -213,7 +121,7 @@ namespace WA
                 // ひとまずフルオンメモリー
                 using (new StopwatchScope("Process File Async"))
                 {
-                    using (var loader = new FileLoader(LogicalPath))
+                    using (var loader = new FileLoader(LogicalPath, Susie.API.Constant.MinFileSize))
                     {
                         await loader.LoadAsync();
                         var decoder = await FindDecoderAsync(loader);
@@ -231,7 +139,6 @@ namespace WA
                 // special case
                 // directory loader
             }
-
         }
 
         private async Task<ImageDecoder> FindDecoderAsync(FileLoader loader)
@@ -273,6 +180,7 @@ namespace WA
 
         // todo call dispose
         private PluginManager _pluginManager = new PluginManager();
+
         private void RegisterBuiltInDecoders()
         {
             _imageDecoders.Add(".bmp", new BuiltInImageDecoder(typeof(BmpBitmapDecoder)));
@@ -281,6 +189,11 @@ namespace WA
             _imageDecoders.Add(".git", new BuiltInImageDecoder(typeof(GifBitmapDecoder)));
             _imageDecoders.Add(".tif", new BuiltInImageDecoder(typeof(TiffBitmapDecoder)));
             _imageDecoders.Add(".wmp", new BuiltInImageDecoder(typeof(WmpBitmapDecoder)));
+        }
+
+        private void RegisterDecoders()
+        {
+            // todo 過去に動作したdecoderを登録する
         }
 
         // INotifyPropertyChanged
@@ -293,5 +206,9 @@ namespace WA
             }
         }
 
+        public void Dispose()
+        {
+            _pluginManager.Dispose();
+        }
     }
 }
