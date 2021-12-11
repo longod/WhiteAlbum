@@ -9,11 +9,11 @@ namespace WA.Susie
     using System.Runtime.InteropServices;
 
     // todo
-    internal interface IPlugin
+    internal interface IPlugin : IDisposable
     {
     }
 
-    public class SusiePlugin : IPlugin, IDisposable
+    public class SusiePlugin : IPlugin
     {
         private enum PluginType
         {
@@ -88,9 +88,9 @@ namespace WA.Susie
             NativeLibrary.Free(_handle);
         }
 
-        public bool IsSupported(string filepath, byte[] binary)
+        public bool IsSupported(string path, byte[] binary)
         {
-            var path = _stringConverter.Encode(filepath);
+            var mbpath = _stringConverter.Encode(path);
             byte[] peek;
             if (binary.Length < _minPeekSize)
             {
@@ -110,17 +110,23 @@ namespace WA.Susie
                 _func.IsSupported = GetFunction<API.IsSupported>(_handle);
             }
 
-            var result = _func.IsSupported(path, peek);
+            var result = _func.IsSupported(mbpath, peek);
             return result != 0;
         }
 
         public bool GetPicture(byte[] binary, out byte[] image, out BitMapInfoHeader info)
         {
+            if (_pluginType != PluginType.ImportFilter)
+            {
+                throw new InvalidOperationException();
+            }
+
             if (_func.GetPicture == null)
             {
                 _func.GetPicture = GetFunction<API.GetPicture>(_handle);
             }
-            const uint flag = 1;// 0: filehandle, 1:on memory
+
+            const uint flag = 1; // 0: filehandle, 1:on memory
 
             image = null;
             info = default;
@@ -137,9 +143,8 @@ namespace WA.Susie
                     {
                         var ptr = (BitMapInfoHeader*)NativeMethods.LocalLock(pHBInfo);
 
-                        BitMapInfoHeader bi = default;
-                        System.Runtime.CompilerServices.Unsafe.Copy(ref bi, ptr);
-                        info = bi;
+                        // copy to managed memory
+                        System.Runtime.CompilerServices.Unsafe.Copy(ref info, ptr);
 
                         NativeMethods.LocalUnlock(pHBInfo);
                     }
@@ -147,7 +152,7 @@ namespace WA.Susie
                     if (pHBm != null)
                     {
                         var ptr = NativeMethods.LocalLock(pHBm);
-                        // copy managed memory
+                        // copy to managed memory
 
                         image = new byte[info.biSizeImage];
                         fixed (void* p = image)
@@ -291,9 +296,102 @@ namespace WA.Susie
                         // ペアで存在するはず
                         throw new Exception("failed to get plugin file format name");
                     }
+
                     offset += 2;
                 }
             } while (length > 0);
         }
+
+        // placeholder
+        private void ConfigurationDlg()
+        {
+            if (_func.ConfigurationDlg == null)
+            {
+                _func.ConfigurationDlg = GetFunction<API.ConfigurationDlg>(_handle);
+            }
+
+            throw new NotImplementedException();
+        }
+
+        // placeholder
+        private void GetPictureInfo()
+        {
+            if (_pluginType != PluginType.ImportFilter)
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (_func.ConfigurationDlg == null)
+            {
+                _func.GetPictureInfo = GetFunction<API.GetPictureInfo>(_handle);
+            }
+
+            throw new NotImplementedException();
+        }
+
+        // placeholder
+        private void GetPreview()
+        {
+            if (_pluginType != PluginType.ImportFilter)
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (_func.GetPreview == null)
+            {
+                _func.GetPreview = GetFunction<API.GetPreview>(_handle);
+            }
+
+            throw new NotImplementedException();
+        }
+
+        // placeholder
+        private void GetArchiveInfo()
+        {
+            if (_pluginType != PluginType.ArchiveExtractor)
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (_func.GetArchiveInfo == null)
+            {
+                _func.GetArchiveInfo = GetFunction<API.GetArchiveInfo>(_handle);
+            }
+
+            throw new NotImplementedException();
+        }
+
+        // placeholder
+        private void GetFileInfo()
+        {
+            if (_pluginType != PluginType.ArchiveExtractor)
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (_func.GetFileInfo == null)
+            {
+                _func.GetFileInfo = GetFunction<API.GetFileInfo>(_handle);
+            }
+
+            throw new NotImplementedException();
+        }
+
+        // placeholder
+        private void GetFile()
+        {
+            if (_pluginType != PluginType.ArchiveExtractor)
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (_func.GetFile == null)
+            {
+                _func.GetFile = GetFunction<API.GetFile>(_handle);
+            }
+
+            throw new NotImplementedException();
+        }
+
     }
 }

@@ -9,6 +9,8 @@ namespace WA.Susie.API
     // Susie, 元のアプリケーションとそのプラグインが開発された時期的に、文字セットはunicodeではない。恐らくほとんど全てのプラグインが文字セットをsjis前提としているはずである
     // そのため文字列のやりとりにはバイト列として扱う
 
+    // todo full unmanaged
+
     // common
     // int _export PASCAL GetPluginInfo (int infono, LPSTR buf, int buflen);
     [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Auto)]
@@ -88,7 +90,7 @@ namespace WA.Susie.API
     {
         Success = 0,                // 正常終了
         NotImplemented = -1,        // その機能はインプリメントされていない
-        FailedToExtract = 1,        // コールバック関数が非0を返したので展開を中止した
+        FailedToProcess = 1,        // コールバック関数が非0を返したので展開を中止した
         UnkinownFormat = 2,         // 未知のフォーマット
         CorruptedData = 3,          // データが壊れている
         FailedToAllocateMemory = 4, // メモリーが確保できない

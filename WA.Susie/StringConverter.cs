@@ -2,12 +2,15 @@
 
 namespace WA.Susie
 {
+    using System;
+    using System.Collections.Generic;
     using System.Text;
 
     public class StringConverter
     {
         private Encoding _target;
         private Encoding _original = Encoding.Unicode;
+        private Dictionary<string, byte[]> _cache = new Dictionary<string, byte[]>();
 
         public StringConverter(string codePage)
         {
@@ -17,7 +20,6 @@ namespace WA.Susie
         }
 
         public static StringConverter SJIS { get; } = new StringConverter("shift-jis");
-
 
         public string Decode(byte[] encodedBinaary)
         {
@@ -30,9 +32,17 @@ namespace WA.Susie
         }
 
         // FIXME プラグイン探索で何度も同じ文字を変換されるので効率が悪い。キャッシュとか
+        // todo ReadOnlySpan<byte>
         public byte[] Encode(string text)
         {
-            return Encoding.Convert(_original, _target, _original.GetBytes(text));
+            if (_cache.TryGetValue(text, out var v))
+            {
+                return v;
+            }
+
+            var bin = Encoding.Convert(_original, _target, _original.GetBytes(text));
+            _cache.Add(text, bin);
+            return bin;
         }
     }
 }
