@@ -1,6 +1,8 @@
 ﻿// (c) longod, MIT License
+
 namespace WA
 {
+    using System.Windows.Media;
 
     // 特定の画像フォーマットによらない中間画像情報
     // 最終的な表示イメージ変換に必要な情報を含む
@@ -56,6 +58,8 @@ namespace WA
         internal ImageOrientation Orientation { get; set; } = ImageOrientation.BottomLeft;
 
         internal ImageRotation Rotation { get; set; } = ImageRotation.None;
+
+        internal Color[] Palette { get; set; }
 
         internal byte[] Binary { get; set; }
     }

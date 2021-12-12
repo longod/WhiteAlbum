@@ -10,7 +10,7 @@
 
     public class PluginManager : IDisposable
     {
-        private List<string> _pluginDirectories = new List<string>() { @"..\..\..\..\Temp\spi\spi32008" };
+        private List<string> _pluginDirectories;
 
         private bool _searchSubDirectory = true; // directory単位で持つかも
 
@@ -32,15 +32,10 @@
             }
         }
 
-        public PluginManager()
+        public PluginManager(AppSettings settings)
         {
-            System.Diagnostics.Trace.WriteLine($"find plugins: {_pluginDirectories}");
-        }
-
-        public PluginManager(List<string> pluginDirectories)
-        {
-            _pluginDirectories = pluginDirectories;
-            System.Diagnostics.Trace.WriteLine($"find plugins: {_pluginDirectories}");
+            var directory = AppContext.BaseDirectory;
+            _pluginDirectories = settings.PluginDirectories;
         }
 
         public async Task FindPlugins(bool rescan = false)
@@ -102,8 +97,10 @@
 
         private static IEnumerable<FileInfo> SearchPlugin(DirectoryInfo directory, bool searchSubDirectory)
         {
-            System.Diagnostics.Trace.WriteLine($" {directory.Exists}");
-            System.Diagnostics.Trace.WriteLine($" {directory.FullName}");
+            if (!directory.Exists)
+            {
+                return Enumerable.Empty<FileInfo>();
+            }
 
             // ディレクトリ単位でソート
             var plugins = directory.EnumerateFiles(Susie.API.Constant.SearchPattern).OrderBy(x => x.Name).AsEnumerable();

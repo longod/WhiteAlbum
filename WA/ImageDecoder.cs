@@ -9,7 +9,6 @@ namespace WA
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
 
-
     // extensionに対応したdecoderセット
     // renderer backendの多用化を考えると、この段階ではBitmapSource じゃない中間フォーマットを返して欲しい
     // しかし builtinや通常のwpfだと、BitmapSourceがもっとも扱いやすい
@@ -59,8 +58,8 @@ namespace WA
                 var b = BitmapSource.Create(
                   (int)image.Width,
                   (int)image.Height,
-                  WpfUtility.DefaultDpi,
-                  WpfUtility.DefaultDpi,
+                  WpfUtility.DefaultDpiX,
+                  WpfUtility.DefaultDpiX,
                   format,
                   plaette,
                   image.Binary,

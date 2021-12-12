@@ -44,27 +44,35 @@ namespace WA
     // {
     // }
 
-    public static class WpfUtility
-    {
-        public const int DefaultDpi = 96; // どこかに定義ないのか
-    }
-
-    public class AppConfig
-    {
-        public List<string> PluginDirectories = new List<string>() { @"..\..\..\..\Temp\spi\" };
-        public bool EnabledBuiltInDecoders = false;
-    }
-
-    public class ViewerModelArgs
-    {
-        public string Path; // filesystem path
-        public string VirtualPath; // relative path in archive
-        public AppConfig Config = new AppConfig();
-    }
 
     // modelにINotifyPropertyChanged つかうのはふつうなのか？
-    public class ViewerModel : INotifyPropertyChanged, IDisposable
+    public class ViewerModel : INotifyPropertyChanged
     {
+        public class Args
+        {
+            // filesystem path
+            internal string Path { get; private set; }
+
+            // relative path in archive
+            internal string VirtualPath { get; private set; }
+
+            public Args(string[] args)
+            {
+                if (args != null)
+                {
+                    if (args.Length > 0)
+                    {
+                        Path = args[0];
+                    }
+                    if (args.Length > 1)
+                    {
+                        VirtualPath = args[1];
+                    }
+                }
+            }
+        }
+
+
         // filesystem path
         public string LogicalPath { get; set; }
 
@@ -77,7 +85,7 @@ namespace WA
 
         // todo replace array to span or memory
 
-        public ViewerModel(ViewerModelArgs args)
+        public ViewerModel(Args args, AppSettings settings, PluginManager pluginManager)
         {
             using (new StopwatchScope("ViewerModel"))
             {
@@ -86,12 +94,14 @@ namespace WA
                     LogicalPath = args.Path;
                     VirtualPath = args.VirtualPath;
 
-                    if (args.Config.EnabledBuiltInDecoders)
+                    if (settings.EnableBuiltInDecoders)
                     {
                         RegisterBuiltInDecoders();
                     }
                 }
             }
+
+            _pluginManager = pluginManager;
         }
 
         private BitmapSource _image;
@@ -178,8 +188,7 @@ namespace WA
 
         private Dictionary<string, ImageDecoder> _imageDecoders = new Dictionary<string, ImageDecoder>();
 
-        // todo call dispose
-        private PluginManager _pluginManager = new PluginManager();
+        private PluginManager _pluginManager;
 
         private void RegisterBuiltInDecoders()
         {
@@ -204,11 +213,6 @@ namespace WA
             {
                 PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
             }
-        }
-
-        public void Dispose()
-        {
-            _pluginManager.Dispose();
         }
     }
 }
