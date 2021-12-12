@@ -38,7 +38,20 @@ namespace WA
                 image.DepthOrArray = 1;
                 image.MipLevels = 1;
                 image.BitsPerPixel = info.biBitCount;
-                image.Format = DecodedImage.PixelFormat.BGR;
+                switch (info.biBitCount)
+                {
+                    case 24:
+                        image.Format = DecodedImage.PixelFormat.BGR;
+                        break;
+                    case 32:
+                        image.Format = DecodedImage.PixelFormat.BGRA;
+                        break;
+                    case 4:
+                        image.Format = DecodedImage.PixelFormat.Index;
+                        break;
+                    default:
+                        throw new NotSupportedException($"info.biBitCount: {info.biBitCount}");
+                }
                 image.Dimension = DecodedImage.ImageDimension.Texture2D;
                 image.Orientation = DecodedImage.ImageOrientation.BottomLeft;
                 image.Rotation = DecodedImage.ImageRotation.None;

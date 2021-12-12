@@ -36,6 +36,7 @@ namespace WA
             RGBA,
             BGR,
             BGRA,
+            Index, // palette
         }
 
         internal uint Width { get; set; }

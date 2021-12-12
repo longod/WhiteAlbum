@@ -121,30 +121,85 @@ namespace WA
                     break;
             }
 
-            if (rotate == null)
+            if (rotate == null && scale == null)
+            {
+                return null;
+            }
+            else if (scale != null)
             {
                 return scale;
             }
-            else if (scale == null)
+            else if (rotate != null)
             {
                 return rotate;
             }
             else
             {
-                // TODO multiply, how?
+                // TODO 乗算順の仕様は？
+                var trs = scale.Value * rotate.Value;
+                return new MatrixTransform(trs);
             }
-
-            return null;
         }
 
         private static BitmapPalette GetBitmapPalette(DecodedImage image)
         {
-            return null;
+            switch (image.Format)
+            {
+                case DecodedImage.PixelFormat.Index:
+                    // FIXME 元データのパレットを参照して生成する
+                    switch (image.BitsPerPixel)
+                    {
+                        case 1:
+                            return BitmapPalettes.BlackAndWhite; // 2 colors
+                        case 2:
+                            return BitmapPalettes.Gray4; // 4 colors
+                        case 4:
+                            return BitmapPalettes.Halftone8; // 16 colors
+                        case 8:
+                            return BitmapPalettes.Halftone256; // 256 colors
+                        default:
+                            throw new NotSupportedException($"image.BitsPerPixel : {image.BitsPerPixel}");
+                    }
+
+                default:
+                    return null;
+            }
         }
 
         private static PixelFormat GetPixelFormat(DecodedImage image)
         {
-            return PixelFormats.Bgr24;
+            switch (image.Format)
+            {
+                case DecodedImage.PixelFormat.RGB:
+                    return PixelFormats.Rgb24;
+                case DecodedImage.PixelFormat.RGBA:
+                    // argb, rgba
+                    break;
+                case DecodedImage.PixelFormat.BGR:
+                    return PixelFormats.Bgr24;
+                case DecodedImage.PixelFormat.BGRA:
+                    return PixelFormats.Bgra32;
+                case DecodedImage.PixelFormat.Index:
+                    switch (image.BitsPerPixel)
+                    {
+                        case 1:
+                            return PixelFormats.Indexed1;
+                        case 2:
+                            return PixelFormats.Indexed2;
+                        case 4:
+                            return PixelFormats.Indexed4;
+                        case 8:
+                            return PixelFormats.Indexed8;
+                        default:
+                            break;
+                    }
+
+                    break;
+                default:
+                    break;
+            }
+
+            throw new NotSupportedException($"image.Format: {image.Format}, image.BitsPerPixel: {image.BitsPerPixel}");
         }
 
         internal void RegisterDecoder(IPluginProxy decoder)
