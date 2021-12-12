@@ -11,7 +11,7 @@ namespace WA.Test
         {
             string expected = "テスト文字列 地図　";
             var e = StringConverter.SJIS.Encode(expected);
-            string actual = StringConverter.SJIS.Decode(e);
+            string actual = StringConverter.SJIS.Decode(e.Span);
 
             Assert.Equal(expected, actual);
         }

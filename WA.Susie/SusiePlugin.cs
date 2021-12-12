@@ -80,9 +80,8 @@ namespace WA.Susie
             NativeLibrary.Free(_handle);
         }
 
-        public bool IsSupported(string path, byte[] binary)
+        public bool IsSupported(string path, ReadOnlyMemory<byte> binary)
         {
-            var mbpath = _stringConverter.Encode(path);
             if (binary.Length < API.Constant.MinFileSize)
             {
                 throw new ArgumentException($"binary.Length larger than {API.Constant.MinFileSize} (has {binary.Length}).");
@@ -96,11 +95,12 @@ namespace WA.Susie
             unsafe
             {
                 int result = 0;
-                fixed (void* ptr = mbpath)
+                var mbpath = _stringConverter.Encode(path);
+                using (var ptr = mbpath.Pin())
                 {
-                    fixed (void* bin = binary)
+                    using (var handle = binary.Pin())
                     {
-                        result = _func.IsSupported(ptr, bin);
+                        result = _func.IsSupported(ptr.Pointer, handle.Pointer);
                     }
                 }
 
@@ -108,7 +108,7 @@ namespace WA.Susie
             }
         }
 
-        public bool GetPicture(byte[] binary, out byte[] image, out BitMapInfoHeader info)
+        public bool GetPicture(ReadOnlyMemory<byte> binary, out byte[] image, out BitMapInfoHeader info)
         {
             if (_pluginType != PluginType.ImportFilter)
             {
@@ -130,9 +130,9 @@ namespace WA.Susie
                 void* pHBInfo = null;
                 void* pHBm = null;
                 int result = 0;
-                fixed (void* ptr = binary)
+                using (var handle = binary.Pin())
                 {
-                    result = _func.GetPicture(ptr, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
+                    result = _func.GetPicture(handle.Pointer, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
                 }
 
                 if (result == 0)
@@ -253,7 +253,7 @@ namespace WA.Susie
 
             unsafe
             {
-                Span<byte> buf = stackalloc byte[256]; // or stackalloc
+                Span<byte> buf = stackalloc byte[128];
                 int length = 0;
                 fixed (void* ptr = buf)
                 {
@@ -290,7 +290,7 @@ namespace WA.Susie
 
             unsafe
             {
-                Span<byte> buf = new byte[256]; // or stackalloc
+                Span<byte> buf = stackalloc byte[128];
 
                 fixed (void* ptr = buf)
                 {
@@ -334,7 +334,7 @@ namespace WA.Susie
         }
 
         // placeholder
-        public bool GetPictureInfo()
+        private bool GetPictureInfo()
         {
             if (_pluginType != PluginType.ImportFilter)
             {

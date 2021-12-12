@@ -23,13 +23,8 @@ namespace WA
 
         public bool Decode(FileLoader loader, out DecodedImage image)
         {
-            byte[] binary = null;
-            if (_plugin.GetPicture(loader.Binary, out binary, out var info))
+            if (_plugin.GetPicture(loader.Binary, out var binary, out var info))
             {
-                if (_plugin.GetPictureInfo())
-                {
-                }
-
                 // index colorの場合、ファイルに埋まっているpaletteは、どこからとってきてる？
                 // consider biCompression?
                 image = new DecodedImage();

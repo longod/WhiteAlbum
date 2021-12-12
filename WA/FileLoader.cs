@@ -23,8 +23,8 @@ namespace WA
         // fixme temp
         internal Stream Stream => new MemoryStream(_binary, false);
 
-        // fixme temp, use readonlymemory
-        internal byte[] Binary => _binary;
+        // todo set actual length
+        internal ReadOnlyMemory<byte> Binary => new ReadOnlyMemory<byte>(_binary);
 
         public string Path => _file.FullName;
 
@@ -52,6 +52,7 @@ namespace WA
                     allocSize = peekSize;
                     readSize = (int)stream.Length;
                 }
+
                 _binary = new byte[allocSize];
                 return await stream.ReadAsync(_binary, 0, readSize); // or async
             }

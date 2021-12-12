@@ -32,14 +32,16 @@ namespace WA.Susie
             // 入力の寿命が不明なので、キャッシュの場合コピーコストが生じる
             bool flush = false;
             var count = _decoder.GetCharCount(src, false);
-            Span<char> desc = stackalloc char[count];
+            Span<char> desc = (count < 64) ? stackalloc char[count] : new char[count]; // avoid large stack allocation
             _decoder.Convert(src, desc, flush, out int bytesUsed, out int charsUsed, out bool completed);
 
             return desc.ToString();
         }
 
-        public ReadOnlySpan<byte> Encode(string text)
+        // 用途が限定されているのなら ReadOnlySpan でも成立するはず
+        public ReadOnlyMemory<byte> Encode(string text)
         {
+            // fixme calling from multi thread. lock or concurrent
             if (_cache != null && _cache.TryGetValue(text, out var v))
             {
                 return v;
