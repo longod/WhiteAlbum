@@ -45,9 +45,6 @@ namespace WA
 
         private async Task<BitmapSource> Convert(DecodedImage image)
         {
-            // fixme temp
-            //int rawStride = ((int)image.Width * image.BitsPerPixel + 7) / 8;
-
             var bmp = await Task.Run(() =>
             {
                 PixelFormat format = GetPixelFormat(image);

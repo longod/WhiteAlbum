@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# application settings
+WA.Settings.json
+
 # VSCode settings
 .vscode/
 # Smart Command Line Arguments extension

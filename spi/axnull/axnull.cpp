@@ -1,6 +1,6 @@
 ﻿// Susie 32bit Plug-in
 // stab of import filter
-#include "spi.h"
+#include "../spi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,8 +13,8 @@ extern "C" {
             if (buflen >= 4) {
                 buf[0] = '0';
                 buf[1] = '0';
-                buf[2] = 'I';
-                buf[3] = 'N';
+                buf[2] = 'A';
+                buf[3] = 'M';
                 return 4;
             }
         case 1: // plugin name
@@ -62,29 +62,6 @@ extern "C" {
     }
     int GetPicture(LPSTR buf, long len, unsigned int flag, HANDLE* pHBInfo, HANDLE* pHBm,
         FARPROC lpPrgressCallback, long lData) {
-
-        ((PrgressCallback)lpPrgressCallback)(0, 1, lData);
-
-        HLOCAL bmpinfo = LocalAlloc(LMEM_ZEROINIT | LMEM_MOVEABLE, sizeof(BITMAPINFO));
-        //HLOCAL bmp = LocalAlloc(LMEM_ZEROINIT | LMEM_MOVEABLE, 32);
-
-        BITMAPINFOHEADER* bmpinfo_mem = (BITMAPINFOHEADER*)LocalLock(bmpinfo);
-        //LPVOID bmp_mem = (LPVOID)LocalLock(bmp);
-
-        // int PASCAL ProgressCallback(int nNum, int nDenom, long lData)
-        //lpPrgressCallback(0, 1, lData);
-
-        //memset(bmpinfo_mem, 0, sizeof(BITMAPINFOHEADER));
-        bmpinfo_mem->biSize = sizeof(BITMAPINFOHEADER);
-        //auto* ptr = (uint8_t*)bmp_mem;
-
-        LocalUnlock(bmpinfo);
-        //LocalUnlock(bmp);
-
-        *pHBInfo = bmpinfo;
-        //*pHBm = bmp;
-        ((PrgressCallback)lpPrgressCallback)(1, 1, lData);
-
         return 0;
     }
     int GetPreview(LPSTR buf, long len, unsigned int flag, HANDLE* pHBInfo, HANDLE* pHBm,
