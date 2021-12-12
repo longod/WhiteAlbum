@@ -2,6 +2,7 @@
 
 namespace WA
 {
+    using Microsoft.Extensions.Logging;
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
@@ -9,6 +10,7 @@ namespace WA
     using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
     using System.Windows.Media.Imaging;
+    using ZLogger;
 
     // backends
     // wpf, windowhost, d3d12
@@ -85,9 +87,10 @@ namespace WA
 
         // todo replace array to span or memory
 
-        public ViewerModel(Args args, AppSettings settings, PluginManager pluginManager)
+        public ViewerModel(Args args, AppSettings settings, PluginManager pluginManager, ILogger logger)
         {
-            using (new StopwatchScope("ViewerModel"))
+            _logger = logger;
+            using (new StopwatchScope("ViewerModel", _logger))
             {
                 if (args != null)
                 {
@@ -189,6 +192,7 @@ namespace WA
         private Dictionary<string, ImageDecoder> _imageDecoders = new Dictionary<string, ImageDecoder>();
 
         private PluginManager _pluginManager;
+        private readonly ILogger _logger;
 
         private void RegisterBuiltInDecoders()
         {

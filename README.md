@@ -9,10 +9,11 @@ WHITE ALBUM is a lightweight Image Viewer, mixturing modern and legacy approach.
     - dotnet core WPF
     - async and parallel
 - Respect Legacy
-    - support Susie Plugin (x86)
+    - support Susie Plugin (only **x86**)
     - and other plugins (TBD)
 
 ## Projects
+
 | Project          | Description |
 |------------------|---|
 | WA.Viewer        | Main Viewer Application |

@@ -12,13 +12,13 @@ namespace WA
 
         public List<string> PluginDirectories { get; set; } = new List<string>() { @"plugins\spi\" };
 
-        public bool EnableBuiltInDecoders { get; set; } = false;
+        public bool EnableBuiltInDecoders { get; set; } = true;
 
-        public bool EnableLogging { get; set; } = false;
+        public bool EnableLogging { get; set; } = true;
 
         private const string _name = "WA.Settings.json";
 
-        private static AppSettings backup;
+        private static AppSettings _backup;
 
         public AppSettings()
         {
@@ -31,12 +31,12 @@ namespace WA
             if (!reset && File.Exists(path))
             {
                 settings = JsonUtility.LoadFromFile<AppSettings>(path);
-                backup = JsonUtility.Clone(settings); // fixme 効率が悪い
+                _backup = JsonUtility.Clone(settings); // fixme 効率が悪い
             }
             else
             {
                 settings = new AppSettings();
-                backup = new AppSettings();
+                _backup = new AppSettings();
             }
 
             return settings;
@@ -58,7 +58,7 @@ namespace WA
             // todo if only changed
             string path = GetSettingsPath();
             JsonUtility.SaveToFile(path, this);
-            backup = JsonUtility.Clone(this); // fixme 効率が悪い
+            _backup = JsonUtility.Clone(this); // fixme 効率が悪い
         }
 
         public async Task SaveAsync()
@@ -66,7 +66,7 @@ namespace WA
             // todo if only changed
             string path = GetSettingsPath();
             await JsonUtility.SaveToFileAsync(path, this)
-                .ContinueWith(_ => backup = JsonUtility.Clone(this)); // fixme 効率が悪い
+                .ContinueWith(_ => _backup = JsonUtility.Clone(this)); // fixme 効率が悪い
         }
 
         private static string GetSettingsPath()
