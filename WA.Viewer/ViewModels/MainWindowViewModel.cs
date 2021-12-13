@@ -6,7 +6,8 @@ namespace WA.Viewer.ViewModels
 {
     public class MainWindowViewModel : BindableBase
     {
-        private string _title = "WHITE ALBUM";
+        private const string _appTitle = "WHITE ALBUM";
+        private string _title = _appTitle;
         public string Title
         {
             get { return _title; }
@@ -30,14 +31,14 @@ namespace WA.Viewer.ViewModels
             Task.Run(() => _viewer.ProcessAsync());
         }
 
-        // この伝搬方法は妥当なのか？
-        // messenger?
+        // FIXME この伝搬方法は妥当なのか？ messenger?
         private void Viewer_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             switch (e.PropertyName)
             {
                 case nameof(_viewer.Image):
                     Image = _viewer.Image;
+                    Title = _appTitle + ' ' + _viewer.LogicalPath + ' ' + _viewer.VirtualPath; // todo display more file info 
                     break;
                 default:
                     break;

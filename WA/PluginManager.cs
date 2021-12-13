@@ -38,7 +38,14 @@
             _pluginDirectories = settings.PluginDirectories;
         }
 
-        public async Task FindPlugins(bool rescan = false)
+        public IEnumerable<string> EnumeratePlugins()
+        {
+            return _pluginDirectories.SelectMany(x => SearchPlugin(new DirectoryInfo(x), _searchSubDirectory))
+                        // .Distinct(new SameNameFileInfoEQ()) // unique
+                        .Select(x => x.FullName);
+        }
+
+        public async Task FindAllPlugins(bool rescan = false)
         {
             if (!rescan && _pluginPaths != null)
             {
@@ -49,16 +56,10 @@
             {
                 using (new StopwatchScope("FindPlugins"))
                 {
-                    _pluginPaths = _pluginDirectories.SelectMany(x => SearchPlugin(new DirectoryInfo(x), _searchSubDirectory))
-                        // .Distinct(new SameNameFileInfoEQ()) // unique
-                        .Select(x => x.FullName)
-                        .ToArray();
+                    _pluginPaths = EnumeratePlugins().ToArray();
                 }
             });
 
-            // FIXME exe直起動(no debugger), use pluginで表示されない
-            // プラグインが見つかっていなさそう
-            // loggerがないとキツイ
             System.Diagnostics.Trace.WriteLine($"find plugins: {_pluginPaths.Length}");
         }
 
@@ -122,7 +123,7 @@
             using (new StopwatchScope("ResolveAsync"))
             {
                 // fixme test load all plugins (not on demand)
-                await FindPlugins();
+                await FindAllPlugins();
                 await LoadAllPlugins();
 
                 var d = await Task.Run(() =>
