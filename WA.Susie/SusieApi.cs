@@ -57,8 +57,10 @@ namespace WA.Susie.API
 
     public static class Constant
     {
+        // todo itnernal, IPluginとかがかえすべきでは
         public const int MinFileSize = 2048; // 2 kbytes
 
+        // todo itnernal, IPluginとかがかえすべきでは
         public const string Extension = ".spi";
         public const string SearchPattern = "*.spi";
 
@@ -92,14 +94,14 @@ namespace WA.Susie.API
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     internal unsafe struct PictureInfo
     {
-        public Int32 left;       // long 画像を展開する位置
-        public Int32 top;        // long 画像を展開する位置
-        public Int32 width;      // long 画像の幅(pixel)
-        public Int32 height;     // long 画像の高さ(pixel)
-        public UInt16 x_density; // WORD 画素の水平方向密度
-        public UInt16 y_density; // WORD 画素の垂直方向密度
-        public Int16 colorDepth; // short 画素当たりのbit数
-        public void* hInfo;      // HLOCAL 画像内のテキスト情報
+        internal Int32 left;       // long 画像を展開する位置
+        internal Int32 top;        // long 画像を展開する位置
+        internal Int32 width;      // long 画像の幅(pixel)
+        internal Int32 height;     // long 画像の高さ(pixel)
+        internal UInt16 x_density; // WORD 画素の水平方向密度
+        internal UInt16 y_density; // WORD 画素の垂直方向密度
+        internal Int16 colorDepth; // short 画素当たりのbit数
+        internal void* hInfo;      // HLOCAL 画像内のテキスト情報
     }
 #pragma warning restore SA1310 // Field names should not contain underscore
 
@@ -107,14 +109,20 @@ namespace WA.Susie.API
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     internal unsafe struct FileInfo
     {
-        public fixed Byte method[8];     // unsigned char[8] 圧縮法の種類
-        public UInt32 position;          // unsigned long  ファイル上での位置
-        public UInt32 compsize;          // unsigned long  圧縮されたサイズ
-        public UInt32 filesize;          // unsigned long  元のファイルサイズ
-        public Int32 timestamp;          // time_t ファイルの更新日時
-        public fixed Byte path[200];     // char[200]  相対パス
-        public fixed Byte filename[200]; // char[200] ファイルネーム
-        public UInt32 crc;               // unsigned long CRC
+#pragma warning disable SA1303 // Const field names should begin with upper-case letter
+        internal const int methodSize = 8;
+        internal const int pathSize = 200;
+        internal const int filenameSize = 200;
+#pragma warning restore SA1303 // Const field names should begin with upper-case letter
+
+        internal fixed Byte method[methodSize];     // unsigned char[8] 圧縮法の種類
+        internal UInt32 position;                   // unsigned long  ファイル上での位置
+        internal UInt32 compsize;                   // unsigned long  圧縮されたサイズ
+        internal UInt32 filesize;                   // unsigned long  元のファイルサイズ
+        internal Int32 timestamp;                   // time_t ファイルの更新日時
+        internal fixed Byte path[pathSize];         // char[200]  相対パス
+        internal fixed Byte filename[filenameSize]; // char[200] ファイルネーム
+        internal UInt32 crc;                        // unsigned long CRC
     }
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 

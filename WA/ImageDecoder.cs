@@ -204,6 +204,7 @@ namespace WA
             {
                 _decoders = new List<IPluginProxy>();
             }
+
             _decoders.Add(decoder);
         }
 
@@ -213,6 +214,7 @@ namespace WA
             {
                 _decoders = new List<IPluginProxy>();
             }
+
             _decoders.AddRange(decoder);
         }
     }

@@ -13,11 +13,11 @@ namespace WA.Susie
 
     public class SusiePlugin : IPlugin
     {
-        private enum PluginType
+        public enum PluginType
         {
             ImportFilter,
-            ExportFilter, // 存在しない？
             ArchiveExtractor,
+            ExportFilter, // 存在しない？
         }
 
         private enum PluginTarget
@@ -48,11 +48,12 @@ namespace WA.Susie
 
         private IntPtr _handle;
         private int _version = 0;
-        private PluginType _pluginType;
         private PluginTarget _pluginTarget;
         private string _pluginName;
         private Function _func;
         private List<Tuple<string, string>> _fileFormats;
+
+        public PluginType Type { get; private set; }
 
         private static int AlwaysContinueProgressCallback(int nNum, int nDenom, int lData)
         {
@@ -110,7 +111,7 @@ namespace WA.Susie
 
         public bool GetPicture(ReadOnlyMemory<byte> binary, out byte[] image, out BitMapInfoHeader info)
         {
-            if (_pluginType != PluginType.ImportFilter)
+            if (Type != PluginType.ImportFilter)
             {
                 throw new InvalidOperationException();
             }
@@ -120,10 +121,10 @@ namespace WA.Susie
                 _func.GetPicture = GetFunction<API.GetPicture>(_handle);
             }
 
-            const uint flag = 1; // 0: filehandle, 1:on memory
-
             image = null;
             info = default;
+
+            const uint flag = API.Constant.OnMemory;
 
             unsafe
             {
@@ -176,6 +177,65 @@ namespace WA.Susie
             }
         }
 
+        public bool GetArchiveInfo(ReadOnlyMemory<byte> binary, out FileInfo[] infos)
+        {
+            if (Type != PluginType.ArchiveExtractor)
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (_func.GetArchiveInfo == null)
+            {
+                _func.GetArchiveInfo = GetFunction<API.GetArchiveInfo>(_handle);
+            }
+
+            infos = null;
+
+            const uint flag = API.Constant.OnMemory;
+
+            unsafe
+            {
+                void* lphInf = null;
+                int result = 0;
+                using (var handle = binary.Pin())
+                {
+                    result = _func.GetArchiveInfo(handle.Pointer, binary.Length, flag, &lphInf);
+                }
+
+                if (result == 0)
+                {
+                    if (lphInf != null)
+                    {
+                        var ptr = (API.FileInfo*)NativeMethods.LocalLock(lphInf);
+                        uint count = 0;
+                        {
+                            var p = ptr;
+                            while (p != null && p->method[0] != 0)
+                            {
+                                ++count;
+                                ++p;
+                            }
+                        }
+
+                        infos = new FileInfo[count];
+                        for (int i = 0; i < infos.Length; ++i)
+                        {
+                            infos[i] = new FileInfo(&ptr[i], _stringConverter);
+                        }
+
+                        NativeMethods.LocalUnlock(lphInf);
+                    }
+                }
+
+                if (lphInf != null)
+                {
+                    NativeMethods.LocalFree(lphInf);
+                }
+
+                return result == 0;
+            }
+        }
+
         private static T GetFunction<T>(IntPtr handle)
         {
             // https://qiita.com/kenichiuda/items/613766f56e5ecd1de856
@@ -214,13 +274,13 @@ namespace WA.Susie
             switch ((char)buf[2])
             {
                 case 'I':
-                    _pluginType = PluginType.ImportFilter;
+                    Type = PluginType.ImportFilter;
                     break;
                 case 'X':
-                    _pluginType = PluginType.ExportFilter;
+                    Type = PluginType.ExportFilter;
                     break;
                 case 'A':
-                    _pluginType = PluginType.ArchiveExtractor;
+                    Type = PluginType.ArchiveExtractor;
                     break;
                 default:
                     throw new Exception("failed to get plugin version [2]");
@@ -336,7 +396,7 @@ namespace WA.Susie
         // placeholder
         private bool GetPictureInfo()
         {
-            if (_pluginType != PluginType.ImportFilter)
+            if (Type != PluginType.ImportFilter)
             {
                 throw new InvalidOperationException();
             }
@@ -352,7 +412,7 @@ namespace WA.Susie
         // placeholder
         private void GetPreview()
         {
-            if (_pluginType != PluginType.ImportFilter)
+            if (Type != PluginType.ImportFilter)
             {
                 throw new InvalidOperationException();
             }
@@ -366,25 +426,9 @@ namespace WA.Susie
         }
 
         // placeholder
-        private void GetArchiveInfo()
-        {
-            if (_pluginType != PluginType.ArchiveExtractor)
-            {
-                throw new InvalidOperationException();
-            }
-
-            if (_func.GetArchiveInfo == null)
-            {
-                _func.GetArchiveInfo = GetFunction<API.GetArchiveInfo>(_handle);
-            }
-
-            throw new NotImplementedException();
-        }
-
-        // placeholder
         private void GetFileInfo()
         {
-            if (_pluginType != PluginType.ArchiveExtractor)
+            if (Type != PluginType.ArchiveExtractor)
             {
                 throw new InvalidOperationException();
             }
@@ -400,7 +444,7 @@ namespace WA.Susie
         // placeholder
         private void GetFile()
         {
-            if (_pluginType != PluginType.ArchiveExtractor)
+            if (Type != PluginType.ArchiveExtractor)
             {
                 throw new InvalidOperationException();
             }

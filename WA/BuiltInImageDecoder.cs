@@ -28,10 +28,11 @@ namespace WA
             {
                 decoder = (BitmapDecoder)_constructor.Invoke(_args);
             }
+
             return decoder.Frames[0];
 
             // fallback
-            // またはプラグインを有線して、ビルトインをfallbackとして使う
+            // またはプラグインを優先して、ビルトインをfallbackとして使う
             //return await base.TryDecodeAsync(loader);
         }
     }

@@ -160,7 +160,7 @@ namespace WA
             // tood async
 
             // 拡張子にマッピングされたデコーダーがヒットするかどうか
-            var ext = loader.Extension;
+            var ext = loader.Extension.ToLower();
             ImageDecoder instance = null;
             if (_imageDecoders.TryGetValue(ext, out instance))
             {

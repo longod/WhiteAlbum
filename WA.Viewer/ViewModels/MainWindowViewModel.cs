@@ -29,6 +29,7 @@ namespace WA.Viewer.ViewModels
             Task.Run(() => _viewer.ProcessAsync());
         }
 
+        // todo call
         public void Dispose()
         {
             _disposable.Dispose();

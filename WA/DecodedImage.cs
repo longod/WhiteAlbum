@@ -4,10 +4,14 @@ namespace WA
 {
     using System.Windows.Media;
 
+    interface IDecodedResult
+    {
+    }
+
     // 特定の画像フォーマットによらない中間画像情報
     // 最終的な表示イメージ変換に必要な情報を含む
     // intermidiate decoded image
-    internal class DecodedImage
+    internal class DecodedImage : IDecodedResult
     {
         internal enum ImageDimension
         {
@@ -62,5 +66,9 @@ namespace WA
         internal Color[] Palette { get; set; }
 
         internal byte[] Binary { get; set; }
+    }
+
+    internal class DecodedArchive : IDecodedResult
+    {
     }
 }

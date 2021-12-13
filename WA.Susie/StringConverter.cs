@@ -27,18 +27,6 @@ namespace WA.Susie
 
         public static StringConverter SJIS { get; } = new StringConverter("shift-jis");
 
-        public string Decode(ReadOnlySpan<byte> src)
-        {
-            // 入力の寿命が不明なので、キャッシュの場合コピーコストが生じる
-            bool flush = false;
-            var count = _decoder.GetCharCount(src, false);
-            Span<char> desc = (count < 64) ? stackalloc char[count] : new char[count]; // avoid large stack allocation
-            _decoder.Convert(src, desc, flush, out int bytesUsed, out int charsUsed, out bool completed);
-
-            return desc.ToString();
-        }
-
-        // 用途が限定されているのなら ReadOnlySpan でも成立するはず
         public ReadOnlyMemory<byte> Encode(string text)
         {
             // fixme calling from multi thread. lock or concurrent
@@ -61,6 +49,56 @@ namespace WA.Susie
 
             _cache.Add(text, dest);
             return dest;
+        }
+
+        public string Decode(ReadOnlySpan<byte> src)
+        {
+            if (src.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            // 入力の寿命が不明なので、キャッシュの場合コピーコストが生じる
+            bool flush = false;
+            var count = _decoder.GetCharCount(src, false);
+            Span<char> desc = (count < 64) ? stackalloc char[count] : new char[count]; // avoid large stack allocation
+            _decoder.Convert(src, desc, flush, out int bytesUsed, out int charsUsed, out bool completed);
+
+            return desc.ToString();
+        }
+
+        internal string DecodeWithZeroTerminate(ReadOnlySpan<byte> src)
+        {
+            // search zero
+            for (int i = 0; i < src.Length; ++i)
+            {
+                if (src[i] == 0)
+                {
+                    return Decode(src.Slice(0, i));
+                }
+            }
+
+            throw new Exception("failed to find zero-terminate.");
+        }
+
+        // 0終端が必ずあることを期待した危険なコード
+        internal unsafe string DecodeWithZeroTerminate(byte* src)
+        {
+            // search zero
+            int count = 0;
+            byte* p = src;
+            while (p != null && *p != 0)
+            {
+                if (*p == 0)
+                {
+                    return Decode(new ReadOnlySpan<byte>(src, count));
+                }
+
+                ++count;
+                ++p;
+            }
+
+            throw new Exception("failed to find zero-terminate.");
         }
     }
 }

@@ -21,7 +21,32 @@ namespace WA
             _plugin.Dispose();
         }
 
+        public bool IsSupported(FileLoader loader)
+        {
+            // peek file
+            return _plugin.IsSupported(loader.Path, loader.Binary);
+        }
+
         public bool Decode(FileLoader loader, out DecodedImage image)
+        {
+            switch (_plugin.Type)
+            {
+                case SusiePlugin.PluginType.ImportFilter:
+                    return GetPicture(loader, out image);
+                case SusiePlugin.PluginType.ArchiveExtractor:
+                    GetArchiveInfo(loader); // test
+                    break;
+                case SusiePlugin.PluginType.ExportFilter:
+                    throw new NotSupportedException();
+                default:
+                    throw new NotSupportedException();
+            }
+
+            image = null;
+            return false;
+        }
+
+        private bool GetPicture(FileLoader loader, out DecodedImage image)
         {
             if (_plugin.GetPicture(loader.Binary, out var binary, out var info))
             {
@@ -47,6 +72,7 @@ namespace WA
                     default:
                         throw new NotSupportedException($"info.biBitCount: {info.biBitCount}");
                 }
+
                 image.Dimension = DecodedImage.ImageDimension.Texture2D;
                 image.Orientation = DecodedImage.ImageOrientation.BottomLeft;
                 image.Rotation = DecodedImage.ImageRotation.None;
@@ -58,10 +84,14 @@ namespace WA
             return false;
         }
 
-        public bool IsSupported(FileLoader loader)
+        private bool GetArchiveInfo(FileLoader loader)
         {
-            // peek file
-            return _plugin.IsSupported(loader.Path, loader.Binary);
+            if (_plugin.GetArchiveInfo(loader.Binary, out var infos))
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }
