@@ -112,7 +112,7 @@ namespace WA
         public BitmapSource Image
         {
             get { return _image; }
-            set
+            private set
             {
                 if (value != _image)
                 {
