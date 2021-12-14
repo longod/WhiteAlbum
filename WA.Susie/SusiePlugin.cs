@@ -150,7 +150,7 @@ namespace WA.Susie
                         var ptr = (BitMapInfoHeader*)NativeMethods.LocalLock(pHBInfo);
 
                         // copy to managed memory
-                        System.Runtime.CompilerServices.Unsafe.Copy(ref info, ptr);
+                        Unsafe.Copy(ref info, ptr);
 
                         NativeMethods.LocalUnlock(pHBInfo);
                     }
@@ -199,7 +199,7 @@ namespace WA.Susie
             return false;
         }
 
-        public bool GetPreview()
+        public bool GetPreview(ReadOnlyMemory<byte> binary, out byte[] image, out BitMapInfoHeader info)
         {
             if (Type != PluginType.ImportFilter)
             {
@@ -211,7 +211,60 @@ namespace WA.Susie
                 _func.GetPreview = GetFunction<API.GetPreview>(_handle);
             }
 
-            throw new NotImplementedException();
+            image = null;
+            info = default;
+
+            const uint flag = API.Constant.OnMemory;
+
+            unsafe
+            {
+                void* pHBInfo = null;
+                void* pHBm = null;
+                int result = 0;
+                using (var handle = binary.Pin())
+                {
+                    result = _func.GetPreview(handle.Pointer, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
+                }
+
+                if (result == 0)
+                {
+                    if (pHBInfo != null)
+                    {
+                        var ptr = (BitMapInfoHeader*)NativeMethods.LocalLock(pHBInfo);
+
+                        // copy to managed memory
+                        Unsafe.Copy(ref info, ptr);
+
+                        NativeMethods.LocalUnlock(pHBInfo);
+                    }
+
+                    if (pHBm != null)
+                    {
+                        var ptr = NativeMethods.LocalLock(pHBm);
+
+                        // copy to managed memory
+                        image = new byte[info.biSizeImage];
+                        fixed (void* p = image)
+                        {
+                            Unsafe.CopyBlock(p, ptr, (uint)image.Length);
+                        }
+
+                        NativeMethods.LocalUnlock(pHBm);
+                    }
+                }
+
+                if (pHBInfo != null)
+                {
+                    NativeMethods.LocalFree(pHBInfo);
+                }
+
+                if (pHBm != null)
+                {
+                    NativeMethods.LocalFree(pHBm);
+                }
+
+                return result == 0;
+            }
         }
 
         public bool GetArchiveInfo(ReadOnlyMemory<byte> binary, out FileInfo[] infos)
