@@ -61,7 +61,7 @@ namespace WA.Susie
             // 入力の寿命が不明なので、キャッシュの場合コピーコストが生じる
             bool flush = false;
             var count = _decoder.GetCharCount(src, false);
-            Span<char> desc = (count < 64) ? stackalloc char[count] : new char[count]; // avoid large stack allocation
+            Span<char> desc = (count <= 128) ? stackalloc char[count] : new char[count]; // avoid large stack allocation
             _decoder.Convert(src, desc, flush, out int bytesUsed, out int charsUsed, out bool completed);
 
             return desc.ToString();

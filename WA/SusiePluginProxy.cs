@@ -90,8 +90,8 @@ namespace WA
             {
 
                 // test extract
-                //_plugin.GetFile(loader.Binary.Slice((int)info.Position, (int)info.CompSize), out var dest);
-                _plugin.GetFile(loader.Binary, infos[0], out var dest);
+                //_plugin.GetFile(loader.Binary, infos[0], out var dest);
+                //_plugin.GetFileInfo(loader.Binary, infos[0].FileName, out var info);
 
                 return true;
             }

@@ -278,7 +278,7 @@ namespace WA.Susie
             }
         }
 
-        public bool GetFileInfo()
+        public bool GetFileInfo(ReadOnlyMemory<byte> binary, string path, out FileInfo info, bool caseSensitive = false)
         {
             if (Type != PluginType.ArchiveExtractor)
             {
@@ -290,7 +290,32 @@ namespace WA.Susie
                 _func.GetFileInfo = GetFunction<API.GetFileInfo>(_handle);
             }
 
-            throw new NotImplementedException();
+            uint flag = API.Constant.OnMemory | (caseSensitive ? API.Constant.CaseSensitive : API.Constant.CaseInsensitive);
+
+            unsafe
+            {
+                API.FileInfo lpInfo;
+                int result = 0;
+                var mbpath = _stringConverter.Encode(path);
+                using (var ptr = mbpath.Pin())
+                {
+                    using (var handle = binary.Pin())
+                    {
+                        result = _func.GetFileInfo(handle.Pointer, binary.Length, ptr.Pointer, flag, &lpInfo);
+                    }
+                }
+
+                if (result == 0)
+                {
+                    info = new FileInfo(&lpInfo, _stringConverter);
+                }
+                else
+                {
+                    info = default;
+                }
+
+                return result == 0;
+            }
         }
 
         public bool GetFile(ReadOnlyMemory<byte> binary, in FileInfo info, out byte[] file)
@@ -360,7 +385,7 @@ namespace WA.Susie
                 _func.GetPluginInfo = GetFunction<API.GetPluginInfo>(_handle);
             }
 
-            Span<byte> buf = stackalloc byte[16]; // or stackalloc
+            Span<byte> buf = stackalloc byte[16];
             unsafe
             {
                 fixed (void* ptr = buf)
@@ -412,7 +437,7 @@ namespace WA.Susie
             {
                 // 00IN plugin
             }
-            else if (Type == PluginType.ImportFilter && _pluginTarget == PluginTarget.Normal)
+            else if (Type == PluginType.ArchiveExtractor && _pluginTarget == PluginTarget.MultiPicture)
             {
                 // 00AM plugin
             }
