@@ -62,11 +62,6 @@ namespace WA.Susie
             return 0; // always continue
         }
 
-        public SusiePlugin(string path)
-            : this(path, StringConverter.SJIS)
-        {
-        }
-
         public SusiePlugin(string path, StringConverter stringConverter)
         {
             _stringConverter = stringConverter;

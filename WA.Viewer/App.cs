@@ -54,6 +54,7 @@ namespace WA.Viewer
 
                 return _loggerFactory.CreateLogger("WA.Viewer");
             });
+            containerRegistry.RegisterSingleton<Susie.StringConverter>(() => Susie.StringConverter.SJIS);
             containerRegistry.RegisterSingleton<PluginManager>();
             containerRegistry.RegisterSingleton<ViewerModel.Args>(() => new ViewerModel.Args(_args));
             containerRegistry.RegisterSingleton<ViewerModel>();

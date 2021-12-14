@@ -18,6 +18,8 @@
 
         private List<IPluginProxy> _loadedDecoder = new List<IPluginProxy>();
 
+        private Susie.StringConverter _stringConverter;
+
         // 主キー重複の場合、タイムスタンプを次に優先する可能性もある
         private class SameNameFileInfoEQ : IEqualityComparer<FileInfo>
         {
@@ -32,9 +34,9 @@
             }
         }
 
-        public PluginManager(AppSettings settings)
+        public PluginManager(AppSettings settings, Susie.StringConverter stringConverter)
         {
-            var directory = AppContext.BaseDirectory;
+            _stringConverter = stringConverter;
             _pluginDirectories = settings.PluginDirectories;
         }
 
@@ -76,7 +78,7 @@
                         SusiePluginProxy decoder = null;
                         try
                         {
-                            decoder = new SusiePluginProxy(new Susie.SusiePlugin(path));
+                            decoder = new SusiePluginProxy(new Susie.SusiePlugin(path, _stringConverter));
                         }
                         catch (DllNotFoundException e)
                         {
