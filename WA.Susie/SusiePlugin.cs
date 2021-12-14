@@ -58,7 +58,6 @@ namespace WA.Susie
 
         private static int AlwaysContinueProgressCallback(int nNum, int nDenom, int lData)
         {
-            System.Diagnostics.Trace.WriteLine($"{nNum}/{nDenom}");
             return 0; // always continue
         }
 
@@ -113,6 +112,8 @@ namespace WA.Susie
                 _func.ConfigurationDlg = GetFunction<API.ConfigurationDlg>(_handle);
             }
 
+            // need hwnd
+            // https://stackoverflow.com/questions/10675305/how-to-get-the-hwnd-of-window-instance
             throw new NotImplementedException();
         }
 
@@ -184,7 +185,7 @@ namespace WA.Susie
             }
         }
 
-        public bool GetPictureInfo()
+        public bool GetPictureInfo(ReadOnlyMemory<byte> binary, out PictureInfo info)
         {
             if (Type != PluginType.ImportFilter)
             {
@@ -196,7 +197,34 @@ namespace WA.Susie
                 _func.GetPictureInfo = GetFunction<API.GetPictureInfo>(_handle);
             }
 
-            return false;
+            const uint flag = API.Constant.OnMemory;
+
+            unsafe
+            {
+                API.PictureInfo lpInfo;
+                int result = 0;
+                using (var handle = binary.Pin())
+                {
+                    result = _func.GetPictureInfo(handle.Pointer, binary.Length, flag, &lpInfo);
+                }
+
+                if (result == 0)
+                {
+                    info = new PictureInfo(&lpInfo, _stringConverter);
+                }
+                else
+                {
+                    info = default;
+                }
+
+                if (lpInfo.hInfo != null)
+                {
+                    // Spi_api.txt には Globalメモリーのハンドルと書いてあるが、実際の型は HGLOBAL ではなく、HLOCAL である。どっちだ？
+                    NativeMethods.LocalFree(lpInfo.hInfo);
+                }
+
+                return result == 0;
+            }
         }
 
         public bool GetPreview(ReadOnlyMemory<byte> binary, out byte[] image, out BitMapInfoHeader info)

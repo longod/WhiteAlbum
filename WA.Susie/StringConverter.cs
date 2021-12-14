@@ -89,16 +89,11 @@ namespace WA.Susie
             byte* p = src;
             while (p != null && *p != 0)
             {
-                if (*p == 0)
-                {
-                    return Decode(new ReadOnlySpan<byte>(src, count));
-                }
-
                 ++count;
                 ++p;
             }
 
-            throw new Exception("failed to find zero-terminate.");
+            return Decode(new ReadOnlySpan<byte>(src, count));
         }
     }
 }
