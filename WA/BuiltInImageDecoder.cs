@@ -2,9 +2,7 @@
 namespace WA
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
-    using System.Text;
     using System.Threading.Tasks;
     using System.Windows.Media.Imaging;
 
@@ -19,17 +17,17 @@ namespace WA
             _constructor = bitmapDecoder.GetConstructor(new Type[] { typeof(Stream), typeof(BitmapCreateOptions), typeof(BitmapCacheOption) });
         }
 
+        // animationを考慮すると、 ReadOnlyCollection<BitmapFrame> のようなほうがよい
         // boxingしまくりで遅そう…
         internal override async Task<BitmapSource> TryDecodeAsync(FileLoader loader)
         {
             _args[0] = loader.Stream;
-            BitmapDecoder decoder = null;
-            using (new StopwatchScope("TryDecodeAsync"))
+            return await Task.Run(() =>
             {
-                decoder = (BitmapDecoder)_constructor.Invoke(_args);
-            }
+                BitmapDecoder decoder = (BitmapDecoder)_constructor.Invoke(_args);
 
-            return decoder.Frames[0];
+                return decoder.Frames[0];
+            });
 
             // fallback
             // またはプラグインを優先して、ビルトインをfallbackとして使う

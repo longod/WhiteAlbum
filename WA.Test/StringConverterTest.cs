@@ -7,7 +7,7 @@ namespace WA.Test
     public class StringConverterTest
     {
         [Fact]
-        public void TestSjis()
+        public void TestEncodeToDecode()
         {
             string expected = "テスト文字列 地図　";
             var e = StringConverter.SJIS.Encode(expected);
@@ -16,6 +16,11 @@ namespace WA.Test
             Assert.Equal(expected, actual);
         }
 
+        // decode to encode
+        // long word
+        // short word
+
         // todo cache test
+        // bench w/ cache w/o cache
     }
 }

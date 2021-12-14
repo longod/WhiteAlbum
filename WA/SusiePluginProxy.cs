@@ -88,6 +88,11 @@ namespace WA
         {
             if (_plugin.GetArchiveInfo(loader.Binary, out var infos))
             {
+
+                // test extract
+                //_plugin.GetFile(loader.Binary.Slice((int)info.Position, (int)info.CompSize), out var dest);
+                _plugin.GetFile(loader.Binary, infos[0], out var dest);
+
                 return true;
             }
 

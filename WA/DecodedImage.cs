@@ -4,7 +4,7 @@ namespace WA
 {
     using System.Windows.Media;
 
-    interface IDecodedResult
+    internal interface IDecodedResult
     {
     }
 

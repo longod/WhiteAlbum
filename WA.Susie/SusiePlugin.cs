@@ -4,6 +4,7 @@ namespace WA.Susie
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
 
     // todo susie以外のプラグインに対応する場合にインターフェイスを揃えたい
@@ -57,6 +58,7 @@ namespace WA.Susie
 
         private static int AlwaysContinueProgressCallback(int nNum, int nDenom, int lData)
         {
+            System.Diagnostics.Trace.WriteLine($"{nNum}/{nDenom}");
             return 0; // always continue
         }
 
@@ -109,6 +111,16 @@ namespace WA.Susie
             }
         }
 
+        public void ConfigurationDlg()
+        {
+            if (_func.ConfigurationDlg == null)
+            {
+                _func.ConfigurationDlg = GetFunction<API.ConfigurationDlg>(_handle);
+            }
+
+            throw new NotImplementedException();
+        }
+
         public bool GetPicture(ReadOnlyMemory<byte> binary, out byte[] image, out BitMapInfoHeader info)
         {
             if (Type != PluginType.ImportFilter)
@@ -156,7 +168,7 @@ namespace WA.Susie
                         image = new byte[info.biSizeImage];
                         fixed (void* p = image)
                         {
-                            System.Runtime.CompilerServices.Unsafe.CopyBlock(p, ptr, info.biSizeImage);
+                            Unsafe.CopyBlock(p, ptr, (uint)image.Length);
                         }
 
                         NativeMethods.LocalUnlock(pHBm);
@@ -175,6 +187,36 @@ namespace WA.Susie
 
                 return result == 0;
             }
+        }
+
+        public bool GetPictureInfo()
+        {
+            if (Type != PluginType.ImportFilter)
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (_func.ConfigurationDlg == null)
+            {
+                _func.GetPictureInfo = GetFunction<API.GetPictureInfo>(_handle);
+            }
+
+            return false;
+        }
+
+        public bool GetPreview()
+        {
+            if (Type != PluginType.ImportFilter)
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (_func.GetPreview == null)
+            {
+                _func.GetPreview = GetFunction<API.GetPreview>(_handle);
+            }
+
+            throw new NotImplementedException();
         }
 
         public bool GetArchiveInfo(ReadOnlyMemory<byte> binary, out FileInfo[] infos)
@@ -230,6 +272,74 @@ namespace WA.Susie
                 if (lphInf != null)
                 {
                     NativeMethods.LocalFree(lphInf);
+                }
+
+                return result == 0;
+            }
+        }
+
+        public bool GetFileInfo()
+        {
+            if (Type != PluginType.ArchiveExtractor)
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (_func.GetFileInfo == null)
+            {
+                _func.GetFileInfo = GetFunction<API.GetFileInfo>(_handle);
+            }
+
+            throw new NotImplementedException();
+        }
+
+        public bool GetFile(ReadOnlyMemory<byte> binary, in FileInfo info, out byte[] file)
+        {
+            if (Type != PluginType.ArchiveExtractor)
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (_func.GetFile == null)
+            {
+                _func.GetFile = GetFunction<API.GetFile>(_handle);
+            }
+
+            file = null;
+
+            const uint flag = API.Constant.SrcOnMemory | API.Constant.DestOnMemory;
+
+            unsafe
+            {
+                // ここで与えるバッファ範囲は [info.Position, info.CompSize) ではない！
+                // プラグインによって動作することもあれば、失敗やハングアップすることもある
+                // [info.Position, Lengh - info.Position) である
+                var src = binary.Slice((int)info.Position);
+                void* dest = null;
+                int result = 0;
+                using (var handle = src.Pin())
+                {
+                    result = _func.GetFile(handle.Pointer, src.Length, &dest, flag, AlwaysContinueProgressCallback, 0);
+                }
+
+                if (result == 0)
+                {
+                    if (dest != null)
+                    {
+                        file = new byte[info.FileSize];
+                        var ptr = (API.FileInfo*)NativeMethods.LocalLock(dest);
+                        fixed (void* p = file)
+                        {
+                            Unsafe.CopyBlock(p, ptr, (uint)file.Length);
+                        }
+
+                        NativeMethods.LocalUnlock(dest);
+                    }
+                }
+
+                if (dest != null)
+                {
+                    NativeMethods.LocalFree(dest);
                 }
 
                 return result == 0;
@@ -296,6 +406,20 @@ namespace WA.Susie
                     break;
                 default:
                     throw new Exception("failed to get plugin version [3]");
+            }
+
+            if (Type == PluginType.ImportFilter && _pluginTarget == PluginTarget.Normal)
+            {
+                // 00IN plugin
+            }
+            else if (Type == PluginType.ImportFilter && _pluginTarget == PluginTarget.Normal)
+            {
+                // 00AM plugin
+            }
+            else
+            {
+                // ? 仕様上は作れるが存在するのか？
+                throw new NotSupportedException();
             }
         }
 
@@ -380,81 +504,6 @@ namespace WA.Susie
                     while (length > 0);
                 }
             }
-        }
-
-        // placeholder
-        private void ConfigurationDlg()
-        {
-            if (_func.ConfigurationDlg == null)
-            {
-                _func.ConfigurationDlg = GetFunction<API.ConfigurationDlg>(_handle);
-            }
-
-            throw new NotImplementedException();
-        }
-
-        // placeholder
-        private bool GetPictureInfo()
-        {
-            if (Type != PluginType.ImportFilter)
-            {
-                throw new InvalidOperationException();
-            }
-
-            if (_func.ConfigurationDlg == null)
-            {
-                _func.GetPictureInfo = GetFunction<API.GetPictureInfo>(_handle);
-            }
-
-            return false;
-        }
-
-        // placeholder
-        private void GetPreview()
-        {
-            if (Type != PluginType.ImportFilter)
-            {
-                throw new InvalidOperationException();
-            }
-
-            if (_func.GetPreview == null)
-            {
-                _func.GetPreview = GetFunction<API.GetPreview>(_handle);
-            }
-
-            throw new NotImplementedException();
-        }
-
-        // placeholder
-        private void GetFileInfo()
-        {
-            if (Type != PluginType.ArchiveExtractor)
-            {
-                throw new InvalidOperationException();
-            }
-
-            if (_func.GetFileInfo == null)
-            {
-                _func.GetFileInfo = GetFunction<API.GetFileInfo>(_handle);
-            }
-
-            throw new NotImplementedException();
-        }
-
-        // placeholder
-        private void GetFile()
-        {
-            if (Type != PluginType.ArchiveExtractor)
-            {
-                throw new InvalidOperationException();
-            }
-
-            if (_func.GetFile == null)
-            {
-                _func.GetFile = GetFunction<API.GetFile>(_handle);
-            }
-
-            throw new NotImplementedException();
         }
     }
 }

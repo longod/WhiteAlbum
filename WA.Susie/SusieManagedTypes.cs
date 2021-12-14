@@ -39,7 +39,6 @@ namespace WA.Susie
 
     public readonly struct FileInfo
     {
-        // string?
         public readonly string Method;   // unsigned char[8] 圧縮法の種類
         public readonly uint Position;   // unsigned long  ファイル上での位置
         public readonly uint CompSize;    // unsigned long  圧縮されたサイズ

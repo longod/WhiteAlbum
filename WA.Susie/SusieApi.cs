@@ -76,8 +76,8 @@ namespace WA.Susie.API
         // GetFile (alias)
         internal const UInt32 SrcOnFile = OnFile;
         internal const UInt32 SrcOnMemory = OnMemory;
-        internal const UInt32 DestOnFile = OnFile << 16;
-        internal const UInt32 DestOnMemory = OnMemory << 16;
+        internal const UInt32 DestOnFile = OnFile << 8;
+        internal const UInt32 DestOnMemory = OnMemory << 8;
 
         // GetFileInfo
         internal const UInt32 CaseSensitive = 0b0;

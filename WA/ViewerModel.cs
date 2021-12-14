@@ -2,15 +2,13 @@
 
 namespace WA
 {
-    using Microsoft.Extensions.Logging;
-    using System;
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.IO;
     using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
     using System.Windows.Media.Imaging;
-    using ZLogger;
+    using Microsoft.Extensions.Logging;
 
     // backends
     // wpf, windowhost, d3d12
@@ -46,8 +44,6 @@ namespace WA
     // {
     // }
 
-
-    // modelにINotifyPropertyChanged つかうのはふつうなのか？
     public class ViewerModel : INotifyPropertyChanged
     {
         public class Args
@@ -56,6 +52,10 @@ namespace WA
             internal string Path { get; private set; }
 
             // relative path in archive
+            // virtual pathの spliterには reserved characterを使う。 | vertical bar が候補
+            // アーカイブ内のパスが foo.zip/bar.jpg という表現の場合、foo.zipがディレクトリなのかアーカイブ内のアーカイブなのか分からないからだ
+            // アーカイブファイル内のjpg: foo.zip|bar.jpg
+            // ディレクトリ内のjpg: foo.zip/bar.jpg
             internal string VirtualPath { get; private set; }
 
             public Args(string[] args)
@@ -140,6 +140,9 @@ namespace WA
                         var decoder = await FindDecoderAsync(loader);
                         if (decoder != null)
                         {
+                            // TODO アーカイブの場合を考慮すると、bmp以外の IDecodedResult をかえす
+                            // 実データが返ってくるまでvirtual pathを使って再帰的に処理を繰り返す必要がある
+                            // builtinとの兼ね合いをどうするか…
                             var bmp = await decoder.TryDecodeAsync(loader);
                             Image = bmp;
                         }
