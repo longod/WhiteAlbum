@@ -58,6 +58,9 @@ namespace WA.Viewer
             containerRegistry.RegisterSingleton<PluginManager>();
             containerRegistry.RegisterSingleton<ViewerModel.Args>(() => new ViewerModel.Args(_args));
             containerRegistry.RegisterSingleton<ViewerModel>();
+
+            // https://prismlibrary.com/docs/wpf/dialog-service.html
+            containerRegistry.RegisterDialog<Views.SettingsControl>("SettingsWindow");
         }
 
         private void PrismApplication_Startup(object sender, StartupEventArgs e)
