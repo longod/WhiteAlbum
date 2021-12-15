@@ -72,6 +72,22 @@
             System.Diagnostics.Trace.WriteLine($"find plugins: {_pluginPaths.Length}");
         }
 
+        public void ShowConfigTest(IntPtr hWnd)
+        {
+            foreach (var d in _loadedDecoder)
+            {
+                var susie = d as SusiePluginProxy;
+                if (susie != null)
+                {
+                    if (susie.ShowConfigTest(hWnd))
+                    {
+                        break;
+                    }
+                }
+            }
+
+        }
+
         // test
         public async Task LoadAllPlugins()
         {

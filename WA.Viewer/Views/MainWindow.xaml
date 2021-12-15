@@ -3,11 +3,20 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:prism="http://prismlibrary.com/"
         prism:ViewModelLocator.AutoWireViewModel="True"
-        Title="{Binding Title.Value}" Height="600" Width="800" >
+        Title="{Binding Title.Value}" Height="600" Width="800">
+    <Window.ContextMenu>
+        <ContextMenu>
+            <MenuItem Header="Debug">
+                <MenuItem Header="Show Dialog" Command="{Binding Path=ShowConfigCommand}"/>
+            </MenuItem>
+            <MenuItem Header="Settings"/>
+            <MenuItem Header="Exit (_E)" Command="{Binding Path=ExitCommand}"/>
+        </ContextMenu>
+    </Window.ContextMenu>
     <Grid>
         <Border x:Name="border" ClipToBounds="True">
             <Image x:Name="image" Source="{Binding Path=Image.Value}" MouseWheel="image_MouseWheel" MouseLeftButtonDown="image_MouseLeftButtonDown" MouseLeftButtonUp="image_MouseLeftButtonUp" MouseMove="image_MouseMove" />
         </Border>
-        <ContentControl prism:RegionManager.RegionName="ContentRegion" />
+        <!--<ContentControl prism:RegionManager.RegionName="ContentRegion" />-->
     </Grid>
 </Window>

@@ -3,8 +3,6 @@
 namespace WA
 {
     using System;
-    using System.Collections.Generic;
-    using System.Text;
     using WA.Susie;
 
     internal class SusiePluginProxy : IPluginProxy
@@ -106,6 +104,11 @@ namespace WA
 
             image = null;
             return false;
+        }
+
+        internal bool ShowConfigTest(IntPtr hWnd)
+        {
+            return _plugin.ConfigurationDlg(hWnd);
         }
 
         private bool GetArchiveInfo(FileLoader loader)

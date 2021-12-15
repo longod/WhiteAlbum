@@ -112,17 +112,23 @@ namespace WA.Susie
             }
         }
 
-        public bool ShowConfigurationDialog(IntPtr hWnd)
+        public bool ConfigurationDlg(IntPtr hWnd)
         {
             if (_func.ConfigurationDlg == null)
             {
-                _func.ConfigurationDlg = GetFunction<API.ConfigurationDlg>(_handle);
+                try
+                {
+                    _func.ConfigurationDlg = GetFunction<API.ConfigurationDlg>(_handle);
+                }
+                catch (EntryPointNotFoundException)
+                {
+                    // optional function
+                    return false;
+                }
             }
 
             unsafe
             {
-                // need hwnd
-                // https://stackoverflow.com/questions/10675305/how-to-get-the-hwnd-of-window-instance
                 const int fnc = (int)API.Constant.DialogSettings;
                 var result = _func.ConfigurationDlg(hWnd.ToPointer(), fnc);
                 return result == 0;
@@ -248,7 +254,17 @@ namespace WA.Susie
 
             if (_func.GetPreview == null)
             {
-                _func.GetPreview = GetFunction<API.GetPreview>(_handle);
+                try
+                {
+                    _func.GetPreview = GetFunction<API.GetPreview>(_handle);
+                }
+                catch (EntryPointNotFoundException)
+                {
+                    // optional function
+                    image = null;
+                    info = default;
+                    return false;
+                }
             }
 
             image = null;
