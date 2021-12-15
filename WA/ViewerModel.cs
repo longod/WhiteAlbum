@@ -136,7 +136,10 @@ namespace WA
                 {
                     using (var loader = new FileLoader(LogicalPath, Susie.API.Constant.MinFileSize))
                     {
-                        await loader.LoadAsync();
+                        // FIXME support判定に必要な分だけ PeekAsyncで先にまず読んでおいて、
+                        // プラグインの検索と並列に読み進めるのが理想的
+                        await loader.ReadAsync();
+
                         var decoder = await FindDecoderAsync(loader);
                         if (decoder != null)
                         {

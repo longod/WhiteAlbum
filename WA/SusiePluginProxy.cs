@@ -48,7 +48,7 @@ namespace WA
         public bool IsSupported(FileLoader loader)
         {
             // peek file
-            return _plugin.IsSupported(loader.Path, loader.Binary);
+            return _plugin.IsSupported(loader.Path, loader.RawBinary);
         }
 
         public bool Decode(FileLoader loader, out DecodedImage image)
