@@ -10,6 +10,8 @@
 
     public class PluginManager : IDisposable
     {
+        private bool _disposed = false;
+
         private List<string> _pluginDirectories;
 
         private bool _searchSubDirectory = true; // directory単位で持つかも
@@ -19,6 +21,11 @@
         private List<IPluginProxy> _loadedDecoder = new List<IPluginProxy>();
 
         private Susie.StringConverter _stringConverter;
+
+        ~PluginManager()
+        {
+            Dispose(false);
+        }
 
         // 主キー重複の場合、タイムスタンプを次に優先する可能性もある
         private class SameNameFileInfoEQ : IEqualityComparer<FileInfo>
@@ -148,11 +155,29 @@
 
         public void Dispose()
         {
-            foreach (var d in _loadedDecoder)
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!_disposed)
             {
-                d.Dispose();
+                if (disposing)
+                {
+                    // managed
+                }
+
+                // unmanaged
+                foreach (var d in _loadedDecoder)
+                {
+                    d.Dispose();
+                }
+                _loadedDecoder.Clear();
+
+                _disposed = true;
             }
-            _loadedDecoder.Clear();
+
         }
     }
 }

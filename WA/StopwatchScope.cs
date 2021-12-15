@@ -42,6 +42,8 @@ namespace WA
                 {
                     Trace.WriteLine($"{_marker}: {_sw.ElapsedMilliseconds}ms");
                 }
+
+                _sw = null;
             }
         }
     }

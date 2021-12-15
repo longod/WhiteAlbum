@@ -1,4 +1,5 @@
 ﻿using Prism.Mvvm;
+using Prism.Regions;
 using Reactive.Bindings;
 using Reactive.Bindings.Extensions;
 using System;
@@ -12,6 +13,7 @@ namespace WA.Viewer.ViewModels
     {
         private const string _appTitle = "WHITE ALBUM";
 
+        private IRegionManager _regionManager;
         private ViewerModel _viewer;
 
         private CompositeDisposable _disposable { get; } = new CompositeDisposable();
@@ -22,17 +24,24 @@ namespace WA.Viewer.ViewModels
         // https://docs.microsoft.com/ja-jp/dotnet/desktop/wpf/advanced/optimizing-performance-2d-graphics-and-imaging?view=netframeworkdesktop-4.8
         public ReadOnlyReactivePropertySlim<BitmapSource> Image { get; }
 
-        public MainWindowViewModel(ViewerModel viewer)
+        public MainWindowViewModel(IRegionManager regionManager, ViewerModel viewer)
         {
+            _regionManager = regionManager;
             _viewer = viewer;
             Image = _viewer.ObserveProperty(x => x.Image).ToReadOnlyReactivePropertySlim().AddTo(_disposable);
             Task.Run(() => _viewer.ProcessAsync());
         }
 
-        // todo call
         public void Dispose()
         {
             _disposable.Dispose();
+            if (_regionManager != null)
+            {
+                foreach (var region in _regionManager.Regions)
+                {
+                    region.RemoveAll();
+                }
+            }
         }
     }
 }

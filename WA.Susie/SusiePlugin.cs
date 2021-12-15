@@ -8,11 +8,11 @@ namespace WA.Susie
     using System.Runtime.InteropServices;
 
     // todo susie以外のプラグインに対応する場合にインターフェイスを揃えたい
-    internal interface IPlugin : IDisposable
+    internal interface IPlugin
     {
     }
 
-    public class SusiePlugin : IPlugin
+    public class SusiePlugin : IPlugin, IDisposable
     {
         public enum PluginType
         {
@@ -48,6 +48,7 @@ namespace WA.Susie
         private readonly StringConverter _stringConverter = null;
 
         private IntPtr _handle;
+        private bool _disposed = false;
         private int _version = 0;
         private PluginTarget _pluginTarget;
         private string _pluginName;
@@ -72,9 +73,15 @@ namespace WA.Susie
             // GetFileFormats();
         }
 
+        ~SusiePlugin()
+        {
+            Dispose(false);
+        }
+
         public void Dispose()
         {
-            NativeLibrary.Free(_handle);
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         public bool IsSupported(string path, ReadOnlyMemory<byte> binary)
@@ -105,16 +112,21 @@ namespace WA.Susie
             }
         }
 
-        public void ConfigurationDlg()
+        public bool ShowConfigurationDialog(IntPtr hWnd)
         {
             if (_func.ConfigurationDlg == null)
             {
                 _func.ConfigurationDlg = GetFunction<API.ConfigurationDlg>(_handle);
             }
 
-            // need hwnd
-            // https://stackoverflow.com/questions/10675305/how-to-get-the-hwnd-of-window-instance
-            throw new NotImplementedException();
+            unsafe
+            {
+                // need hwnd
+                // https://stackoverflow.com/questions/10675305/how-to-get-the-hwnd-of-window-instance
+                const int fnc = (int)API.Constant.DialogSettings;
+                var result = _func.ConfigurationDlg(hWnd.ToPointer(), fnc);
+                return result == 0;
+            }
         }
 
         public bool GetPicture(ReadOnlyMemory<byte> binary, out byte[] image, out BitMapInfoHeader info)
@@ -452,6 +464,28 @@ namespace WA.Susie
             // https://qiita.com/kenichiuda/items/613766f56e5ecd1de856
             var func = NativeLibrary.GetExport(handle, typeof(T).Name);
             return Marshal.GetDelegateForFunctionPointer<T>(func);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // managed
+                }
+
+                // unmanaged
+                Free();
+
+                _disposed = true;
+            }
+        }
+
+        private void Free()
+        {
+            NativeLibrary.Free(_handle);
+            _handle = default;
         }
 
         private void GetPluginVersion()

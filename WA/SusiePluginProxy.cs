@@ -10,15 +10,39 @@ namespace WA
     internal class SusiePluginProxy : IPluginProxy
     {
         private SusiePlugin _plugin;
+        private bool _disposed = false;
 
         internal SusiePluginProxy(SusiePlugin plugin)
         {
             _plugin = plugin;
         }
 
+        ~SusiePluginProxy()
+        {
+            Dispose(false);
+        }
+
         public void Dispose()
         {
-            _plugin.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // managed
+                }
+
+                // unmanaged
+                _plugin?.Dispose();
+                _plugin = null;
+
+                _disposed = true;
+            }
         }
 
         public bool IsSupported(FileLoader loader)

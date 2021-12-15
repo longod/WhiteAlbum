@@ -160,10 +160,10 @@ namespace WA
         private async Task<ImageDecoder> FindDecoderAsync(FileLoader loader)
         {
             // find decoder extension and header
-            // tood async
+            // todo async
 
             // 拡張子にマッピングされたデコーダーがヒットするかどうか
-            var ext = loader.Extension.ToLower();
+            var ext = loader.Extension;
             ImageDecoder instance = null;
             if (_imageDecoders.TryGetValue(ext, out instance))
             {
