@@ -54,9 +54,9 @@ namespace WA.Viewer.ViewModels
             ShowSettingsWindowCommand = new DelegateCommand(ShowSettingsWindow);
             ShowConfigCommand = new DelegateCommand(ShowConfigTest);
 
-            LoadedCommand = new DelegateCommand<RoutedEventArgs>(Loaded);
-            PreviewDragOverCommand = new DelegateCommand<DragEventArgs>(ImagePreviewDragOver);
-            DropCommand = new DelegateCommand<DragEventArgs>(ImageDrop);
+            LoadedCommand = new DelegateCommand<RoutedEventArgs>(LoadedEvent);
+            PreviewDragOverCommand = new DelegateCommand<DragEventArgs>(PreviewDragOverEvent);
+            DropCommand = new DelegateCommand<DragEventArgs>(DropEvent);
         }
 
 
@@ -72,7 +72,7 @@ namespace WA.Viewer.ViewModels
             }
         }
 
-        private void Loaded(RoutedEventArgs e)
+        private void LoadedEvent(RoutedEventArgs e)
         {
 #if true // todo only development
             var args = Environment.GetCommandLineArgs();
@@ -91,21 +91,17 @@ namespace WA.Viewer.ViewModels
 #endif
         }
 
-        private void ImagePreviewDragOver(DragEventArgs e)
+        private void PreviewDragOverEvent(DragEventArgs e)
         {
-            // マウスカーソルをコピーにする。
-            e.Effects = DragDropEffects.Copy;
-            // ドラッグされてきたものがFileDrop形式の場合だけ、このイベントを処理済みにする。
-            e.Handled = e.Data.GetDataPresent(DataFormats.FileDrop);
+            e.Effects = DragDropEffects.Move;
+            e.Handled = e.Data.GetDataPresent(DataFormats.FileDrop); // handled
         }
 
         // ImageのDropイベントに対する処理
-        private void ImageDrop(DragEventArgs e)
+        private async void DropEvent(DragEventArgs e)
         {
-            // ドロップされたものがFileDrop形式の場合は、各ファイルのパス文字列を文字列配列に格納する。
-            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            // 複数ドロップの可能性もあるので、今回は最初のファイルを選択して表示
-            //ViewImage.Value = files[0];
+            string[] paths = (string[])e.Data.GetData(DataFormats.FileDrop);
+            await _viewer.ProcessAsync(paths[0]);
         }
 
         private void Exit()

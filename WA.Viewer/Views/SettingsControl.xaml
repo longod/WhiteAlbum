@@ -17,6 +17,28 @@
         </Style>
     </prism:Dialog.WindowStyle>
     <Grid>
-        <TextBlock Text="test"/>
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TabControl Grid.Row="0">
+            <TabItem Header="General">
+                <TextBlock Text="TabItem1 Content" />
+            </TabItem>
+            <TabItem Header="Plug-in">
+                <TextBlock Text="TabItem1 Content" />
+            </TabItem>
+        </TabControl>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Content="Reset to default" Margin="10,10,10,10" Width="100" Height="24"/>
+            <Button Grid.Column="2" Content="OK" IsDefault="True" Margin="10,10,10,10" Width="100" Height="24"/>
+            <Button Grid.Column="3" Content="Cancel" Margin="10,10,10,10" Width="100" Height="24"/>
+        </Grid>
     </Grid>
 </UserControl>

@@ -4,6 +4,7 @@
         xmlns:bh="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:prism="http://prismlibrary.com/"
         prism:ViewModelLocator.AutoWireViewModel="True"
+        x:Name="mainWindow"
         Title="{Binding Title.Value}" Width="800" Height="600"
         AllowDrop="True">
     <Window.ContextMenu>

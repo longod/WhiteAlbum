@@ -6,7 +6,7 @@
 extern "C" {
 #endif // __cplusplus
 
-    int GetPluginInfo(int infono, LPSTR buf, int buflen) {
+    int SPI_CALL GetPluginInfo(int infono, LPSTR buf, int buflen) {
         switch (infono)
         {
         case 0: // plugin version
@@ -49,18 +49,20 @@ extern "C" {
         }
         return 0;
     }
-    int IsSupported(LPSTR filename, DWORD dw) {
+
+    int SPI_CALL IsSupported(LPSTR filename, DWORD dw) {
         return 1;
     }
 
-    int ConfigurationDlg(HWND parent, int fnc) {
+    int SPI_CALL ConfigurationDlg(HWND parent, int fnc) {
         return 0;
     }
 
-    int GetPictureInfo(LPSTR buf, long len, unsigned int flag, PictureInfo* lpInfo) {
+    int SPI_CALL GetPictureInfo(LPSTR buf, long len, unsigned int flag, PictureInfo* lpInfo) {
         return 0;
     }
-    int GetPicture(LPSTR buf, long len, unsigned int flag, HANDLE* pHBInfo, HANDLE* pHBm,
+
+    int SPI_CALL GetPicture(LPSTR buf, long len, unsigned int flag, HANDLE* pHBInfo, HANDLE* pHBm,
         FARPROC lpPrgressCallback, long lData) {
 
         ((PrgressCallback)lpPrgressCallback)(0, 1, lData);
@@ -87,20 +89,21 @@ extern "C" {
 
         return 0;
     }
-    int GetPreview(LPSTR buf, long len, unsigned int flag, HANDLE* pHBInfo, HANDLE* pHBm,
+
+    int SPI_CALL GetPreview(LPSTR buf, long len, unsigned int flag, HANDLE* pHBInfo, HANDLE* pHBm,
         FARPROC lpPrgressCallback, long lData) {
         return 0;
     }
 
-    int GetArchiveInfo(LPSTR buf, long len, unsigned int flag, HLOCAL* lphInf) {
+    int SPI_CALL GetArchiveInfo(LPSTR buf, long len, unsigned int flag, HLOCAL* lphInf) {
         return 0;
     }
 
-    int GetFileInfo(LPSTR buf, long len, LPSTR filename, unsigned int flag, fileInfo* lpInfo) {
+    int SPI_CALL GetFileInfo(LPSTR buf, long len, LPSTR filename, unsigned int flag, FileInfo* lpInfo) {
         return 0;
     }
 
-    int GetFile(LPSTR src, long len, LPSTR dest, unsigned int flag, FARPROC prgressCallback, long lData) {
+    int SPI_CALL GetFile(LPSTR src, long len, LPSTR dest, unsigned int flag, FARPROC prgressCallback, long lData) {
         return 0;
     }
 

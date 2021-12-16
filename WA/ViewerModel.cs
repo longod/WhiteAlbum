@@ -116,6 +116,12 @@ namespace WA
             }
         }
 
+        public async Task ProcessAsync(string path)
+        {
+            LogicalPath = path;
+            await ProcessAsync();
+        }
+
         public async Task ProcessAsync()
         {
             // load
