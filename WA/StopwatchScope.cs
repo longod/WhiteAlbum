@@ -2,16 +2,16 @@
 
 namespace WA
 {
-    using Microsoft.Extensions.Logging;
     using System;
     using System.Diagnostics;
     using ZLogger;
+    using Microsoft.Extensions.Logging;
 
     public struct StopwatchScope : IDisposable
     {
+        private readonly ILogger _logger;
         private Stopwatch _sw;
         private string _marker;
-        private readonly ILogger _logger;
 
         public StopwatchScope(string marker)
         {

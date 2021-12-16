@@ -24,5 +24,24 @@ namespace WA.Blank
         {
             InitializeComponent();
         }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+#if true // todo only development
+            var args = Environment.GetCommandLineArgs();
+            // include self dll name
+            if (args.Length >= 2)
+            {
+                if (args[1] == "-k")
+                {
+                    System.Diagnostics.Process.GetCurrentProcess().Kill(); // force kill
+                }
+                else if (args[1] == "-e")
+                {
+                    Application.Current.Shutdown();
+                }
+            }
+#endif
+        }
     }
 }

@@ -32,6 +32,7 @@
     <OutputPath>..\Bin\App\x86\Release</OutputPath>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
     <PackageReference Include="Prism.DryIoc" Version="8.0.0.1909" />
     <PackageReference Include="ReactiveProperty" Version="8.0.3" />
   </ItemGroup>

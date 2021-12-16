@@ -7,6 +7,8 @@
     using System.Linq;
     using System.Diagnostics.CodeAnalysis;
     using System.Threading.Tasks;
+    using Microsoft.Extensions.Logging;
+    using ZLogger;
 
     public class PluginManager : IDisposable
     {
@@ -21,6 +23,7 @@
         private List<IPluginProxy> _loadedDecoder = new List<IPluginProxy>();
 
         private Susie.StringConverter _stringConverter;
+        private readonly ILogger _logger;
 
         ~PluginManager()
         {
@@ -28,7 +31,7 @@
         }
 
         // 主キー重複の場合、タイムスタンプを次に優先する可能性もある
-        private class SameNameFileInfoEQ : IEqualityComparer<FileInfo>
+        private class SameNameFileInfoEqualityComparer : IEqualityComparer<FileInfo>
         {
             public bool Equals([AllowNull] FileInfo x, [AllowNull] FileInfo y)
             {
@@ -41,8 +44,9 @@
             }
         }
 
-        public PluginManager(AppSettings settings, Susie.StringConverter stringConverter)
+        public PluginManager(AppSettings settings, Susie.StringConverter stringConverter, ILogger logger)
         {
+            _logger = logger;
             _stringConverter = stringConverter;
             _pluginDirectories = settings.PluginDirectories;
         }
@@ -63,13 +67,13 @@
 
             await Task.Run(() =>
             {
-                using (new StopwatchScope("FindPlugins"))
+                using (new StopwatchScope("FindPlugins", _logger))
                 {
                     _pluginPaths = EnumeratePlugins().ToArray();
                 }
-            });
 
-            System.Diagnostics.Trace.WriteLine($"find plugins: {_pluginPaths.Length}");
+                _logger.ZLogInformation("Find plugin count: {0}", _pluginPaths.Length);
+            });
         }
 
         public void ShowConfigTest(IntPtr hWnd)
@@ -93,7 +97,7 @@
         {
             await Task.Run(() =>
             {
-                using (new StopwatchScope("LoadAllPlugins"))
+                using (new StopwatchScope("LoadAllPlugins", _logger))
                 {
 
                     foreach (var path in _pluginPaths)
@@ -106,7 +110,7 @@
                         catch (DllNotFoundException e)
                         {
                             // 多分 dependency dllが読めていない
-                            System.Diagnostics.Trace.WriteLine(e.Message);
+                            _logger.ZLogError(e, $"Failed to load plugin: {path}");
                             decoder?.Dispose();
                             decoder = null;
                         }
@@ -145,7 +149,7 @@
 
         internal async Task<IPluginProxy> ResolveAsync(FileLoader loader/*, bool enumerateAll = false*/)
         {
-            using (new StopwatchScope("ResolveAsync"))
+            using (new StopwatchScope("ResolveAsync", _logger))
             {
                 // fixme test load all plugins (not on demand)
                 await FindAllPlugins();

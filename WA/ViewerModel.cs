@@ -16,10 +16,6 @@ namespace WA
     // {
     // }
 
-    // interface IFileLoader
-    // {
-    // }
-
     // パス（ファイル、ディレクトリ、アーカイブ）を与えるとそれぞれに応じた処理をする
     // class FileSystem
     // {
@@ -66,6 +62,7 @@ namespace WA
                     {
                         Path = args[0];
                     }
+
                     if (args.Length > 1)
                     {
                         VirtualPath = args[1];
@@ -85,11 +82,10 @@ namespace WA
         // x86 dllを読めるようにしないといけない 現実的にはx86アプリにする…x64がいいんだけれど
         // 一応、out-of-process com serverでいける https://qiita.com/mima_ita/items/57d7c1101543e214b1d6
 
-        // todo replace array to span or memory
-
         public ViewerModel(Args args, AppSettings settings, PluginManager pluginManager, ILogger logger)
         {
             _logger = logger;
+            _pluginManager = pluginManager;
             using (new StopwatchScope("ViewerModel", _logger))
             {
                 if (args != null)
@@ -103,8 +99,6 @@ namespace WA
                     }
                 }
             }
-
-            _pluginManager = pluginManager;
         }
 
         private BitmapSource _image;
@@ -132,7 +126,7 @@ namespace WA
                 // キャッシュとか前後領域の先読みストリーミングとか色々あるけれど、最小構成から
 
                 // ひとまずフルオンメモリー
-                using (new StopwatchScope("Process File Async"))
+                using (new StopwatchScope("Process File Async", _logger))
                 {
                     using (var loader = new FileLoader(LogicalPath, Susie.API.Constant.MinFileSize))
                     {
