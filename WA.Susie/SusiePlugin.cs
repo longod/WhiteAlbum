@@ -21,7 +21,7 @@ namespace WA.Susie
             ExportFilter, // 存在しない？
         }
 
-        private enum PluginTarget
+        public enum PluginTarget
         {
             Normal, // 恐らく事実上 ImportFilter と固定
             MultiPicture, // 恐らく事実上 ArchiveExtractor と固定
@@ -49,13 +49,15 @@ namespace WA.Susie
 
         private IntPtr _handle;
         private bool _disposed = false;
-        private int _version = 0;
-        private PluginTarget _pluginTarget;
         private string _pluginName;
         private Function _func;
         private List<Tuple<string, string>> _fileFormats;
 
+        public int Version { get; private set; }
+
         public PluginType Type { get; private set; }
+
+        public PluginTarget Target { get; private set; }
 
         private static int AlwaysContinueProgressCallback(int nNum, int nDenom, int lData)
         {
@@ -528,7 +530,7 @@ namespace WA.Susie
 
             // ascii number 0 to 9
             // sjisだが二桁のascii数字なので、そのままオフセットして求める
-            _version = ((buf[0] - 0x30) * 10) + (buf[1] - 0x30);
+            Version = ((buf[0] - 0x30) * 10) + (buf[1] - 0x30);
 
             // ascii alphabet A to Z
             // sjisだが、ascii範囲内なので、そのままキャストして判別する
@@ -550,20 +552,20 @@ namespace WA.Susie
             switch ((char)buf[3])
             {
                 case 'N':
-                    _pluginTarget = PluginTarget.Normal;
+                    Target = PluginTarget.Normal;
                     break;
                 case 'M':
-                    _pluginTarget = PluginTarget.MultiPicture;
+                    Target = PluginTarget.MultiPicture;
                     break;
                 default:
                     throw new Exception("failed to get plugin version [3]");
             }
 
-            if (Type == PluginType.ImportFilter && _pluginTarget == PluginTarget.Normal)
+            if (Type == PluginType.ImportFilter && Target == PluginTarget.Normal)
             {
                 // 00IN plugin
             }
-            else if (Type == PluginType.ArchiveExtractor && _pluginTarget == PluginTarget.MultiPicture)
+            else if (Type == PluginType.ArchiveExtractor && Target == PluginTarget.MultiPicture)
             {
                 // 00AM plugin
             }

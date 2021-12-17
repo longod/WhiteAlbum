@@ -1,7 +1,6 @@
 ﻿// Susie 32bit Plug-in header
 #ifndef SUSIE_PLUGIN_API_HEADER_
 #define SUSIE_PLUGIN_API_HEADER_
-#pragma once
 
 #ifndef NOMINMAX
 #define NOMINMAX

@@ -42,6 +42,8 @@ namespace WA
 
     public class ViewerModel : INotifyPropertyChanged
     {
+        // fixme コマンドラインだけならviewer model専用のargsは不要,
+        // viewmodelでcommandlineを受け取って processにそのまま渡せばよい
         public class Args
         {
             // filesystem path
@@ -70,7 +72,6 @@ namespace WA
                 }
             }
         }
-
 
         // filesystem path
         public string LogicalPath { get; set; }

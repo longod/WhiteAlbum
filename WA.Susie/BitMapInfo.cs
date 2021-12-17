@@ -23,5 +23,22 @@ namespace WA.Susie
         public readonly UInt32 biClrImportant; // DWORD
     }
 
+    // https://docs.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-rgbquad
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    public readonly struct RGBQuad
+    {
+        public readonly Byte rgbBlue;
+        public readonly Byte rgbGreen;
+        public readonly Byte rgbRed;
+        public readonly Byte rgbReserved;
+    }
+
+    // https://docs.microsoft.com/ja-jp/windows/win32/api/wingdi/ns-wingdi-bitmapinfo
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    public readonly struct BitMapInfo
+    {
+        public readonly BitMapInfoHeader bmiHeader;
+        public readonly RGBQuad[] bmiColors;
+    }
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 }

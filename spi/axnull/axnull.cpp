@@ -11,8 +11,8 @@ extern "C" {
         {
         case 0: // plugin version
             if (buflen >= 4) {
-                buf[0] = '0';
-                buf[1] = '0';
+                buf[0] = '3';
+                buf[1] = '4';
                 buf[2] = 'A';
                 buf[3] = 'M';
                 return 4;

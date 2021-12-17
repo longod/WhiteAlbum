@@ -15,6 +15,12 @@ namespace WA.Test
         }
 
         [Fact]
+        public void TestRGBQuadSize()
+        {
+            Assert.Equal(4, Marshal.SizeOf<Susie.RGBQuad>());
+        }
+
+        [Fact]
         public void TestPictureInfoSize()
         {
             Assert.Equal(26, Marshal.SizeOf<Susie.API.PictureInfo>());
