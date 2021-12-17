@@ -175,6 +175,7 @@ namespace WA.Susie
 
                         // gettin palette
                         // biClrUsed は適切に設定されていないので自力で判定する
+                        // TODO validate header
                         var bitCount = info.bmiHeader.biBitCount;
                         if (bitCount < 24)
                         {

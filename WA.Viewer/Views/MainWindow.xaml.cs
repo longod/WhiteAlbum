@@ -38,40 +38,5 @@ namespace WA.Viewer.Views
 
             image.RenderTransform = new MatrixTransform(matrix);
         }
-
-        Point _start;
-        private void image_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            image.CaptureMouse();
-            _start = e.GetPosition(border);
-        }
-
-        private void image_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            image.ReleaseMouseCapture();
-
-            // reset
-            var matrix = image.RenderTransform.Value;
-            matrix.M11 = 1.0;
-            matrix.M12 = 0.0;
-            matrix.M21 = 0.0;
-            matrix.M22 = 1.0;
-            matrix.OffsetX = 0.0;
-            matrix.OffsetY = 0.0;
-            image.RenderTransform = new MatrixTransform(matrix);
-        }
-
-        private void image_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            if (image.IsMouseCaptured)
-            {
-                var matrix = image.RenderTransform.Value;
-
-                Vector v = _start - e.GetPosition(border);
-                matrix.Translate(-v.X, -v.Y);
-                image.RenderTransform = new MatrixTransform(matrix);
-                _start = e.GetPosition(border);
-            }
-        }
     }
 }

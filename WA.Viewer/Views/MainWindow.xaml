@@ -26,10 +26,22 @@
         <bh:EventTrigger EventName="Drop">
             <prism:InvokeCommandAction Command="{Binding Path=DropCommand}"/>
         </bh:EventTrigger>
+        <bh:EventTrigger EventName="MouseDown">
+            <prism:InvokeCommandAction Command="{Binding Path=MouseDownCommand}"/>
+        </bh:EventTrigger>
+        <bh:EventTrigger EventName="MouseMove">
+            <prism:InvokeCommandAction Command="{Binding Path=MouseMoveCommand}"/>
+        </bh:EventTrigger>
+        <bh:EventTrigger EventName="MouseUp">
+            <prism:InvokeCommandAction Command="{Binding Path=MouseUpCommand}"/>
+        </bh:EventTrigger>
+        <bh:EventTrigger EventName="MouseWheel">
+            <prism:InvokeCommandAction Command="{Binding Path=MouseWheelCommand}"/>
+        </bh:EventTrigger>
     </bh:Interaction.Triggers>
     <Grid>
-        <Border x:Name="border" ClipToBounds="True">
-            <Image x:Name="image" Source="{Binding Path=Image.Value}" MouseWheel="image_MouseWheel" MouseLeftButtonDown="image_MouseLeftButtonDown" MouseLeftButtonUp="image_MouseLeftButtonUp" MouseMove="image_MouseMove" />
+        <Border x:Name="border" ClipToBounds="False">
+            <Image x:Name="image" Source="{Binding Path=Image.Value}"  RenderTransform="{Binding Path=ImageTransform.Value, Mode=OneWay}"/>
         </Border>
         <!--<ContentControl prism:RegionManager.RegionName="ContentRegion" />-->
     </Grid>
