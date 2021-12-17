@@ -137,7 +137,7 @@ namespace WA.Susie
             }
         }
 
-        public bool GetPicture(ReadOnlyMemory<byte> binary, out byte[] image, out BitMapInfoHeader info)
+        public bool GetPicture(ReadOnlyMemory<byte> binary, out byte[] image, out BitMapInfo info)
         {
             if (Type != PluginType.ImportFilter)
             {
@@ -171,7 +171,23 @@ namespace WA.Susie
                         var ptr = (BitMapInfoHeader*)NativeMethods.LocalLock(pHBInfo);
 
                         // copy to managed memory
-                        Unsafe.Copy(ref info, ptr);
+                        Unsafe.Copy(ref info.bmiHeader, ptr);
+
+                        // gettin palette
+                        // biClrUsed は適切に設定されていないので自力で判定する
+                        var bitCount = info.bmiHeader.biBitCount;
+                        if (bitCount < 24)
+                        {
+                            var clrUsed = 1 << bitCount;
+                            info.bmiColors = new RGBQuad[clrUsed];
+                            Span<RGBQuad> palette = info.bmiColors.AsSpan();
+
+                            fixed (void* dest = palette)
+                            {
+                                var src = ptr + 1; // next
+                                Unsafe.CopyBlock(dest, src, (uint)(sizeof(RGBQuad) * palette.Length));
+                            }
+                        }
 
                         NativeMethods.LocalUnlock(pHBInfo);
                     }
@@ -181,7 +197,7 @@ namespace WA.Susie
                         var ptr = NativeMethods.LocalLock(pHBm);
 
                         // copy to managed memory
-                        image = new byte[info.biSizeImage];
+                        image = new byte[info.bmiHeader.biSizeImage];
                         fixed (void* p = image)
                         {
                             Unsafe.CopyBlock(p, ptr, (uint)image.Length);
@@ -247,7 +263,7 @@ namespace WA.Susie
             }
         }
 
-        public bool GetPreview(ReadOnlyMemory<byte> binary, out byte[] image, out BitMapInfoHeader info)
+        public bool GetPreview(ReadOnlyMemory<byte> binary, out byte[] image, out BitMapInfo info)
         {
             if (Type != PluginType.ImportFilter)
             {
@@ -284,6 +300,7 @@ namespace WA.Susie
                     result = _func.GetPreview(handle.Pointer, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
                 }
 
+                // todo share GetPicture
                 if (result == 0)
                 {
                     if (pHBInfo != null)
@@ -291,7 +308,23 @@ namespace WA.Susie
                         var ptr = (BitMapInfoHeader*)NativeMethods.LocalLock(pHBInfo);
 
                         // copy to managed memory
-                        Unsafe.Copy(ref info, ptr);
+                        Unsafe.Copy(ref info.bmiHeader, ptr);
+
+                        // gettin palette
+                        // biClrUsed は適切に設定されていないので自力で判定する
+                        var bitCount = info.bmiHeader.biBitCount;
+                        if (bitCount < 24)
+                        {
+                            var clrUsed = 1 << bitCount;
+                            info.bmiColors = new RGBQuad[clrUsed];
+                            Span<RGBQuad> palette = info.bmiColors.AsSpan();
+
+                            fixed (void* dest = palette)
+                            {
+                                var src = ptr + 1; // next
+                                Unsafe.CopyBlock(dest, src, (uint)(sizeof(RGBQuad) * palette.Length));
+                            }
+                        }
 
                         NativeMethods.LocalUnlock(pHBInfo);
                     }
@@ -301,7 +334,7 @@ namespace WA.Susie
                         var ptr = NativeMethods.LocalLock(pHBm);
 
                         // copy to managed memory
-                        image = new byte[info.biSizeImage];
+                        image = new byte[info.bmiHeader.biSizeImage];
                         fixed (void* p = image)
                         {
                             Unsafe.CopyBlock(p, ptr, (uint)image.Length);

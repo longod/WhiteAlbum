@@ -3,6 +3,8 @@
 namespace WA
 {
     using System;
+    using System.Linq;
+    using System.Windows.Media;
     using WA.Susie;
 
     internal class SusiePluginProxy : IPluginProxy
@@ -75,12 +77,12 @@ namespace WA
                 // index colorの場合、ファイルに埋まっているpaletteは、どこからとってきてる？
                 // consider biCompression?
                 image = new DecodedImage();
-                image.Width = (uint)info.biWidth;
-                image.Height = (uint)info.biHeight;
+                image.Width = (uint)info.bmiHeader.biWidth;
+                image.Height = (uint)info.bmiHeader.biHeight;
                 image.DepthOrArray = 1;
                 image.MipLevels = 1;
-                image.BitsPerPixel = info.biBitCount;
-                switch (info.biBitCount)
+                image.BitsPerPixel = info.bmiHeader.biBitCount;
+                switch (info.bmiHeader.biBitCount)
                 {
                     case 24:
                         image.Format = DecodedImage.PixelFormat.BGR;
@@ -92,13 +94,17 @@ namespace WA
                         image.Format = DecodedImage.PixelFormat.Index;
                         break;
                     default:
-                        throw new NotSupportedException($"info.biBitCount: {info.biBitCount}");
+                        throw new NotSupportedException($"info.biBitCount: {info.bmiHeader.biBitCount}");
                 }
 
                 image.Dimension = DecodedImage.ImageDimension.Texture2D;
                 image.Orientation = DecodedImage.ImageOrientation.BottomLeft;
                 image.Rotation = DecodedImage.ImageRotation.None;
                 image.Binary = binary;
+                if (info.bmiColors != null)
+                {
+                    image.Palette = info.bmiColors.Select(x => Color.FromRgb(x.rgbRed, x.rgbGreen, x.rgbBlue)).ToArray();
+                }
                 return true;
             }
 

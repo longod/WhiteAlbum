@@ -33,12 +33,13 @@ namespace WA.Susie
         public readonly Byte rgbReserved;
     }
 
+    // todo readonly
     // https://docs.microsoft.com/ja-jp/windows/win32/api/wingdi/ns-wingdi-bitmapinfo
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
-    public readonly struct BitMapInfo
+    public struct BitMapInfo
     {
-        public readonly BitMapInfoHeader bmiHeader;
-        public readonly RGBQuad[] bmiColors;
+        public BitMapInfoHeader bmiHeader;
+        public RGBQuad[] bmiColors;
     }
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 }

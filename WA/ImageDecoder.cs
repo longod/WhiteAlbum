@@ -139,6 +139,12 @@ namespace WA
 
         private static BitmapPalette GetBitmapPalette(DecodedImage image)
         {
+            if (image.Palette != null)
+            {
+                return new BitmapPalette(image.Palette);
+            }
+
+            // fallback
             switch (image.Format)
             {
                 case DecodedImage.PixelFormat.Index:
