@@ -58,6 +58,12 @@ namespace WA.Susie
                 return string.Empty;
             }
 
+            // contain zero term?
+            if (src[src.Length - 1] == 0)
+            {
+                src = src.Slice(0, src.Length - 1);
+            }
+
             // 入力の寿命が不明なので、キャッシュの場合コピーコストが生じる
             bool flush = false;
             var count = _decoder.GetCharCount(src, false);

@@ -6,6 +6,7 @@
         prism:ViewModelLocator.AutoWireViewModel="True"
         x:Name="mainWindow"
         Title="{Binding Title.Value}" Width="800" Height="600"
+        SizeToContent="WidthAndHeight"
         AllowDrop="True">
     <Window.ContextMenu>
         <ContextMenu>
@@ -38,10 +39,13 @@
         <bh:EventTrigger EventName="MouseWheel">
             <prism:InvokeCommandAction Command="{Binding Path=MouseWheelCommand}"/>
         </bh:EventTrigger>
+        <bh:EventTrigger EventName="MouseDoubleClick">
+            <prism:InvokeCommandAction Command="{Binding Path=MouseDoubleClickCommand}"/>
+        </bh:EventTrigger>
     </bh:Interaction.Triggers>
     <Grid>
         <Border x:Name="border" ClipToBounds="False">
-            <Image x:Name="image" Source="{Binding Path=Image.Value}"  RenderTransform="{Binding Path=ImageTransform.Value, Mode=OneWay}"/>
+            <Image x:Name="image" Stretch="None" Source="{Binding Path=Image.Value}"  RenderTransform="{Binding Path=ImageTransform.Value, Mode=OneWay}"/>
         </Border>
         <!--<ContentControl prism:RegionManager.RegionName="ContentRegion" />-->
     </Grid>

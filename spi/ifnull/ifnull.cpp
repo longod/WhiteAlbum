@@ -19,7 +19,7 @@ extern "C" {
             }
         case 1: // plugin name
         {
-            const char pluginName[] = "null plugin";
+            const char pluginName[] = "ifnull";
             const int count = ARRAYSIZE(pluginName); // not byte-size but equals
             if (buflen >= count) {
                 memcpy(buf, pluginName, count);
@@ -28,7 +28,7 @@ extern "C" {
         }
         case 2: // plugin extension
         {
-            const char ext[] = "*.*";
+            const char ext[] = "*.null";
             const int count = ARRAYSIZE(ext); // not byte-size but equals
             if (buflen >= count) {
                 memcpy(buf, ext, count);
@@ -37,7 +37,7 @@ extern "C" {
         }
         case 3: // plugin format
         {
-            const char format[] = "all";
+            const char format[] = "null";
             const int count = ARRAYSIZE(format); // not byte-size but equals
             if (buflen >= count) {
                 memcpy(buf, format, count);

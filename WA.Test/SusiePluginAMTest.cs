@@ -5,46 +5,50 @@ using Xunit;
 
 namespace WA.Test
 {
-    public class SusiePluginImageFilterTest : IDisposable
+    public class SusiePluginAMTest : IDisposable
     {
-        private Susie.SusiePlugin _susie;
+        private Susie.SusiePlugin _plugin;
 
-        public SusiePluginImageFilterTest()
+        public SusiePluginAMTest()
         {
             //Environment.CurrentDirectory = AppContext.BaseDirectory;
             // ここでこけるかどうかのテストをどうする
             // fixme dotnet testで実行した場合に失敗してしまう
 #if DEBUG
-            string path = @"..\..\..\..\..\Bin\spi\Win32\Debug\ifnull.spi";
+            string path = @"..\..\..\..\..\Bin\spi\Win32\Debug\axnull.spi";
 #else
-            string path = @"..\..\..\..\..\Bin\spi\Win32\Release\ifnull.spi";
+            string path = @"..\..\..\..\..\Bin\spi\Win32\Release\axnull.spi";
 #endif
-            _susie = new Susie.SusiePlugin(path, Susie.StringConverter.SJIS);
+            _plugin = new Susie.SusiePlugin(path, Susie.StringConverter.SJIS);
         }
 
         public void Dispose()
         {
-            _susie?.Dispose();
+            _plugin?.Dispose();
         }
 
         [Fact]
         public void TestPluginVersion()
         {
-            Assert.Equal(12, _susie.Version);
-            Assert.Equal(Susie.SusiePlugin.PluginType.ImportFilter, _susie.Type);
-            Assert.Equal(Susie.SusiePlugin.PluginTarget.Normal, _susie.Target);
+            Assert.Equal(34, _plugin.Version);
+            Assert.Equal(Susie.SusiePlugin.PluginType.ArchiveExtractor, _plugin.Type);
+            Assert.Equal(Susie.SusiePlugin.PluginTarget.MultiPicture, _plugin.Target);
         }
 
         [Fact]
         public void TestPluginName()
         {
-            Assert.True(false);
+            Assert.Equal("axnull", _plugin.Name);
         }
 
         [Fact]
         public void TestFileFormats()
         {
-            Assert.True(false);
+            foreach (var f in _plugin.FileFormats)
+            {
+                Assert.Equal("*.null", f.Item1);
+                Assert.Equal("null", f.Item2);
+            }
         }
 
         [Fact]
@@ -62,13 +66,19 @@ namespace WA.Test
         [Fact]
         public void TestGetPictureInfo()
         {
-            Assert.True(false);
+            Assert.Throws<InvalidOperationException>(() => _plugin.GetPictureInfo(null, out var infos));
         }
 
         [Fact]
         public void TestGetPicture()
         {
-            Assert.True(false);
+            Assert.Throws<InvalidOperationException>(() => _plugin.GetPicture(null, out var image, out var infos));
+        }
+
+        [Fact]
+        public void TestGetPreview()
+        {
+            Assert.Throws<InvalidOperationException>(() => _plugin.GetPreview(null, out var image, out var infos));
         }
 
         [Fact]

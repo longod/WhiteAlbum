@@ -23,6 +23,7 @@ namespace WA.Viewer.ViewModels
         private ViewerModel _viewer;
 
         private Point _movingOffset;
+        private Point _scalingPivot;
 
         private CompositeDisposable _disposable { get; } = new CompositeDisposable();
 
@@ -45,6 +46,7 @@ namespace WA.Viewer.ViewModels
         public DelegateCommand<MouseEventArgs> MouseMoveCommand { get; }
         public DelegateCommand<MouseButtonEventArgs> MouseUpCommand { get; }
         public DelegateCommand<MouseWheelEventArgs> MouseWheelCommand { get; }
+        public DelegateCommand<MouseButtonEventArgs> MouseDoubleClickCommand { get; }
 
         // test
         public DelegateCommand ShowConfigCommand { get; }
@@ -62,9 +64,9 @@ namespace WA.Viewer.ViewModels
             Image = _viewer.ObserveProperty(x => x.Image).ToReadOnlyReactivePropertySlim().AddTo(_disposable);
             ImageTransform = new ReactivePropertySlim<Transform>(MatrixTransform.Identity);
 
-            ExitCommand = new DelegateCommand(Exit);
-            ShowSettingsWindowCommand = new DelegateCommand(ShowSettingsWindow);
-            ShowConfigCommand = new DelegateCommand(ShowConfigTest);
+            ExitCommand = new DelegateCommand(ExitEvent);
+            ShowSettingsWindowCommand = new DelegateCommand(ShowSettingsWindowEvent);
+            ShowConfigCommand = new DelegateCommand(ShowConfigTestEvent);
 
             LoadedCommand = new DelegateCommand<RoutedEventArgs>(LoadedEvent);
             PreviewDragOverCommand = new DelegateCommand<DragEventArgs>(PreviewDragOverEvent);
@@ -74,6 +76,7 @@ namespace WA.Viewer.ViewModels
             MouseMoveCommand = new DelegateCommand<MouseEventArgs>(MouseMoveEvent);
             MouseUpCommand = new DelegateCommand<MouseButtonEventArgs>(MouseUpEvent);
             MouseWheelCommand = new DelegateCommand<MouseWheelEventArgs>(MouseWheelEvent);
+            MouseDoubleClickCommand = new DelegateCommand<MouseButtonEventArgs>(MouseDoubleClickEvent);
         }
 
         public void Dispose()
@@ -141,8 +144,51 @@ namespace WA.Viewer.ViewModels
 
         private void MouseWheelEvent(MouseWheelEventArgs e)
         {
-            System.Diagnostics.Trace.WriteLine("mouse wheel");
+            //System.Diagnostics.Trace.WriteLine("mouse wheel");
             // zoom ratioはintでもったほうがよさそう
+            var win = Window.GetWindow((DependencyObject)e.Source);
+            _scalingPivot = e.GetPosition(win);
+            var matrix = ImageTransform.Value.Value;
+            // scalingしてspaceをあわせないといけない
+            _scalingPivot.X -= matrix.OffsetX;
+            _scalingPivot.Y -= matrix.OffsetY;
+            //_scalingPivot = matrix.Transform(_scalingPivot);
+            System.Diagnostics.Trace.WriteLine("mouse wheel " + _scalingPivot);
+            const double scale = 1.2;
+            // 逆方向に回転させても、1, 2tick前回の挙動になるのは…
+            if (e.Delta > 0)
+            {
+                _scale *= 2;
+                // mag
+                Matrix s = Matrix.Identity;
+                s.ScaleAt(_scale, _scale, 0, 0);
+                //matrix.ScaleAtPrepend(scale, scale, _scalingPivot.X, _scalingPivot.Y);
+                matrix *= s;
+                //matrix = s * matrix;
+                System.Diagnostics.Trace.WriteLine("mouse wheel delta up" + e.Delta);
+            }
+            else
+            {
+                _scale *= 0.5;
+                Matrix s = Matrix.Identity;
+                s.ScaleAt(_scale, _scale, 0, 0);
+                matrix *= s;
+                // min
+                //matrix.ScaleAtPrepend(1.0 / scale, 1.0 / scale, _scalingPivot.X, _scalingPivot.Y);
+                //matrix = s * matrix;
+                System.Diagnostics.Trace.WriteLine("mouse wheel delta down" + e.Delta);
+            }
+            ImageTransform.Value = new MatrixTransform(matrix);
+        }
+        double _scale = 1;
+
+        private void MouseDoubleClickEvent(MouseButtonEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                // reset
+                ImageTransform.Value = new MatrixTransform(Matrix.Identity);
+            }
         }
 
         private void LoadedEvent(RoutedEventArgs e)
@@ -176,17 +222,17 @@ namespace WA.Viewer.ViewModels
             await _viewer.ProcessAsync(paths[0]);
         }
 
-        private void Exit()
+        private void ExitEvent()
         {
             Application.Current.Shutdown();
         }
 
-        private void ShowSettingsWindow()
+        private void ShowSettingsWindowEvent()
         {
             _dialogService.ShowDialog("SettingsWindow");
         }
 
-        private void ShowConfigTest()
+        private void ShowConfigTestEvent()
         {
             // fixme 必要悪
             // IValueProvider とかで取得して、view resourceにもたせてbindすればとれるか？

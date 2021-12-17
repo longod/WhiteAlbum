@@ -49,7 +49,7 @@ namespace WA.Susie
 
         private IntPtr _handle;
         private bool _disposed = false;
-        private string _pluginName;
+        private string _name;
         private Function _func;
         private List<Tuple<string, string>> _fileFormats;
 
@@ -58,6 +58,27 @@ namespace WA.Susie
         public PluginType Type { get; private set; }
 
         public PluginTarget Target { get; private set; }
+
+        public string Name
+        {
+            get
+            {
+                GetPluginName();
+                return _name;
+            }
+        }
+
+        public IEnumerable<Tuple<string, string>> FileFormats
+        {
+            get
+            {
+                GetFileFormats();
+                foreach (var f in _fileFormats)
+                {
+                    yield return f;
+                }
+            }
+        }
 
         private static int AlwaysContinueProgressCallback(int nNum, int nDenom, int lData)
         {
@@ -612,7 +633,7 @@ namespace WA.Susie
 
         private void GetPluginName()
         {
-            if (_pluginName != null)
+            if (_name != null)
             {
                 return;
             }
@@ -633,7 +654,7 @@ namespace WA.Susie
 
                 if (length > 0)
                 {
-                    _pluginName = _stringConverter.Decode(buf.Slice(0, length));
+                    _name = _stringConverter.Decode(buf.Slice(0, length));
                 }
                 else
                 {
