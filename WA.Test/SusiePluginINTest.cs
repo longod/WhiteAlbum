@@ -54,7 +54,10 @@ namespace WA.Test
         [Fact]
         public void TestIsSupported()
         {
-            Assert.True(false);
+            Assert.Throws<ArgumentException>(() => _plugin.IsSupported("file.null", null));
+            byte[] buff = new byte[Susie.API.Constant.MinFileSize];
+            Assert.ThrowsAny<Exception>(() => _plugin.IsSupported(null, buff));
+            Assert.True(_plugin.IsSupported("file.null", buff));
         }
 
         [Fact(Skip = "needs HWND")]

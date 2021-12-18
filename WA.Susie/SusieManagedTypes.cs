@@ -27,7 +27,7 @@ namespace WA.Susie
             {
                 // Spi_api.txt には Globalメモリーのハンドルと書いてあるが、実際の型は HGLOBAL ではなく、HLOCAL である。どっちだ？
                 var ptr = (byte*)NativeMethods.LocalLock(info->hInfo);
-                Info = stringConverter.DecodeWithZeroTerminate(ptr);
+                Info = stringConverter.DecodeWithZeroTerminateUnsafe(ptr);
                 NativeMethods.LocalUnlock(info->hInfo);
             }
             else

@@ -45,7 +45,7 @@ namespace WA.Susie
             internal API.GetFile GetFile;
         }
 
-        private readonly StringConverter _stringConverter = null;
+        private readonly StringConverter _stringConverter;
 
         private IntPtr _handle;
         private bool _disposed = false;
@@ -89,11 +89,7 @@ namespace WA.Susie
         {
             _stringConverter = stringConverter;
             _handle = NativeLibrary.Load(path);
-
             GetPluginVersion();
-
-            // GetPluginName();
-            // GetFileFormats();
         }
 
         ~SusiePlugin()

@@ -29,6 +29,11 @@ namespace WA.Susie
 
         public ReadOnlyMemory<byte> Encode(string text)
         {
+            if (string.IsNullOrEmpty(text))
+            {
+                return default;
+            }
+
             // fixme calling from multi thread. lock or concurrent
             if (_cache != null && _cache.TryGetValue(text, out var v))
             {
@@ -47,7 +52,7 @@ namespace WA.Susie
                 _encoder.Reset(); // flush
             }
 
-            _cache.Add(text, dest);
+            _cache?.Add(text, dest);
             return dest;
         }
 
@@ -84,11 +89,11 @@ namespace WA.Susie
                 }
             }
 
-            throw new Exception("failed to find zero-terminate.");
+            return string.Empty;
         }
 
         // 0終端が必ずあることを期待した危険なコード
-        internal unsafe string DecodeWithZeroTerminate(byte* src)
+        internal unsafe string DecodeWithZeroTerminateUnsafe(byte* src)
         {
             // search zero
             int count = 0;
