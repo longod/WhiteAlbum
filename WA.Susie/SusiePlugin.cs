@@ -63,8 +63,7 @@ namespace WA.Susie
         {
             get
             {
-                GetPluginName();
-                return _name;
+                return GetPluginName();
             }
         }
 
@@ -72,8 +71,8 @@ namespace WA.Susie
         {
             get
             {
-                GetFileFormats();
-                foreach (var f in _fileFormats)
+                var formats = GetFileFormats();
+                foreach (var f in formats)
                 {
                     yield return f;
                 }
@@ -569,11 +568,11 @@ namespace WA.Susie
             }
         }
 
-        private void GetPluginName()
+        private string GetPluginName()
         {
             if (_name != null)
             {
-                return;
+                return _name;
             }
 
             if (_func.GetPluginInfo == null)
@@ -601,14 +600,16 @@ namespace WA.Susie
                     throw new SusieException("Failed to get plugin name.");
                 }
             }
+
+            return _name;
         }
 
         // これで取得できるのは、open dialogに表示する用の拡張子であって、実際にサポートしているかどうかは別
-        private void GetFileFormats()
+        private List<Tuple<string, string>> GetFileFormats()
         {
             if (_fileFormats != null)
             {
-                return;
+                return _fileFormats;
             }
 
             if (_func.GetPluginInfo == null)
@@ -650,6 +651,8 @@ namespace WA.Susie
                     while (length > 0);
                 }
             }
+
+            return _fileFormats;
         }
 
         private unsafe bool PostProcessPicture(int result, void* pHBInfo, void* pHBm, ref byte[] image, ref BitMapInfo info)
