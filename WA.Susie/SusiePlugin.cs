@@ -105,9 +105,19 @@ namespace WA.Susie
 
         public bool IsSupported(string path, ReadOnlyMemory<byte> binary)
         {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                throw new ArgumentNullException("path must not be empty.");
+            }
+
+            if (binary.IsEmpty)
+            {
+                throw new ArgumentNullException("binary must not be empty.");
+            }
+
             if (binary.Length < API.Constant.MinFileSize)
             {
-                throw new ArgumentException($"binary.Length larger than {API.Constant.MinFileSize} (has {binary.Length}).");
+                throw new ArgumentException($"binary size larger than {API.Constant.MinFileSize} (has {binary.Length}).");
             }
 
             if (_func.IsSupported == null)
@@ -133,6 +143,11 @@ namespace WA.Susie
 
         public bool ConfigurationDlg(IntPtr hWnd)
         {
+            if (hWnd == default)
+            {
+                throw new ArgumentException("hWnd must be valid.");
+            }
+
             if (_func.ConfigurationDlg == null)
             {
                 try
@@ -159,6 +174,11 @@ namespace WA.Susie
             if (Type != PluginType.ImportFilter)
             {
                 throw new InvalidOperationException();
+            }
+
+            if (binary.IsEmpty)
+            {
+                throw new ArgumentNullException("binary must not be empty.");
             }
 
             if (_func.GetPicture == null)
@@ -246,6 +266,11 @@ namespace WA.Susie
                 throw new InvalidOperationException();
             }
 
+            if (binary.IsEmpty)
+            {
+                throw new ArgumentNullException("binary must not be empty.");
+            }
+
             if (_func.ConfigurationDlg == null)
             {
                 _func.GetPictureInfo = GetFunction<API.GetPictureInfo>(_handle);
@@ -286,6 +311,11 @@ namespace WA.Susie
             if (Type != PluginType.ImportFilter)
             {
                 throw new InvalidOperationException();
+            }
+
+            if (binary.IsEmpty)
+            {
+                throw new ArgumentNullException("binary must not be empty.");
             }
 
             if (_func.GetPreview == null)
@@ -383,6 +413,11 @@ namespace WA.Susie
                 throw new InvalidOperationException();
             }
 
+            if (binary.IsEmpty)
+            {
+                throw new ArgumentNullException("binary must not be empty.");
+            }
+
             if (_func.GetArchiveInfo == null)
             {
                 _func.GetArchiveInfo = GetFunction<API.GetArchiveInfo>(_handle);
@@ -442,6 +477,16 @@ namespace WA.Susie
                 throw new InvalidOperationException();
             }
 
+            if (binary.IsEmpty)
+            {
+                throw new ArgumentNullException("binary must not be empty.");
+            }
+
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                throw new ArgumentNullException("path must not be empty.");
+            }
+
             if (_func.GetFileInfo == null)
             {
                 _func.GetFileInfo = GetFunction<API.GetFileInfo>(_handle);
@@ -480,6 +525,11 @@ namespace WA.Susie
             if (Type != PluginType.ArchiveExtractor)
             {
                 throw new InvalidOperationException();
+            }
+
+            if (binary.IsEmpty)
+            {
+                throw new ArgumentNullException("binary must not be empty.");
             }
 
             if (_func.GetFile == null)
@@ -574,7 +624,7 @@ namespace WA.Susie
                     // 4byts固定のはずだが、終端を含めてさらに余分に返すケースがある, 6 byteまで確認
                     if (length < 4)
                     {
-                        throw new Exception("failed to get plugin info");
+                        throw new SusieException("Failed to get plugin info.");
                     }
                 }
             }
@@ -597,7 +647,7 @@ namespace WA.Susie
                     Type = PluginType.ArchiveExtractor;
                     break;
                 default:
-                    throw new Exception("failed to get plugin version [2]");
+                    throw new SusieException($"Failed to get plugin version: {buf[2]}.");
             }
 
             switch ((char)buf[3])
@@ -609,7 +659,7 @@ namespace WA.Susie
                     Target = PluginTarget.MultiPicture;
                     break;
                 default:
-                    throw new Exception("failed to get plugin version [3]");
+                    throw new SusieException($"Failed to get plugin version: {buf[3]}");
             }
 
             if (Type == PluginType.ImportFilter && Target == PluginTarget.Normal)
@@ -656,7 +706,7 @@ namespace WA.Susie
                 {
                     // Not Implemented
                     // _pluginName = "Not Implemented";
-                    throw new Exception("failed to get plugin name");
+                    throw new SusieException("Failed to get plugin name.");
                 }
             }
         }
@@ -699,7 +749,7 @@ namespace WA.Susie
                             else
                             {
                                 // ペアで存在するはず
-                                throw new Exception("failed to get plugin file format name");
+                                throw new SusieException($"Failed to get plugin file format with {ext}");
                             }
 
                             offset += 2;

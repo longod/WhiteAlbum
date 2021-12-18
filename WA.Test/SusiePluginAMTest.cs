@@ -54,13 +54,23 @@ namespace WA.Test
         [Fact]
         public void TestIsSupported()
         {
-            Assert.True(false);
+            byte[] buff = new byte[Susie.API.Constant.MinFileSize];
+            Assert.True(_plugin.IsSupported("file.null", buff));
         }
 
-        [Fact(Skip = "needs HWND")]
+        [Fact]
+        public void TestIsSupportedFailure()
+        {
+            Assert.Throws<ArgumentNullException>(() => _plugin.IsSupported("file.null", null));
+            byte[] buff = new byte[Susie.API.Constant.MinFileSize];
+            Assert.Throws<ArgumentNullException>(() => _plugin.IsSupported(null, buff));
+        }
+
+        [Fact]
         public void TestConfigurationDlg()
         {
-            Assert.True(false);
+            // need hWND
+            Assert.Throws<ArgumentException>(() => _plugin.ConfigurationDlg(default));
         }
 
         [Fact]
@@ -84,19 +94,42 @@ namespace WA.Test
         [Fact]
         public void TestGetArchiveInfo()
         {
-            Assert.True(false);
+            byte[] buff = new byte[Susie.API.Constant.MinFileSize];
+            Assert.True(_plugin.GetArchiveInfo(buff, out var infos));
+        }
+
+        [Fact]
+        public void TestGetArchiveInfoFailure()
+        {
+            Assert.Throws<ArgumentNullException>(() => _plugin.GetArchiveInfo(null, out var files));
         }
 
         [Fact]
         public void TestGetFileInfo()
         {
-            Assert.True(false);
+            byte[] buff = new byte[Susie.API.Constant.MinFileSize];
+            Assert.True(_plugin.GetFileInfo(buff, "file", out var info));
+        }
+
+        [Fact]
+        public void TestGetFileInfoFailure()
+        {
+            Assert.Throws<ArgumentNullException>(() => _plugin.GetFileInfo(null, "file", out var info));
+            byte[] buff = new byte[Susie.API.Constant.MinFileSize];
+            Assert.Throws<ArgumentNullException>(() => _plugin.GetFileInfo(buff, null, out var info));
         }
 
         [Fact]
         public void TestGetFile()
         {
-            Assert.True(false);
+            byte[] buff = new byte[Susie.API.Constant.MinFileSize];
+            Assert.True(_plugin.GetFile(buff, default, out var file));
+        }
+
+        [Fact]
+        public void TestGetFileFailure()
+        {
+            Assert.Throws<ArgumentNullException>(() => _plugin.GetFile(null, default, out var file));
         }
 
     }

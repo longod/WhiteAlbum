@@ -9,11 +9,11 @@ namespace WA.Test
 
     public class StringConverterTest
     {
-        public class TestDataClass : IEnumerable<object[]>
+        class TestDataProvider : IEnumerable<object[]>
         {
             List<object[]> _testData = new List<object[]>();
 
-            public TestDataClass()
+            public TestDataProvider()
             {
                 _testData.Add(new object[] { new StringConverter("shift-jis") }); // with cache
                 _testData.Add(new object[] { new StringConverter("shift-jis", 0) }); // without cache
@@ -25,7 +25,7 @@ namespace WA.Test
         }
 
         [Theory]
-        [ClassData(typeof(TestDataClass))]
+        [ClassData(typeof(TestDataProvider))]
         public void TestEncodeToDecode(StringConverter converter)
         {
             string expected = "テスト文字列 地図　";
@@ -38,7 +38,7 @@ namespace WA.Test
         }
 
         [Theory]
-        [ClassData(typeof(TestDataClass))]
+        [ClassData(typeof(TestDataProvider))]
         public void TestDecodeToEncode(StringConverter converter)
         {
             Span<byte> expected = stackalloc byte[4];
@@ -61,7 +61,7 @@ namespace WA.Test
 
 
         [Theory]
-        [ClassData(typeof(TestDataClass))]
+        [ClassData(typeof(TestDataProvider))]
         public void TestDecodeToEncodeWithZero(StringConverter converter)
         {
             Span<byte> expected = stackalloc byte[5];
@@ -83,7 +83,7 @@ namespace WA.Test
         }
 
         [Theory]
-        [ClassData(typeof(TestDataClass))]
+        [ClassData(typeof(TestDataProvider))]
         public void TestDecodeWithZeroTerminate(StringConverter converter)
         {
             Span<byte> expected = stackalloc byte[5];
@@ -98,7 +98,7 @@ namespace WA.Test
         }
 
         [Theory]
-        [ClassData(typeof(TestDataClass))]
+        [ClassData(typeof(TestDataProvider))]
         public void TestDecodeWithZeroTerminateUnsafe(StringConverter converter)
         {
             Span<byte> expected = stackalloc byte[5];
@@ -119,14 +119,14 @@ namespace WA.Test
         }
 
         [Theory]
-        [ClassData(typeof(TestDataClass))]
+        [ClassData(typeof(TestDataProvider))]
         public void TestEncodeNull(StringConverter converter)
         {
             Assert.Equal(0, converter.Encode(null).Length);
         }
 
         [Theory]
-        [ClassData(typeof(TestDataClass))]
+        [ClassData(typeof(TestDataProvider))]
         public void TestDecodeNull(StringConverter converter)
         {
             Assert.Equal(string.Empty, converter.Decode(null));
@@ -138,14 +138,14 @@ namespace WA.Test
         }
 
         [Theory]
-        [ClassData(typeof(TestDataClass))]
+        [ClassData(typeof(TestDataProvider))]
         public void TestEncodeEmpty(StringConverter converter)
         {
             Assert.Equal(0, converter.Encode(string.Empty).Length);
         }
 
         [Theory]
-        [ClassData(typeof(TestDataClass))]
+        [ClassData(typeof(TestDataProvider))]
         public void TestDecodeEmpty(StringConverter converter)
         {
             ReadOnlySpan<byte> zero = stackalloc byte[0];

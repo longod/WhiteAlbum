@@ -34,7 +34,6 @@ namespace WA.Susie
                 return default;
             }
 
-            // fixme calling from multi thread. lock or concurrent
             if (_cache != null && _cache.TryGetValue(text, out var v))
             {
                 return v;
@@ -58,7 +57,7 @@ namespace WA.Susie
 
         public string Decode(ReadOnlySpan<byte> src)
         {
-            if (src.Length == 0)
+            if (src.IsEmpty)
             {
                 return string.Empty;
             }

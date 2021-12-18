@@ -54,34 +54,62 @@ namespace WA.Test
         [Fact]
         public void TestIsSupported()
         {
-            Assert.Throws<ArgumentException>(() => _plugin.IsSupported("file.null", null));
             byte[] buff = new byte[Susie.API.Constant.MinFileSize];
-            Assert.ThrowsAny<Exception>(() => _plugin.IsSupported(null, buff));
             Assert.True(_plugin.IsSupported("file.null", buff));
         }
 
-        [Fact(Skip = "needs HWND")]
+        [Fact]
+        public void TestIsSupportedFailure()
+        {
+            Assert.Throws<ArgumentNullException>(() => _plugin.IsSupported("file.null", null));
+            byte[] buff = new byte[Susie.API.Constant.MinFileSize];
+            Assert.Throws<ArgumentNullException>(() => _plugin.IsSupported(null, buff));
+        }
+
+        [Fact]
         public void TestConfigurationDlg()
         {
-            Assert.True(false);
+            // need hWND
+            Assert.Throws<ArgumentException>(() => _plugin.ConfigurationDlg(default));
         }
 
         [Fact]
         public void TestGetPictureInfo()
         {
-            Assert.True(false);
+            byte[] buff = new byte[Susie.API.Constant.MinFileSize];
+            Assert.True(_plugin.GetPictureInfo(buff, out var info));
+        }
+
+        [Fact]
+        public void TestGetPictureInfoFailure()
+        {
+            Assert.Throws<ArgumentNullException>(() => _plugin.GetPictureInfo(null, out var info));
         }
 
         [Fact]
         public void TestGetPicture()
         {
-            Assert.True(false);
+            byte[] buff = new byte[Susie.API.Constant.MinFileSize];
+            Assert.True(_plugin.GetPicture(buff, out var image, out var info));
+        }
+
+        [Fact]
+        public void TestGetPictureFailure()
+        {
+            Assert.Throws<ArgumentNullException>(() => _plugin.GetPicture(null, out var image, out var info));
         }
 
         [Fact]
         public void TestGetPreview()
         {
-            Assert.True(false);
+            byte[] buff = new byte[Susie.API.Constant.MinFileSize];
+            Assert.True(_plugin.GetPreview(buff, out var image, out var info));
+        }
+
+        [Fact]
+        public void TestGetPreviewFailure()
+        {
+            Assert.Throws<ArgumentNullException>(() => _plugin.GetPreview(null, out var image, out var info));
         }
 
         [Fact]

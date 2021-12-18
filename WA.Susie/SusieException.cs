@@ -10,17 +10,22 @@ namespace WA.Susie
     [Serializable]
     public class SusieException : Exception
     {
-        public SusieException()
+        internal SusieException()
         {
         }
 
-        public SusieException(string message)
+        internal SusieException(string message)
             : base(message)
         {
         }
 
-        public SusieException(string message, Exception inner)
+        internal SusieException(string message, Exception inner)
             : base(message, inner)
+        {
+        }
+
+        internal SusieException(API.ReturnCode returnCode)
+            : base(GetErrorMessage(returnCode))
         {
         }
 
@@ -29,7 +34,7 @@ namespace WA.Susie
         {
         }
 
-        internal static string ErrorMessage(API.ReturnCode returnCode)
+        internal static string GetErrorMessage(API.ReturnCode returnCode)
         {
             switch (returnCode)
             {
