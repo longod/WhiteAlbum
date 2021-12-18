@@ -201,61 +201,7 @@ namespace WA.Susie
                     result = _func.GetPicture(handle.Pointer, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
                 }
 
-                if (result == 0)
-                {
-                    if (pHBInfo != null)
-                    {
-                        var ptr = (BitMapInfoHeader*)NativeMethods.LocalLock(pHBInfo);
-
-                        // copy to managed memory
-                        Unsafe.Copy(ref info.bmiHeader, ptr);
-
-                        // gettin palette
-                        // biClrUsed は適切に設定されていないので自力で判定する
-                        // TODO validate header
-                        var bitCount = info.bmiHeader.biBitCount;
-                        if (bitCount < 24)
-                        {
-                            var clrUsed = 1 << bitCount;
-                            info.bmiColors = new RGBQuad[clrUsed];
-                            Span<RGBQuad> palette = info.bmiColors.AsSpan();
-
-                            fixed (void* dest = palette)
-                            {
-                                var src = ptr + 1; // next
-                                Unsafe.CopyBlock(dest, src, (uint)(sizeof(RGBQuad) * palette.Length));
-                            }
-                        }
-
-                        NativeMethods.LocalUnlock(pHBInfo);
-                    }
-
-                    if (pHBm != null)
-                    {
-                        var ptr = NativeMethods.LocalLock(pHBm);
-
-                        // copy to managed memory
-                        image = new byte[info.bmiHeader.biSizeImage];
-                        fixed (void* p = image)
-                        {
-                            Unsafe.CopyBlock(p, ptr, (uint)image.Length);
-                        }
-
-                        NativeMethods.LocalUnlock(pHBm);
-                    }
-                }
-
-                if (pHBInfo != null)
-                {
-                    NativeMethods.LocalFree(pHBInfo);
-                }
-
-                if (pHBm != null)
-                {
-                    NativeMethods.LocalFree(pHBm);
-                }
-
-                return result == 0;
+                return PostProcessPicture(result, pHBInfo, pHBm, ref image, ref info);
             }
         }
 
@@ -348,61 +294,7 @@ namespace WA.Susie
                     result = _func.GetPreview(handle.Pointer, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
                 }
 
-                // todo share GetPicture
-                if (result == 0)
-                {
-                    if (pHBInfo != null)
-                    {
-                        var ptr = (BitMapInfoHeader*)NativeMethods.LocalLock(pHBInfo);
-
-                        // copy to managed memory
-                        Unsafe.Copy(ref info.bmiHeader, ptr);
-
-                        // gettin palette
-                        // biClrUsed は適切に設定されていないので自力で判定する
-                        var bitCount = info.bmiHeader.biBitCount;
-                        if (bitCount < 24)
-                        {
-                            var clrUsed = 1 << bitCount;
-                            info.bmiColors = new RGBQuad[clrUsed];
-                            Span<RGBQuad> palette = info.bmiColors.AsSpan();
-
-                            fixed (void* dest = palette)
-                            {
-                                var src = ptr + 1; // next
-                                Unsafe.CopyBlock(dest, src, (uint)(sizeof(RGBQuad) * palette.Length));
-                            }
-                        }
-
-                        NativeMethods.LocalUnlock(pHBInfo);
-                    }
-
-                    if (pHBm != null)
-                    {
-                        var ptr = NativeMethods.LocalLock(pHBm);
-
-                        // copy to managed memory
-                        image = new byte[info.bmiHeader.biSizeImage];
-                        fixed (void* p = image)
-                        {
-                            Unsafe.CopyBlock(p, ptr, (uint)image.Length);
-                        }
-
-                        NativeMethods.LocalUnlock(pHBm);
-                    }
-                }
-
-                if (pHBInfo != null)
-                {
-                    NativeMethods.LocalFree(pHBInfo);
-                }
-
-                if (pHBm != null)
-                {
-                    NativeMethods.LocalFree(pHBm);
-                }
-
-                return result == 0;
+                return PostProcessPicture(result, pHBInfo, pHBm, ref image, ref info);
             }
         }
 
@@ -673,7 +565,7 @@ namespace WA.Susie
             else
             {
                 // ? 仕様上は作れるが存在するのか？
-                throw new NotSupportedException();
+                throw new NotSupportedException($"invalid plugin type: {Type} and {Target}");
             }
         }
 
@@ -758,6 +650,65 @@ namespace WA.Susie
                     while (length > 0);
                 }
             }
+        }
+
+        private unsafe bool PostProcessPicture(int result, void* pHBInfo, void* pHBm, ref byte[] image, ref BitMapInfo info)
+        {
+            if (result == 0)
+            {
+                if (pHBInfo != null)
+                {
+                    var ptr = (BitMapInfoHeader*)NativeMethods.LocalLock(pHBInfo);
+
+                    // copy to managed memory
+                    Unsafe.Copy(ref info.bmiHeader, ptr);
+
+                    // gettin palette
+                    // biClrUsed は適切に設定されていないので自力で判定する
+                    // TODO validate header
+                    var bitCount = info.bmiHeader.biBitCount;
+                    if (bitCount < 24)
+                    {
+                        var clrUsed = 1 << bitCount;
+                        info.bmiColors = new RGBQuad[clrUsed];
+                        Span<RGBQuad> palette = info.bmiColors.AsSpan();
+
+                        fixed (void* dest = palette)
+                        {
+                            var src = ptr + 1; // next
+                            Unsafe.CopyBlock(dest, src, (uint)(sizeof(RGBQuad) * palette.Length));
+                        }
+                    }
+
+                    NativeMethods.LocalUnlock(pHBInfo);
+                }
+
+                if (pHBm != null)
+                {
+                    var ptr = NativeMethods.LocalLock(pHBm);
+
+                    // copy to managed memory
+                    image = new byte[info.bmiHeader.biSizeImage];
+                    fixed (void* p = image)
+                    {
+                        Unsafe.CopyBlock(p, ptr, (uint)image.Length);
+                    }
+
+                    NativeMethods.LocalUnlock(pHBm);
+                }
+            }
+
+            if (pHBInfo != null)
+            {
+                NativeMethods.LocalFree(pHBInfo);
+            }
+
+            if (pHBm != null)
+            {
+                NativeMethods.LocalFree(pHBm);
+            }
+
+            return result == 0;
         }
     }
 }
