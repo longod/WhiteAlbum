@@ -5,25 +5,20 @@
     using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Linq;
-    using System.Text;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Logging;
     using ZLogger;
 
     public class PluginManager : IDisposable
     {
-        private bool _disposed = false;
-
-        private List<string> _pluginDirectories;
-
-        private bool _searchSubDirectory = true; // directory単位で持つかも
-
-        private string[] _pluginPaths = null;
-
-        private List<IPluginProxy> _loadedDecoder = new List<IPluginProxy>();
-
-        private Susie.StringConverter _stringConverter;
         private readonly ILogger _logger;
+        private readonly Susie.StringConverter _stringConverter;
+        private bool _disposed = false;
+        private List<string> _pluginDirectories;
+        private bool _searchSubDirectory = true; // directory単位で持つかも
+        private string[] _pluginPaths = null;
+        private ReadOnlyMemory<string> _leftPaths;
+        private List<IPluginProxy> _plugins = new List<IPluginProxy>();
 
         ~PluginManager()
         {
@@ -51,34 +46,38 @@
             _pluginDirectories = settings.PluginDirectories;
         }
 
-        public IEnumerable<string> EnumeratePlugins()
+        private IEnumerable<string> EnumeratePlugins()
         {
+            // 現在の探索ルール
+            // _pluginDirectories の上から順を優先する
+            // 浅い階層を優先する
+            // 同一階層のファイルは名前昇順を優先する
+            // 同一階層のディレクトリは名前昇順を優先する
             return _pluginDirectories.SelectMany(x => SearchPlugin(new DirectoryInfo(x), _searchSubDirectory))
                         // .Distinct(new SameNameFileInfoEQ()) // unique
                         .Select(x => x.FullName);
         }
 
-        public async Task FindAllPlugins(bool rescan = false)
+        internal void FindAllPlugins(bool rescan = false)
         {
             if (!rescan && _pluginPaths != null)
             {
                 return;
             }
 
-            await Task.Run(() =>
+            using (new StopwatchScope("FindPlugins", _logger))
             {
-                using (new StopwatchScope("FindPlugins", _logger))
-                {
-                    _pluginPaths = EnumeratePlugins().ToArray();
-                }
+                _pluginPaths = EnumeratePlugins().ToArray();
+            }
 
-                _logger.ZLogInformation("Find plugin count: {0}", _pluginPaths.Length);
-            });
+            _logger.ZLogInformation("Find plugin count: {0}", _pluginPaths.Length);
+            _leftPaths = _pluginPaths;
         }
 
+        // test
         public void ShowConfigTest(IntPtr hWnd)
         {
-            foreach (var d in _loadedDecoder)
+            foreach (var d in _plugins)
             {
                 var susie = d as SusiePluginProxy;
                 if (susie != null)
@@ -91,36 +90,44 @@
             }
         }
 
-        // test
-        public async Task LoadAllPlugins()
+        private IPluginProxy LoadPlugin(string path)
         {
-            await Task.Run(() =>
+            SusiePluginProxy plugin = null;
+            try
             {
-                using (new StopwatchScope("LoadAllPlugins", _logger))
+                plugin = new SusiePluginProxy(new Susie.SusiePlugin(path, _stringConverter));
+                if (plugin != null)
                 {
-
-                    foreach (var path in _pluginPaths)
-                    {
-                        SusiePluginProxy decoder = null;
-                        try
-                        {
-                            decoder = new SusiePluginProxy(new Susie.SusiePlugin(path, _stringConverter));
-                        }
-                        catch (DllNotFoundException e)
-                        {
-                            // 多分 dependency dllが読めていない
-                            _logger.ZLogError(e, $"Failed to load plugin: {path}");
-                            decoder?.Dispose();
-                            decoder = null;
-                        }
-
-                        if (decoder != null)
-                        {
-                            _loadedDecoder.Add(decoder);
-                        }
-                    }
+                    _plugins.Add(plugin);
                 }
-            });
+            }
+            catch (BadImageFormatException e)
+            {
+                // architectureが一致していない
+                _logger.ZLogError(e, $"Mismatch architecture: {path}");
+                plugin?.Dispose();
+            }
+            catch (DllNotFoundException e)
+            {
+                // 多分 依存しているdllが読めていない
+                _logger.ZLogError(e, $"Failed to load dependency DLLs: {path}");
+                plugin?.Dispose();
+            }
+
+            return plugin;
+        }
+
+        // test
+        private void LoadAllPlugins()
+        {
+            using (new StopwatchScope("LoadAllPlugins", _logger))
+            {
+
+                foreach (var path in _pluginPaths)
+                {
+                    LoadPlugin(path);
+                }
+            }
         }
 
         private static IEnumerable<FileInfo> SearchPlugin(DirectoryInfo directory, bool searchSubDirectory)
@@ -149,25 +156,44 @@
         {
             using (new StopwatchScope("ResolveAsync", _logger))
             {
-                // fixme test load all plugins (not on demand)
-                await FindAllPlugins();
-                await LoadAllPlugins();
-
-                var d = await Task.Run(() =>
+                var plugin = await Task.Run(() =>
                 {
-                    foreach (var d in _loadedDecoder)
+                    // try already loaded plugin
+                    if (_plugins != null)
                     {
-                        if (d.IsSupported(loader))
+                        foreach (var p in _plugins)
                         {
-                            // todo どこかに対応付けをしておく
-                            return d;
+                            if (p.IsSupported(loader))
+                            {
+                                // todo どこかに対応付けをしておく
+                                return p;
+                            }
                         }
                     }
 
+                    // on demand plugin
+                    FindAllPlugins();
+                    var span = _leftPaths.Span;
+                    for (int i = 0; i < span.Length; ++i)
+                    {
+
+                        var p = LoadPlugin(span[i]);
+                        if (p != null && p.IsSupported(loader))
+                        {
+                            // slide
+                            _leftPaths = _leftPaths.Slice(i + 1);
+
+                            // todo どこかに対応付けをしておく
+                            return p;
+                        }
+                    }
+
+                    // not found
+                    _leftPaths = _leftPaths.Slice(_leftPaths.Length); // slide to end
                     return null;
                 });
 
-                return d;
+                return plugin;
             }
         }
 
@@ -187,12 +213,12 @@
                 }
 
                 // unmanaged
-                foreach (var d in _loadedDecoder)
+                foreach (var d in _plugins)
                 {
                     d.Dispose();
                 }
 
-                _loadedDecoder.Clear();
+                _plugins.Clear();
 
                 _disposed = true;
             }

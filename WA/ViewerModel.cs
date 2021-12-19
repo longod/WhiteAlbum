@@ -50,26 +50,12 @@
         // x86 dllを読めるようにしないといけない 現実的にはx86アプリにする…x64がいいんだけれど
         // 一応、out-of-process com serverでいける https://qiita.com/mima_ita/items/57d7c1101543e214b1d6
 
-        public ViewerModel(CommandLineArgs args, AppSettings settings, PluginManager pluginManager, ILogger logger)
+        public ViewerModel(AppSettings settings, PluginManager pluginManager, ILogger logger)
         {
             _logger = logger;
             _pluginManager = pluginManager;
             using (new StopwatchScope("ViewerModel", _logger))
             {
-                if (args.Args != null)
-                {
-
-                    if (args.Args.Length > 0)
-                    {
-                        LogicalPath = args.Args[0];
-                    }
-
-                    if (args.Args.Length > 1)
-                    {
-                        VirtualPath = args.Args[1];
-                    }
-                }
-
                 if (settings.EnableBuiltInDecoders)
                 {
                     RegisterBuiltInDecoders();
@@ -96,13 +82,14 @@
             }
         }
 
-        public async Task ProcessAsync(string path)
+        public async Task ProcessAsync(string logicalPath, string virtualPath = null)
         {
-            LogicalPath = path;
+            LogicalPath = logicalPath;
+            VirtualPath = virtualPath;
             await ProcessAsync();
         }
 
-        public async Task ProcessAsync()
+        private async Task ProcessAsync()
         {
             // load
             if (File.Exists(LogicalPath))

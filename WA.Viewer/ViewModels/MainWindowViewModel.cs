@@ -1,4 +1,5 @@
-﻿using Prism.Commands;
+﻿using Microsoft.Extensions.Logging;
+using Prism.Commands;
 using Prism.Mvvm;
 using Prism.Regions;
 using Prism.Services.Dialogs;
@@ -22,6 +23,7 @@ namespace WA.Viewer.ViewModels
         private IDialogService _dialogService;
         private ViewerModel _viewer;
         private CommandLineArgs _args;
+        private ILogger _logger;
 
         private Point _movingOffset;
         private Point _scalingPivot;
@@ -53,32 +55,35 @@ namespace WA.Viewer.ViewModels
         public DelegateCommand ShowConfigCommand { get; }
         PluginManager _pluginManager;
 
-        public MainWindowViewModel(IRegionManager regionManager, IDialogService dialogService, CommandLineArgs args, AppSettings settings, ViewerModel viewer, PluginManager pluginManager)
+        public MainWindowViewModel(IRegionManager regionManager, IDialogService dialogService, CommandLineArgs args, AppSettings settings, ViewerModel viewer, PluginManager pluginManager, ILogger logger)
         {
-            _args = args;
-            _viewer = viewer;
-            Task.Run(() => _viewer.ProcessAsync());
+            _logger = logger;
+            using (new StopwatchScope("Window Setup", _logger))
+            {
+                _args = args;
+                _viewer = viewer;
 
-            _regionManager = regionManager;
-            _dialogService = dialogService;
-            _pluginManager = pluginManager; // test
+                _regionManager = regionManager;
+                _dialogService = dialogService;
+                _pluginManager = pluginManager; // test
 
-            Image = _viewer.ObserveProperty(x => x.Image).ToReadOnlyReactivePropertySlim().AddTo(_disposable);
-            ImageTransform = new ReactivePropertySlim<Transform>(MatrixTransform.Identity);
+                Image = _viewer.ObserveProperty(x => x.Image).ToReadOnlyReactivePropertySlim().AddTo(_disposable);
+                ImageTransform = new ReactivePropertySlim<Transform>(MatrixTransform.Identity);
 
-            ExitCommand = new DelegateCommand(ExitEvent);
-            ShowSettingsWindowCommand = new DelegateCommand(ShowSettingsWindowEvent);
-            ShowConfigCommand = new DelegateCommand(ShowConfigTestEvent);
+                ExitCommand = new DelegateCommand(ExitEvent);
+                ShowSettingsWindowCommand = new DelegateCommand(ShowSettingsWindowEvent);
+                ShowConfigCommand = new DelegateCommand(ShowConfigTestEvent);
 
-            LoadedCommand = new DelegateCommand<RoutedEventArgs>(LoadedEvent);
-            PreviewDragOverCommand = new DelegateCommand<DragEventArgs>(PreviewDragOverEvent);
-            DropCommand = new DelegateCommand<DragEventArgs>(DropEvent);
+                LoadedCommand = new DelegateCommand<RoutedEventArgs>(async (e) => await LoadedEvent(e));
+                PreviewDragOverCommand = new DelegateCommand<DragEventArgs>(PreviewDragOverEvent);
+                DropCommand = new DelegateCommand<DragEventArgs>(async (e) => await DropEvent(e));
 
-            MouseDownCommand = new DelegateCommand<MouseButtonEventArgs>(MouseDownEvent);
-            MouseMoveCommand = new DelegateCommand<MouseEventArgs>(MouseMoveEvent);
-            MouseUpCommand = new DelegateCommand<MouseButtonEventArgs>(MouseUpEvent);
-            MouseWheelCommand = new DelegateCommand<MouseWheelEventArgs>(MouseWheelEvent);
-            MouseDoubleClickCommand = new DelegateCommand<MouseButtonEventArgs>(MouseDoubleClickEvent);
+                MouseDownCommand = new DelegateCommand<MouseButtonEventArgs>(MouseDownEvent);
+                MouseMoveCommand = new DelegateCommand<MouseEventArgs>(MouseMoveEvent);
+                MouseUpCommand = new DelegateCommand<MouseButtonEventArgs>(MouseUpEvent);
+                MouseWheelCommand = new DelegateCommand<MouseWheelEventArgs>(MouseWheelEvent);
+                MouseDoubleClickCommand = new DelegateCommand<MouseButtonEventArgs>(MouseDoubleClickEvent);
+            }
         }
 
         public void Dispose()
@@ -193,7 +198,7 @@ namespace WA.Viewer.ViewModels
             }
         }
 
-        private void LoadedEvent(RoutedEventArgs e)
+        private async Task LoadedEvent(RoutedEventArgs e)
         {
 #if true // todo only development
             if (_args.Args.Length >= 1)
@@ -208,6 +213,24 @@ namespace WA.Viewer.ViewModels
                 }
             }
 #endif
+
+            string LogicalPath = null;
+            string VirtualPath = null;
+            if (_args.Args != null)
+            {
+
+                if (_args.Args.Length > 0)
+                {
+                    LogicalPath = _args.Args[0];
+                }
+
+                if (_args.Args.Length > 1)
+                {
+                    VirtualPath = _args.Args[1];
+                }
+            }
+
+            await _viewer.ProcessAsync(LogicalPath, VirtualPath);
         }
 
         private void PreviewDragOverEvent(DragEventArgs e)
@@ -216,7 +239,7 @@ namespace WA.Viewer.ViewModels
             e.Handled = e.Data.GetDataPresent(DataFormats.FileDrop); // handled
         }
 
-        private async void DropEvent(DragEventArgs e)
+        private async Task DropEvent(DragEventArgs e)
         {
             string[] paths = (string[])e.Data.GetData(DataFormats.FileDrop);
             await _viewer.ProcessAsync(paths[0]);
