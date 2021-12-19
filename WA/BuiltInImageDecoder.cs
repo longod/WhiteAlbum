@@ -18,7 +18,7 @@
 
         // animationを考慮すると、 ReadOnlyCollection<BitmapFrame> のようなほうがよい
         // boxingしまくりで遅そう…
-        internal override async Task<BitmapSource> TryDecodeAsync(FileLoader loader)
+        internal override async Task<BitmapSource> DecodeAsync(FileLoader loader)
         {
             _args[0] = loader.Stream;
             return await Task.Run(() =>

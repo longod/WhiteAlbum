@@ -46,7 +46,7 @@
             _pluginDirectories = settings.PluginDirectories;
         }
 
-        private IEnumerable<string> EnumeratePlugins()
+        private IEnumerable<string> EnumeratePluginPath()
         {
             // 現在の探索ルール
             // _pluginDirectories の上から順を優先する
@@ -58,16 +58,16 @@
                         .Select(x => x.FullName);
         }
 
-        internal void FindAllPlugins(bool rescan = false)
+        internal void ScanPluginDirectory(bool rescan = false)
         {
             if (!rescan && _pluginPaths != null)
             {
                 return;
             }
 
-            using (new StopwatchScope("FindPlugins", _logger))
+            using (new StopwatchScope("Scan plugin directory", _logger))
             {
-                _pluginPaths = EnumeratePlugins().ToArray();
+                _pluginPaths = EnumeratePluginPath().ToArray();
             }
 
             _logger.ZLogInformation("Find plugin count: {0}", _pluginPaths.Length);
@@ -152,44 +152,53 @@
             return plugins;
         }
 
-        internal async Task<IPluginProxy> ResolveAsync(FileLoader loader/*, bool enumerateAll = false*/)
+        internal async Task<IPluginProxy> FindDecodablePluginAsync(FileLoader loader/*, bool enumerateAll = false*/)
         {
-            using (new StopwatchScope("ResolveAsync", _logger))
+            using (new StopwatchScope("Find decodable plugin", _logger))
             {
                 var plugin = await Task.Run(() =>
                 {
                     // try already loaded plugin
-                    if (_plugins != null)
+                    if (_plugins?.Count > 0)
                     {
-                        foreach (var p in _plugins)
+                        using (new StopwatchScope("Try to find plugins on memory", _logger))
                         {
-                            if (p.IsSupported(loader))
+
+                            foreach (var p in _plugins)
                             {
-                                // todo どこかに対応付けをしておく
-                                return p;
+                                if (p.IsSupported(loader))
+                                {
+                                    // todo どこかに対応付けをしておく
+                                    return p;
+                                }
                             }
                         }
                     }
 
                     // on demand plugin
-                    FindAllPlugins();
-                    var span = _leftPaths.Span;
-                    for (int i = 0; i < span.Length; ++i)
+                    ScanPluginDirectory();
+
+                    using (new StopwatchScope("Try to find plugins on drive", _logger))
                     {
-
-                        var p = LoadPlugin(span[i]);
-                        if (p != null && p.IsSupported(loader))
+                        var span = _leftPaths.Span;
+                        for (int i = 0; i < span.Length; ++i)
                         {
-                            // slide
-                            _leftPaths = _leftPaths.Slice(i + 1);
 
-                            // todo どこかに対応付けをしておく
-                            return p;
+                            var p = LoadPlugin(span[i]);
+                            if (p != null && p.IsSupported(loader))
+                            {
+                                // slide
+                                _leftPaths = _leftPaths.Slice(i + 1);
+
+                                // todo どこかに対応付けをしておく
+                                return p;
+                            }
                         }
+
+                        // not found
+                        _leftPaths = _leftPaths.Slice(_leftPaths.Length); // slide to end
                     }
 
-                    // not found
-                    _leftPaths = _leftPaths.Slice(_leftPaths.Length); // slide to end
                     return null;
                 });
 

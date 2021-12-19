@@ -99,7 +99,7 @@
                 // キャッシュとか前後領域の先読みストリーミングとか色々あるけれど、最小構成から
 
                 // ひとまずフルオンメモリー
-                using (new StopwatchScope("Process File Async", _logger))
+                using (new StopwatchScope("Process File", _logger))
                 {
                     using (var loader = new FileLoader(LogicalPath, Susie.API.Constant.MinFileSize))
                     {
@@ -113,8 +113,11 @@
                             // TODO アーカイブの場合を考慮すると、bmp以外の IDecodedResult をかえす
                             // 実データが返ってくるまでvirtual pathを使って再帰的に処理を繰り返す必要がある
                             // builtinとの兼ね合いをどうするか…
-                            var bmp = await decoder.TryDecodeAsync(loader);
-                            Image = bmp;
+                            using (new StopwatchScope("Decoding", _logger))
+                            {
+                                var bmp = await decoder.DecodeAsync(loader);
+                                Image = bmp;
+                            }
                         }
                     }
                 }
@@ -146,7 +149,7 @@
             // ヒットしない、プラグインで該当するかどうか解決を試みる
             // 解決できる場合は、対応する拡張子にマッピングする
             // この拡張子でマッピング済みということがplugin maneger側にも分からないと、continueFinding時に同じものがでてくる
-            var decoder = await _pluginManager.ResolveAsync(loader);
+            var decoder = await _pluginManager.FindDecodablePluginAsync(loader);
             if (decoder != null)
             {
                 if (instance == null)

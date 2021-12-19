@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Prism.Ioc;
 using System;
+using System.IO;
 using System.Windows;
 using ZLogger;
 
@@ -33,9 +34,9 @@ namespace WA.Viewer
                         builder.SetMinimumLevel(LogLevel.Debug);
 #else
                         builder.SetMinimumLevel(LogLevel.Debug); // todo enable debug logging
-                        //builder.SetMinimumLevel(LogLevel.Information);
+                                                                 //builder.SetMinimumLevel(LogLevel.Information);
 #endif
-                        builder.AddZLoggerFile("WA.Viewer.log", options =>
+                        builder.AddZLoggerFile(Path.Combine(AppContext.BaseDirectory, "WA.Viewer.log"), options =>
                         {
                             SetupLoggerOptions(options);
                         });

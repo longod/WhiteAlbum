@@ -18,7 +18,7 @@
     {
         private List<IPluginProxy> _decoders;
 
-        internal virtual async Task<BitmapSource> TryDecodeAsync(FileLoader loader)
+        internal virtual async Task<BitmapSource> DecodeAsync(FileLoader loader)
         {
             var image = await Task.Run(() =>
             {
