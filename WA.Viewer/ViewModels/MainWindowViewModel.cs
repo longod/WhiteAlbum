@@ -21,6 +21,7 @@ namespace WA.Viewer.ViewModels
         private IRegionManager _regionManager;
         private IDialogService _dialogService;
         private ViewerModel _viewer;
+        private CommandLineArgs _args;
 
         private Point _movingOffset;
         private Point _scalingPivot;
@@ -52,8 +53,9 @@ namespace WA.Viewer.ViewModels
         public DelegateCommand ShowConfigCommand { get; }
         PluginManager _pluginManager;
 
-        public MainWindowViewModel(IRegionManager regionManager, IDialogService dialogService, AppSettings settings, ViewerModel viewer, PluginManager pluginManager)
+        public MainWindowViewModel(IRegionManager regionManager, IDialogService dialogService, CommandLineArgs args, AppSettings settings, ViewerModel viewer, PluginManager pluginManager)
         {
+            _args = args;
             _viewer = viewer;
             Task.Run(() => _viewer.ProcessAsync());
 
@@ -194,15 +196,13 @@ namespace WA.Viewer.ViewModels
         private void LoadedEvent(RoutedEventArgs e)
         {
 #if true // todo only development
-            var args = Environment.GetCommandLineArgs();
-            // include self dll name
-            if (args.Length >= 2)
+            if (_args.Args.Length >= 1)
             {
-                if (args[1] == "-k")
+                if (_args.Args[0] == "-k")
                 {
                     System.Diagnostics.Process.GetCurrentProcess().Kill(); // force kill
                 }
-                else if (args[1] == "-e")
+                else if (_args.Args[0] == "-e")
                 {
                     Application.Current.Shutdown();
                 }

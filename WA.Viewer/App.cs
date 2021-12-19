@@ -18,6 +18,7 @@ namespace WA.Viewer
 
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
         {
+            containerRegistry.RegisterSingleton<CommandLineArgs>(() => new CommandLineArgs(_args));
             containerRegistry.RegisterSingleton<AppSettings>(() => AppSettings.Load()); // どこも非同期に読むタイミングが無い
             containerRegistry.RegisterSingleton<ILogger>(_ =>
             {
@@ -56,7 +57,6 @@ namespace WA.Viewer
             });
             containerRegistry.RegisterSingleton<Susie.StringConverter>(() => Susie.StringConverter.SJIS);
             containerRegistry.RegisterSingleton<PluginManager>();
-            containerRegistry.RegisterSingleton<ViewerModel.Args>(() => new ViewerModel.Args(_args));
             containerRegistry.RegisterSingleton<ViewerModel>();
 
             // https://prismlibrary.com/docs/wpf/dialog-service.html

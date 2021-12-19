@@ -40,37 +40,6 @@
 
     public class ViewerModel : INotifyPropertyChanged
     {
-        // fixme コマンドラインだけならviewer model専用のargsは不要,
-        // viewmodelでcommandlineを受け取って processにそのまま渡せばよい
-        public class Args
-        {
-            // filesystem path
-            internal string Path { get; private set; }
-
-            // relative path in archive
-            // virtual pathの spliterには reserved characterを使う。 | vertical bar が候補
-            // アーカイブ内のパスが foo.zip/bar.jpg という表現の場合、foo.zipがディレクトリなのかアーカイブ内のアーカイブなのか分からないからだ
-            // アーカイブファイル内のjpg: foo.zip|bar.jpg
-            // ディレクトリ内のjpg: foo.zip/bar.jpg
-            internal string VirtualPath { get; private set; }
-
-            public Args(string[] args)
-            {
-                if (args != null)
-                {
-                    if (args.Length > 0)
-                    {
-                        Path = args[0];
-                    }
-
-                    if (args.Length > 1)
-                    {
-                        VirtualPath = args[1];
-                    }
-                }
-            }
-        }
-
         // filesystem path
         public string LogicalPath { get; set; }
 
@@ -81,21 +50,29 @@
         // x86 dllを読めるようにしないといけない 現実的にはx86アプリにする…x64がいいんだけれど
         // 一応、out-of-process com serverでいける https://qiita.com/mima_ita/items/57d7c1101543e214b1d6
 
-        public ViewerModel(Args args, AppSettings settings, PluginManager pluginManager, ILogger logger)
+        public ViewerModel(CommandLineArgs args, AppSettings settings, PluginManager pluginManager, ILogger logger)
         {
             _logger = logger;
             _pluginManager = pluginManager;
             using (new StopwatchScope("ViewerModel", _logger))
             {
-                if (args != null)
+                if (args.Args != null)
                 {
-                    LogicalPath = args.Path;
-                    VirtualPath = args.VirtualPath;
 
-                    if (settings.EnableBuiltInDecoders)
+                    if (args.Args.Length > 0)
                     {
-                        RegisterBuiltInDecoders();
+                        LogicalPath = args.Args[0];
                     }
+
+                    if (args.Args.Length > 1)
+                    {
+                        VirtualPath = args.Args[1];
+                    }
+                }
+
+                if (settings.EnableBuiltInDecoders)
+                {
+                    RegisterBuiltInDecoders();
                 }
             }
         }

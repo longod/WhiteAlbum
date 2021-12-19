@@ -17,7 +17,7 @@ WHITE ALBUM is a lightweight Image Viewer with a mix of modern and legacy featur
 ## Requirements
 - Windows x64 or x86
 - Visual Studio 2019
-- dotnet core 3.1 (for prism)
+- .NET Core 3.1 (for Prism)
 
 ## Projects
 
@@ -34,14 +34,16 @@ WHITE ALBUM is a lightweight Image Viewer with a mix of modern and legacy featur
 | ifnull (VC)      | Stub (null) image filter Susie Plugin |
 
 ### Dependency
+```
 WA.Susie    ->  WA  ->  WA.Viewer
                     ->  WA.Catalog (TBD) 
                     ->  WA.Test
                     ->  WA.Benchmark
+```
 
 ## Build and Run
 
-**Currently WHITE ALBUM supports only x86.**
+**Currently, WHITE ALBUM supports only x86.**
 
 1. Open `WhiteAlbum.sln`
 1. Set `Debug` or `Release` and `x86`
