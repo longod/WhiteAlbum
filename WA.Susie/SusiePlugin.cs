@@ -162,7 +162,18 @@
             {
                 const int fnc = (int)API.Constant.DialogSettings;
                 var result = _func.ConfigurationDlg(hWnd.ToPointer(), fnc);
-                return result == 0;
+                if ((API.ReturnCode)result == API.ReturnCode.Success)
+                {
+                    return true;
+                }
+                else if ((API.ReturnCode)result == API.ReturnCode.NotImplemented)
+                {
+                    return false;
+                }
+                else
+                {
+                    throw new SusieException((API.ReturnCode)result);
+                }
             }
         }
 
@@ -198,7 +209,14 @@
                     result = _func.GetPicture(handle.Pointer, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
                 }
 
-                return PostProcessPicture(result, pHBInfo, pHBm, ref image, ref info);
+                if (PostProcessPicture(result, pHBInfo, pHBm, ref image, ref info))
+                {
+                    return true;
+                }
+                else
+                {
+                    throw new SusieException((API.ReturnCode)result);
+                }
             }
         }
 
@@ -230,7 +248,7 @@
                     result = _func.GetPictureInfo(handle.Pointer, binary.Length, flag, &lpInfo);
                 }
 
-                if (result == 0)
+                if ((API.ReturnCode)result == API.ReturnCode.Success)
                 {
                     info = new PictureInfo(&lpInfo, _stringConverter);
                 }
@@ -245,7 +263,14 @@
                     NativeMethods.LocalFree(lpInfo.hInfo);
                 }
 
-                return result == 0;
+                if ((API.ReturnCode)result == API.ReturnCode.Success)
+                {
+                    return true;
+                }
+                else
+                {
+                    throw new SusieException((API.ReturnCode)result);
+                }
             }
         }
 
@@ -291,7 +316,18 @@
                     result = _func.GetPreview(handle.Pointer, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
                 }
 
-                return PostProcessPicture(result, pHBInfo, pHBm, ref image, ref info);
+                if (PostProcessPicture(result, pHBInfo, pHBm, ref image, ref info))
+                {
+                    return true;
+                }
+                else if ((API.ReturnCode)result == API.ReturnCode.NotImplemented)
+                {
+                    return false;
+                }
+                else
+                {
+                    throw new SusieException((API.ReturnCode)result);
+                }
             }
         }
 
@@ -325,7 +361,7 @@
                     result = _func.GetArchiveInfo(handle.Pointer, binary.Length, flag, &lphInf);
                 }
 
-                if (result == 0)
+                if ((API.ReturnCode)result == API.ReturnCode.Success)
                 {
                     if (lphInf != null)
                     {
@@ -355,7 +391,14 @@
                     NativeMethods.LocalFree(lphInf);
                 }
 
-                return result == 0;
+                if ((API.ReturnCode)result == API.ReturnCode.Success)
+                {
+                    return true;
+                }
+                else
+                {
+                    throw new SusieException((API.ReturnCode)result);
+                }
             }
         }
 
@@ -396,7 +439,7 @@
                     }
                 }
 
-                if (result == 0)
+                if ((API.ReturnCode)result == API.ReturnCode.Success)
                 {
                     info = new FileInfo(&lpInfo, _stringConverter);
                 }
@@ -405,7 +448,14 @@
                     info = default;
                 }
 
-                return result == 0;
+                if ((API.ReturnCode)result == API.ReturnCode.Success)
+                {
+                    return true;
+                }
+                else
+                {
+                    throw new SusieException((API.ReturnCode)result);
+                }
             }
         }
 
@@ -443,7 +493,7 @@
                     result = _func.GetFile(handle.Pointer, src.Length, &dest, flag, AlwaysContinueProgressCallback, 0);
                 }
 
-                if (result == 0)
+                if ((API.ReturnCode)result == API.ReturnCode.Success)
                 {
                     if (dest != null)
                     {
@@ -463,7 +513,14 @@
                     NativeMethods.LocalFree(dest);
                 }
 
-                return result == 0;
+                if ((API.ReturnCode)result == API.ReturnCode.Success)
+                {
+                    return true;
+                }
+                else
+                {
+                    throw new SusieException((API.ReturnCode)result);
+                }
             }
         }
 
@@ -655,7 +712,7 @@
 
         private unsafe bool PostProcessPicture(int result, void* pHBInfo, void* pHBm, ref byte[] image, ref BitMapInfo info)
         {
-            if (result == 0)
+            if ((API.ReturnCode)result == API.ReturnCode.Success)
             {
                 if (pHBInfo != null)
                 {
@@ -709,7 +766,7 @@
                 NativeMethods.LocalFree(pHBm);
             }
 
-            return result == 0;
+            return (API.ReturnCode)result == API.ReturnCode.Success;
         }
     }
 }

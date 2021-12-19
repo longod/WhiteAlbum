@@ -18,7 +18,7 @@
         internal FileLoader(string path, int minFileSize)
         {
             _file = new FileInfo(path);
-            _minFileSize = minFileSize + _macBinaryHeaderSize;
+            _minFileSize = minFileSize;
         }
 
         internal string Extension => _file.Extension.ToLower();
