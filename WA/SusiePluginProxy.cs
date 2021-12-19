@@ -109,6 +109,7 @@
                 {
                     image.Palette = info.bmiColors.Select(x => Color.FromRgb(x.rgbRed, x.rgbGreen, x.rgbBlue)).ToArray();
                 }
+
                 return true;
             }
 
@@ -125,10 +126,9 @@
         {
             if (_plugin.GetArchiveInfo(loader.Binary, out var infos))
             {
-
                 // test extract
-                //_plugin.GetFile(loader.Binary, infos[0], out var dest);
-                //_plugin.GetFileInfo(loader.Binary, infos[0].FileName, out var info);
+                // _plugin.GetFile(loader.Binary, infos[0], out var dest);
+                // _plugin.GetFileInfo(loader.Binary, infos[0].FileName, out var info);
 
                 return true;
             }

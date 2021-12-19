@@ -1,16 +1,23 @@
 # WHITE ALBUM
 
-WHITE ALBUM is a lightweight Image Viewer, mixturing modern and legacy approach.
+WHITE ALBUM is a lightweight Image Viewer with a mix of modern and legacy features.
 
 ## Concept
 - Fast and Lightweight
-    - avoid unnecessary decoration and animation, therefore white
-- Use Modern Foundation
-    - dotnet core WPF
+    - Avoid unnecessary decoration and animation, therefore white
+- Use modern features
+    - dotnet core
+    - WPF
     - async and parallel
-- Respect Legacy
+    - and other plugins (TBD)
+- Respect legacy features
     - support Susie Plugin (only **x86**)
     - and other plugins (TBD)
+
+## Requirements
+- Windows x64 or x86
+- Visual Studio 2019
+- dotnet core 3.1 (for prism)
 
 ## Projects
 
@@ -23,8 +30,31 @@ WHITE ALBUM is a lightweight Image Viewer, mixturing modern and legacy approach.
 | WA.Test          | xUnit Test |
 | WA.Benchmark     | BenchmarkDotNet Benchmark |
 | WA.Blank         | Minimized WPF application for comparing |
-| axnull           | Stub (null) archive extractor Susie Plugin |
-| ifnull           | Stub (null) image filter Susie Plugin |
+| axnull (VC)      | Stub (null) archive extractor Susie Plugin |
+| ifnull (VC)      | Stub (null) image filter Susie Plugin |
 
 ### Dependency
-WA.Susie -> WA -> WA.Viewer
+WA.Susie    ->  WA  ->  WA.Viewer
+                    ->  WA.Catalog (TBD) 
+                    ->  WA.Test
+                    ->  WA.Benchmark
+
+## Build and Run
+
+**Currently WHITE ALBUM supports only x86.**
+
+1. Open `WhiteAlbum.sln`
+1. Set `Debug` or `Release` and `x86`
+1. Build it
+
+## How to view
+
+- Write a file path to 1st commandline argument
+    - Drop a file to execution binary file
+- Drop a file to the main window
+
+## Susie Plug-in
+TODO
+
+https://www.digitalpad.co.jp/~takechin/
+

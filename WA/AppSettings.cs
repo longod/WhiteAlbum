@@ -8,7 +8,6 @@
     [Serializable]
     public class AppSettings
     {
-
         public List<string> PluginDirectories { get; set; } = new List<string>() { @"plugins\spi\" };
 
         public bool EnableBuiltInDecoders { get; set; } = true;

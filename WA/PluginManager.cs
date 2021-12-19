@@ -2,10 +2,10 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
-    using System.Text;
-    using System.Linq;
     using System.Diagnostics.CodeAnalysis;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Logging;
     using ZLogger;
@@ -89,7 +89,6 @@
                     }
                 }
             }
-
         }
 
         // test
@@ -119,7 +118,6 @@
                         {
                             _loadedDecoder.Add(decoder);
                         }
-
                     }
                 }
             });
@@ -193,11 +191,11 @@
                 {
                     d.Dispose();
                 }
+
                 _loadedDecoder.Clear();
 
                 _disposed = true;
             }
-
         }
     }
 }

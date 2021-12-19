@@ -59,9 +59,10 @@
                     // MacBinary II minimum version
                     if (h[123] == 129)
                     {
-                        // V3? MacBinary II version
                         if (h[122] == 130)
                         {
+                            // V3? MacBinary II version
+
                             // 'mBIN' big-endian?
                             var mbin = MemoryMarshal.Cast<byte, uint>(h.Slice(102))[0];
                             if (mbin == 0x6F42494E)
@@ -70,9 +71,10 @@
                             }
 
                         }
-                        // V2? MacBinary II version
                         else if (h[122] == 129)
                         {
+                            // V2? MacBinary II version
+
                             // CRC-16-CCITT of [0-123] byte
                             // CRCアルゴリズムは指定されていないのと、実装によっては計算せずに0になっていることがあるのでアテにならない
                             var crc = MemoryMarshal.Cast<byte, ushort>(h.Slice(124))[0];

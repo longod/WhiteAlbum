@@ -104,7 +104,11 @@
 
         public BitmapSource Image
         {
-            get { return _image; }
+            get
+            {
+                return _image;
+            }
+
             private set
             {
                 if (value != _image)
@@ -150,7 +154,6 @@
                         }
                     }
                 }
-
             }
             else if (Directory.Exists(LogicalPath))
             {
@@ -216,6 +219,7 @@
 
         // INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged;
+
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
         {
             if (PropertyChanged != null)

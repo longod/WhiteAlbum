@@ -69,8 +69,8 @@
                 var tb = new TransformedBitmap(b, transform);
                 tb.Freeze();
                 return tb;
-            }
-            );
+            });
+
             // BitmapSourceは Must create DependencySource on same Thread as the DependencyObject
             // を発生させるので、freezeする
             // これを継承した生成器や、decoderはdispatcherでUIスレッドで作られるようにされていると思われるが、

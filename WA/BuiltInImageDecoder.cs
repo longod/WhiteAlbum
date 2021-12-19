@@ -30,8 +30,7 @@
 
             // fallback
             // またはプラグインを優先して、ビルトインをfallbackとして使う
-            //return await base.TryDecodeAsync(loader);
+            // return await base.TryDecodeAsync(loader);
         }
     }
-
 }
