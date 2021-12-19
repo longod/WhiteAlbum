@@ -13,6 +13,8 @@ namespace WA.Benchmark
         static void Main(string[] args)
         {
             IConfig config = null;
+
+            // FIXME works on x86, x64, AnyCPU
 #if DEBUG
             //config = new DebugBuildConfig();
             config = new DebugInProcessConfig();

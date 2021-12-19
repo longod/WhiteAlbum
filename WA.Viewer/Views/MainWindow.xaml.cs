@@ -15,7 +15,7 @@ namespace WA.Viewer.Views
 
         // https://stackoverflow.com/questions/741956/pan-zoom-image
         // https://ni4muraano.hatenablog.com/entry/2017/10/21/135713
-        // todo binding command, code behind
+        // todo binding command, do not write code behind
         private void image_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
         {
             // 基点がおかしい

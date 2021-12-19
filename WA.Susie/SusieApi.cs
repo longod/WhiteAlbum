@@ -1,5 +1,4 @@
-﻿// (c) longod, MIT License
-namespace WA.Susie.API
+﻿namespace WA.Susie.API
 {
     using System;
     using System.Runtime.InteropServices;

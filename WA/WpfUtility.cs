@@ -1,5 +1,4 @@
-﻿// (c) longod, MIT License
-namespace WA
+﻿namespace WA
 {
     public static class WpfUtility
     {

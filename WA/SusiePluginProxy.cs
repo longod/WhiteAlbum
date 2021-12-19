@@ -1,6 +1,4 @@
-﻿// (c) longod, MIT License
-
-namespace WA
+﻿namespace WA
 {
     using System;
     using System.Linq;
@@ -84,11 +82,17 @@ namespace WA
                 image.BitsPerPixel = info.bmiHeader.biBitCount;
                 switch (info.bmiHeader.biBitCount)
                 {
+                    case 32:
+                        image.Format = DecodedImage.PixelFormat.BGRA;
+                        break;
                     case 24:
                         image.Format = DecodedImage.PixelFormat.BGR;
                         break;
-                    case 32:
-                        image.Format = DecodedImage.PixelFormat.BGRA;
+                    case 16:
+                        image.Format = DecodedImage.PixelFormat.BGR;
+                        break;
+                    case 8:
+                        image.Format = DecodedImage.PixelFormat.Index;
                         break;
                     case 4:
                         image.Format = DecodedImage.PixelFormat.Index;
