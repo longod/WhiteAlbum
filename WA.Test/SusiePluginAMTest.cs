@@ -11,9 +11,6 @@ namespace WA.Test
 
         public SusiePluginAMTest()
         {
-            //Environment.CurrentDirectory = AppContext.BaseDirectory;
-            // ここでこけるかどうかのテストをどうする
-            // fixme dotnet testで実行した場合に失敗してしまう
 #if DEBUG
             string path = @"..\..\..\..\..\Bin\spi\Win32\Debug\axnull.spi";
 #else
