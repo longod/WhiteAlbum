@@ -77,15 +77,25 @@ jobs:
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1.0.2
 
-    # Execute all unit tests in the solution
-    - name: Execute unit tests
-      run: dotnet test
-
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     - name: Restore the application
       run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
       env:
         Configuration: ${{ matrix.configuration }}
+
+    - name: Prebuild axnull plugin
+      run: msbuild spi\axnull\axnull.vcxproj -p:Configuration=$env:Configuration -p:Platform=Win32 -p:SolutionDir=../../
+      env:
+        Configuration: ${{ matrix.configuration }}
+
+    - name: Prebuild ifnull plugin
+      run: msbuild spi\ifnull\ifnull.vcxproj -p:Configuration=$env:Configuration -p:Platform=Win32 -p:SolutionDir=../../
+      env:
+        Configuration: ${{ matrix.configuration }}
+
+    # Execute all unit tests in the solution
+    - name: Execute unit tests
+      run: dotnet test WhiteAlbum.sln -s WA.Test.runsettings
 
     # Decode the base 64 encoded pfx and save the Signing_Certificate
     - name: Decode the pfx
