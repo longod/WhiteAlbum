@@ -79,7 +79,9 @@
 
         private static int AlwaysContinueProgressCallback(int nNum, int nDenom, int lData)
         {
-            return 0; // always continue
+            // start: nNum == 0
+            // end  : nNum == nDenom
+            return 0; // 0: continue, 1: cancel
         }
 
         public SusiePlugin(string path, StringConverter stringConverter)
@@ -126,6 +128,7 @@
             {
                 int result = 0;
                 var mbpath = _stringConverter.Encode(path);
+
                 using (var ptr = mbpath.Pin())
                 {
                     using (var handle = binary.Pin())
@@ -162,17 +165,15 @@
             {
                 const int fnc = (int)API.Constant.DialogSettings;
                 var result = _func.ConfigurationDlg(hWnd.ToPointer(), fnc);
-                if ((API.ReturnCode)result == API.ReturnCode.Success)
+
+                switch ((API.ReturnCode)result)
                 {
-                    return true;
-                }
-                else if ((API.ReturnCode)result == API.ReturnCode.NotImplemented)
-                {
-                    return false;
-                }
-                else
-                {
-                    throw new SusieException((API.ReturnCode)result);
+                    case API.ReturnCode.Success:
+                        return true;
+                    case API.ReturnCode.NotImplemented:
+                        return false;
+                    default:
+                        throw new SusieException((API.ReturnCode)result);
                 }
             }
         }
@@ -194,83 +195,37 @@
                 _func.GetPicture = GetFunction<API.GetPicture>(_handle);
             }
 
-            image = null;
-            info = default;
-
-            const uint flag = API.Constant.OnMemory;
-
             unsafe
             {
                 void* pHBInfo = null;
                 void* pHBm = null;
                 int result = 0;
-                using (var handle = binary.Pin())
+                const uint flag = API.Constant.OnMemory;
+                try
                 {
-                    result = _func.GetPicture(handle.Pointer, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
+                    using (var handle = binary.Pin())
+                    {
+                        result = _func.GetPicture(handle.Pointer, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
+                    }
+
+                    switch ((API.ReturnCode)result)
+                    {
+                        case API.ReturnCode.Success:
+                            PostProcessPicture(result, pHBInfo, pHBm, out image, out info);
+                            break;
+                        default:
+                            image = null;
+                            info = default;
+                            throw new SusieException((API.ReturnCode)result);
+                    }
+                }
+                finally
+                {
+                    LocalFree(pHBInfo);
+                    LocalFree(pHBm);
                 }
 
-                if (PostProcessPicture(result, pHBInfo, pHBm, ref image, ref info))
-                {
-                    return true;
-                }
-                else
-                {
-                    throw new SusieException((API.ReturnCode)result);
-                }
-            }
-        }
-
-        public bool GetPictureInfo(ReadOnlyMemory<byte> binary, out PictureInfo info)
-        {
-            if (Type != PluginType.ImportFilter)
-            {
-                throw new InvalidOperationException();
-            }
-
-            if (binary.IsEmpty)
-            {
-                throw new ArgumentNullException("binary must not be empty.");
-            }
-
-            if (_func.ConfigurationDlg == null)
-            {
-                _func.GetPictureInfo = GetFunction<API.GetPictureInfo>(_handle);
-            }
-
-            const uint flag = API.Constant.OnMemory;
-
-            unsafe
-            {
-                API.PictureInfo lpInfo;
-                int result = 0;
-                using (var handle = binary.Pin())
-                {
-                    result = _func.GetPictureInfo(handle.Pointer, binary.Length, flag, &lpInfo);
-                }
-
-                if ((API.ReturnCode)result == API.ReturnCode.Success)
-                {
-                    info = new PictureInfo(&lpInfo, _stringConverter);
-                }
-                else
-                {
-                    info = default;
-                }
-
-                if (lpInfo.hInfo != null)
-                {
-                    // Spi_api.txt には Globalメモリーのハンドルと書いてあるが、実際の型は HGLOBAL ではなく、HLOCAL である。どっちだ？
-                    NativeMethods.LocalFree(lpInfo.hInfo);
-                }
-
-                if ((API.ReturnCode)result == API.ReturnCode.Success)
-                {
-                    return true;
-                }
-                else
-                {
-                    throw new SusieException((API.ReturnCode)result);
-                }
+                return (API.ReturnCode)result == API.ReturnCode.Success;
             }
         }
 
@@ -301,33 +256,90 @@
                 }
             }
 
-            image = null;
-            info = default;
-
-            const uint flag = API.Constant.OnMemory;
-
             unsafe
             {
                 void* pHBInfo = null;
                 void* pHBm = null;
                 int result = 0;
-                using (var handle = binary.Pin())
+                const uint flag = API.Constant.OnMemory;
+                try
                 {
-                    result = _func.GetPreview(handle.Pointer, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
+                    using (var handle = binary.Pin())
+                    {
+                        result = _func.GetPreview(handle.Pointer, binary.Length, flag, &pHBInfo, &pHBm, AlwaysContinueProgressCallback, 0);
+                    }
+
+                    switch ((API.ReturnCode)result)
+                    {
+                        case API.ReturnCode.Success:
+                            PostProcessPicture(result, pHBInfo, pHBm, out image, out info);
+                            break;
+                        case API.ReturnCode.NotImplemented:
+                            image = null;
+                            info = default;
+                            break;
+                        default:
+                            image = null;
+                            info = default;
+                            throw new SusieException((API.ReturnCode)result);
+                    }
+                }
+                finally
+                {
+                    LocalFree(pHBInfo);
+                    LocalFree(pHBm);
                 }
 
-                if (PostProcessPicture(result, pHBInfo, pHBm, ref image, ref info))
+                return (API.ReturnCode)result == API.ReturnCode.Success;
+            }
+        }
+
+        public bool GetPictureInfo(ReadOnlyMemory<byte> binary, out PictureInfo info)
+        {
+            if (Type != PluginType.ImportFilter)
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (binary.IsEmpty)
+            {
+                throw new ArgumentNullException("binary must not be empty.");
+            }
+
+            if (_func.ConfigurationDlg == null)
+            {
+                _func.GetPictureInfo = GetFunction<API.GetPictureInfo>(_handle);
+            }
+
+            unsafe
+            {
+                API.PictureInfo lpInfo = default;
+                int result = 0;
+                const uint flag = API.Constant.OnMemory;
+                try
                 {
-                    return true;
+                    using (var handle = binary.Pin())
+                    {
+                        result = _func.GetPictureInfo(handle.Pointer, binary.Length, flag, &lpInfo);
+                    }
+
+                    switch ((API.ReturnCode)result)
+                    {
+                        case API.ReturnCode.Success:
+                            info = new PictureInfo(&lpInfo, _stringConverter);
+                            break;
+                        default:
+                            info = default;
+                            throw new SusieException((API.ReturnCode)result);
+                    }
                 }
-                else if ((API.ReturnCode)result == API.ReturnCode.NotImplemented)
+                finally
                 {
-                    return false;
+                    // Spi_api.txt には Globalメモリーのハンドルと書いてあるが、実際の型は HGLOBAL ではなく、HLOCAL である。どっちだ？
+                    LocalFree(lpInfo.hInfo);
                 }
-                else
-                {
-                    throw new SusieException((API.ReturnCode)result);
-                }
+
+                return (API.ReturnCode)result == API.ReturnCode.Success;
             }
         }
 
@@ -348,57 +360,58 @@
                 _func.GetArchiveInfo = GetFunction<API.GetArchiveInfo>(_handle);
             }
 
-            infos = null;
-
-            const uint flag = API.Constant.OnMemory;
-
             unsafe
             {
                 void* lphInf = null;
                 int result = 0;
-                using (var handle = binary.Pin())
+                const uint flag = API.Constant.OnMemory;
+                try
                 {
-                    result = _func.GetArchiveInfo(handle.Pointer, binary.Length, flag, &lphInf);
-                }
-
-                if ((API.ReturnCode)result == API.ReturnCode.Success)
-                {
-                    if (lphInf != null)
+                    using (var handle = binary.Pin())
                     {
-                        var ptr = (API.FileInfo*)NativeMethods.LocalLock(lphInf);
-                        uint count = 0;
-                        {
-                            var p = ptr;
-                            while (p != null && p->method[0] != 0)
+                        result = _func.GetArchiveInfo(handle.Pointer, binary.Length, flag, &lphInf);
+                    }
+
+                    switch ((API.ReturnCode)result)
+                    {
+                        case API.ReturnCode.Success:
+                            if (lphInf != null)
                             {
-                                ++count;
-                                ++p;
+                                var ptr = (API.FileInfo*)NativeMethods.LocalLock(lphInf);
+                                uint count = 0;
+                                {
+                                    var p = ptr;
+                                    while (p != null && p->method[0] != 0)
+                                    {
+                                        ++count;
+                                        ++p;
+                                    }
+                                }
+
+                                infos = new FileInfo[count];
+                                for (int i = 0; i < infos.Length; ++i)
+                                {
+                                    infos[i] = new FileInfo(&ptr[i], _stringConverter);
+                                }
+
+                                NativeMethods.LocalUnlock(lphInf);
                             }
-                        }
+                            else
+                            {
+                                infos = new FileInfo[0];
+                            }
 
-                        infos = new FileInfo[count];
-                        for (int i = 0; i < infos.Length; ++i)
-                        {
-                            infos[i] = new FileInfo(&ptr[i], _stringConverter);
-                        }
-
-                        NativeMethods.LocalUnlock(lphInf);
+                            break;
+                        default:
+                            throw new SusieException((API.ReturnCode)result);
                     }
                 }
-
-                if (lphInf != null)
+                finally
                 {
-                    NativeMethods.LocalFree(lphInf);
+                    LocalFree(lphInf);
                 }
 
-                if ((API.ReturnCode)result == API.ReturnCode.Success)
-                {
-                    return true;
-                }
-                else
-                {
-                    throw new SusieException((API.ReturnCode)result);
-                }
+                return (API.ReturnCode)result == API.ReturnCode.Success;
             }
         }
 
@@ -424,13 +437,12 @@
                 _func.GetFileInfo = GetFunction<API.GetFileInfo>(_handle);
             }
 
-            uint flag = API.Constant.OnMemory | (caseSensitive ? API.Constant.CaseSensitive : API.Constant.CaseInsensitive);
-
             unsafe
             {
                 API.FileInfo lpInfo;
                 int result = 0;
                 var mbpath = _stringConverter.Encode(path);
+                uint flag = API.Constant.OnMemory | (caseSensitive ? API.Constant.CaseSensitive : API.Constant.CaseInsensitive);
                 using (var ptr = mbpath.Pin())
                 {
                     using (var handle = binary.Pin())
@@ -446,16 +458,10 @@
                 else
                 {
                     info = default;
-                }
-
-                if ((API.ReturnCode)result == API.ReturnCode.Success)
-                {
-                    return true;
-                }
-                else
-                {
                     throw new SusieException((API.ReturnCode)result);
                 }
+
+                return (API.ReturnCode)result == API.ReturnCode.Success;
             }
         }
 
@@ -476,10 +482,6 @@
                 _func.GetFile = GetFunction<API.GetFile>(_handle);
             }
 
-            file = null;
-
-            const uint flag = API.Constant.SrcOnMemory | API.Constant.DestOnMemory;
-
             unsafe
             {
                 // ここで与えるバッファ範囲は [info.Position, info.CompSize) ではない！
@@ -488,47 +490,60 @@
                 var src = binary.Slice((int)info.Position);
                 void* dest = null;
                 int result = 0;
-                using (var handle = src.Pin())
+                const uint flag = API.Constant.SrcOnMemory | API.Constant.DestOnMemory;
+                try
                 {
-                    result = _func.GetFile(handle.Pointer, src.Length, &dest, flag, AlwaysContinueProgressCallback, 0);
-                }
-
-                if ((API.ReturnCode)result == API.ReturnCode.Success)
-                {
-                    if (dest != null)
+                    using (var handle = src.Pin())
                     {
-                        file = new byte[info.FileSize];
-                        var ptr = (API.FileInfo*)NativeMethods.LocalLock(dest);
-                        fixed (void* p = file)
-                        {
-                            Unsafe.CopyBlock(p, ptr, (uint)file.Length);
-                        }
+                        result = _func.GetFile(handle.Pointer, src.Length, &dest, flag, AlwaysContinueProgressCallback, 0);
+                    }
 
-                        NativeMethods.LocalUnlock(dest);
+                    switch ((API.ReturnCode)result)
+                    {
+                        case API.ReturnCode.Success:
+                            if (dest != null)
+                            {
+                                file = new byte[info.FileSize];
+                                var ptr = (API.FileInfo*)NativeMethods.LocalLock(dest);
+                                fixed (void* p = file)
+                                {
+                                    Unsafe.CopyBlock(p, ptr, (uint)file.Length);
+                                }
+
+                                NativeMethods.LocalUnlock(dest);
+                            }
+                            else
+                            {
+                                file = new byte[0];
+                            }
+
+                            break;
+                        default:
+                            file = null;
+                            throw new SusieException((API.ReturnCode)result);
                     }
                 }
-
-                if (dest != null)
+                finally
                 {
-                    NativeMethods.LocalFree(dest);
+                    LocalFree(dest);
                 }
 
-                if ((API.ReturnCode)result == API.ReturnCode.Success)
-                {
-                    return true;
-                }
-                else
-                {
-                    throw new SusieException((API.ReturnCode)result);
-                }
+                return (API.ReturnCode)result == API.ReturnCode.Success;
             }
         }
 
         private static T GetFunction<T>(IntPtr handle)
         {
-            // https://qiita.com/kenichiuda/items/613766f56e5ecd1de856
             var func = NativeLibrary.GetExport(handle, typeof(T).Name);
             return Marshal.GetDelegateForFunctionPointer<T>(func);
+        }
+
+        private static unsafe void LocalFree(void* ptr)
+        {
+            if (ptr != null)
+            {
+                NativeMethods.LocalFree(ptr);
+            }
         }
 
         private void Dispose(bool disposing)
@@ -710,63 +725,51 @@
             return _fileFormats;
         }
 
-        private unsafe bool PostProcessPicture(int result, void* pHBInfo, void* pHBm, ref byte[] image, ref BitMapInfo info)
+        private unsafe void PostProcessPicture(int result, void* pHBInfo, void* pHBm, out byte[] image, out BitMapInfo info)
         {
-            if ((API.ReturnCode)result == API.ReturnCode.Success)
-            {
-                if (pHBInfo != null)
-                {
-                    var ptr = (BitMapInfoHeader*)NativeMethods.LocalLock(pHBInfo);
-
-                    // copy to managed memory
-                    Unsafe.Copy(ref info.bmiHeader, ptr);
-
-                    // gettin palette
-                    // biClrUsed は適切に設定されていないので自力で判定する
-                    // TODO validate header
-                    var bitCount = info.bmiHeader.biBitCount;
-                    if (bitCount < 24)
-                    {
-                        var clrUsed = 1 << bitCount;
-                        info.bmiColors = new RGBQuad[clrUsed];
-                        Span<RGBQuad> palette = info.bmiColors.AsSpan();
-
-                        fixed (void* dest = palette)
-                        {
-                            var src = ptr + 1; // next
-                            Unsafe.CopyBlock(dest, src, (uint)(sizeof(RGBQuad) * palette.Length));
-                        }
-                    }
-
-                    NativeMethods.LocalUnlock(pHBInfo);
-                }
-
-                if (pHBm != null)
-                {
-                    var ptr = NativeMethods.LocalLock(pHBm);
-
-                    // copy to managed memory
-                    image = new byte[info.bmiHeader.biSizeImage];
-                    fixed (void* p = image)
-                    {
-                        Unsafe.CopyBlock(p, ptr, (uint)image.Length);
-                    }
-
-                    NativeMethods.LocalUnlock(pHBm);
-                }
-            }
+            image = null;
+            info = default;
 
             if (pHBInfo != null)
             {
-                NativeMethods.LocalFree(pHBInfo);
+                var ptr = (BitMapInfoHeader*)NativeMethods.LocalLock(pHBInfo);
+
+                // copy to managed memory
+                Unsafe.Copy(ref info.bmiHeader, ptr);
+
+                // gettin palette
+                // biClrUsed は適切に設定されていないので自力で判定する
+                // TODO validate header
+                var bitCount = info.bmiHeader.biBitCount;
+                if (bitCount < 24)
+                {
+                    var clrUsed = 1 << bitCount;
+                    info.bmiColors = new RGBQuad[clrUsed];
+                    Span<RGBQuad> palette = info.bmiColors.AsSpan();
+
+                    fixed (void* dest = palette)
+                    {
+                        var src = ptr + 1; // next
+                        Unsafe.CopyBlock(dest, src, (uint)(sizeof(RGBQuad) * palette.Length));
+                    }
+                }
+
+                NativeMethods.LocalUnlock(pHBInfo);
             }
 
             if (pHBm != null)
             {
-                NativeMethods.LocalFree(pHBm);
-            }
+                var ptr = NativeMethods.LocalLock(pHBm);
 
-            return (API.ReturnCode)result == API.ReturnCode.Success;
+                // copy to managed memory
+                image = new byte[info.bmiHeader.biSizeImage];
+                fixed (void* p = image)
+                {
+                    Unsafe.CopyBlock(p, ptr, (uint)image.Length);
+                }
+
+                NativeMethods.LocalUnlock(pHBm);
+            }
         }
     }
 }

@@ -25,6 +25,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WA.Blank", "WA.Blank\WA.Bla
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WA.Susie", "WA.Susie\WA.Susie.csproj", "{610C57BD-902B-4C7A-AE3F-0A3E293C526E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "spi", "spi", "{488FB82C-A4C0-4D95-A4D1-2BD88AF91FD1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -128,6 +130,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7ADA98D7-2389-4283-850E-75D0B5AEC98F} = {488FB82C-A4C0-4D95-A4D1-2BD88AF91FD1}
+		{CAE43C02-C72E-472B-ADF1-C0440E2D5EE9} = {488FB82C-A4C0-4D95-A4D1-2BD88AF91FD1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55CED695-0C93-4B07-B08B-27F6A9D98CFE}

@@ -2,6 +2,7 @@
 {
     using System.Runtime.InteropServices;
 
+    // todo
     // https://qiita.com/mitsu_at3/items/94807ee0b3bf34ffb6b2
     // https://qiita.com/kob58im/items/e40081491a75204ccb6e
     internal static class NativeMethods
