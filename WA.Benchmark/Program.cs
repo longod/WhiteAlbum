@@ -4,7 +4,7 @@ using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
 using BenchmarkDotNet.Toolchains.CsProj;
 using BenchmarkDotNet.Toolchains.DotNetCli;
-using System;
+using BenchmarkDotNet.Toolchains.InProcess.Emit;
 
 namespace WA.Benchmark
 {
@@ -14,28 +14,37 @@ namespace WA.Benchmark
         {
             IConfig config = null;
 
-            // FIXME works on x86, x64, AnyCPU
 #if DEBUG
-            //config = new DebugBuildConfig();
+            // on debugger
             config = new DebugInProcessConfig();
 #else
-            config = new DebugInProcessConfig(); // release でもデバッガ経由だと動かせる
-
-            //BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, config);
-            //var config = ManualConfig.Create(DefaultConfig.Instance).AddJob(Job.Default.WithPlatform(Platform.X86));
-            // doesnt work
-            var x86core31 = Job.ShortRun
-                .WithPlatform(BenchmarkDotNet.Environments.Platform.X86)
-                .WithToolchain(CsProjCoreToolchain.From(NetCoreAppSettings.NetCoreApp31
-                //.WithCustomDotNetCliPath(@"..\..\..\..\\dotnet-runtime-3.1.21-win-x86\dotnet.exe")
-                .WithCustomDotNetCliPath(@"C:\Program Files (x86)\dotnet\dotnet.exe")
+            // FIXME Doesnt work
+            // https://github.com/dotnet/BenchmarkDotNet/issues/856#issuecomment-715910912
+            // これが動作すればAnyCPUで両方試せるはずなのだが
+            var x86Core31 = Job.Default
+                .WithPlatform(Platform.X86)
+                .WithToolchain(CsProjCoreToolchain.From(
+                    NetCoreAppSettings.NetCoreApp31
+                    .WithCustomDotNetCliPath(@"C:\Program Files (x86)\dotnet\dotnet.exe")
                 ))
-                .WithId("x86 .NET Core 3.1"); // displayed in the results table
-            //config = DefaultConfig.Instance.AddJob(x86core31);
+                .WithId("x86 .NET Core 3.1");
+
+            var x64Core31 = Job.Default
+                .WithPlatform(Platform.X64)
+                .WithToolchain(CsProjCoreToolchain.From(
+                    NetCoreAppSettings.NetCoreApp31
+                    .WithCustomDotNetCliPath(@"C:\Program Files\dotnet\dotnet.exe")
+                ))
+                .WithId("x64 .NET Core 3.1");
+
+            // DebugInProcessConfig に近い構成
+            // Platform指定で動作する
+            var inProcess = Job.Default.WithToolchain(InProcessEmitToolchain.Instance).WithId("InProcess");
+
+            config = DefaultConfig.Instance.AddJob(inProcess);
 #endif
 
             BenchmarkRunner.Run<MemoryCopying>(config);
-            //BenchmarkRunner.Run<BitmapCreation>(config);
         }
     }
 }

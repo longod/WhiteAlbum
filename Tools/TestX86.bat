@@ -14,4 +14,3 @@ MSBuild spi\ifnull\ifnull.vcxproj -m -warnAsError -t:build -p:Platform=Win32;Con
 dotnet test WhiteAlbum.sln -s WA.Test.runsettings
 
 popd
-pause
