@@ -29,31 +29,34 @@
     // }
 
     // management loader and raw binary
+    // 先読みとか
     // public class FileManager
-    // {
-    // }
-
-    // management decoer and decoded image
-    // public class CacheManager
     // {
     // }
 
     public class ViewerModel : INotifyPropertyChanged
     {
+        private readonly ILogger _logger;
+        private readonly PluginManager _pluginManager;
+        private readonly CacheManager<BitmapSource> _cacheManager;
+
+        private Dictionary<string, ImageDecoder> _imageDecoders = new Dictionary<string, ImageDecoder>();
+
         // filesystem path
-        public string LogicalPath { get; set; }
+        private string LogicalPath { get; set; }
 
         // relative path in archive
-        public string VirtualPath { get; set; }
+        private string VirtualPath { get; set; }
 
         // 起動時に、全プラグインをロードすると致命的なので、対応フォーマットが判明したらその軽量なデータベースを作っておき、次回以降はそれをみて必要なやつのみロードするとかが必要か
         // x86 dllを読めるようにしないといけない 現実的にはx86アプリにする…x64がいいんだけれど
         // 一応、out-of-process com serverでいける https://qiita.com/mima_ita/items/57d7c1101543e214b1d6
 
-        public ViewerModel(AppSettings settings, PluginManager pluginManager, ILogger logger)
+        public ViewerModel(AppSettings settings, PluginManager pluginManager, CacheManager<BitmapSource> cacheManager, ILogger logger)
         {
             _logger = logger;
             _pluginManager = pluginManager;
+            _cacheManager = cacheManager;
             using (new StopwatchScope("ViewerModel", _logger))
             {
                 if (settings.EnableBuiltInDecoders)
@@ -101,6 +104,14 @@
                 // ひとまずフルオンメモリー
                 using (new StopwatchScope("Process File", _logger))
                 {
+
+                    // cache
+                    if (_cacheManager.TryQuery(LogicalPath, VirtualPath, out var hit))
+                    {
+                        Image = hit;
+                        return;
+                    }
+
                     using (var loader = new FileLoader(LogicalPath, Susie.API.Constant.MinFileSize))
                     {
                         // FIXME support判定に必要な分だけ PeekAsyncで先にまず読んでおいて、
@@ -116,6 +127,7 @@
                             using (new StopwatchScope("Decoding", _logger))
                             {
                                 var bmp = await decoder.DecodeAsync(loader);
+                                _cacheManager.Entry(LogicalPath, VirtualPath, bmp);
                                 Image = bmp;
                             }
                         }
@@ -163,11 +175,6 @@
 
             return instance;
         }
-
-        private Dictionary<string, ImageDecoder> _imageDecoders = new Dictionary<string, ImageDecoder>();
-
-        private PluginManager _pluginManager;
-        private readonly ILogger _logger;
 
         private void RegisterBuiltInDecoders()
         {

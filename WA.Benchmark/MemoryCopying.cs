@@ -32,10 +32,13 @@ namespace WA.Benchmark
             Array.Copy(_src, _dest, _dest.Length);
         }
 
-        // may be fastest
         [Benchmark]
         public void VectorCopy()
         {
+            // FIXME 正しい使い方ではない
+            // SIMD レジスタに格納できる数(Vector<T>.Count)しか格納できないので、その回数分操作を繰り返す必要がある
+            // 終端の調整も必要
+            // https://stackoverflow.com/questions/55931034/system-numerics-vectort-on-large-data-sets
             var v = new Vector<byte>(_src);
             v.TryCopyTo(_dest);
         }
