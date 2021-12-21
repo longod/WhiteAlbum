@@ -36,7 +36,7 @@
 # For a complete CI/CD sample to get started with GitHub Action workflows for Desktop Applications,
 # refer to https://github.com/microsoft/github-actions-for-desktop-apps
 
-name: .NET Core Desktop
+name: Build x86
 
 on:
   push:
@@ -45,58 +45,48 @@ on:
     branches: [ main ]
 
 jobs:
-
   build:
-
     strategy:
       matrix:
         configuration: [Debug, Release]
 
-    runs-on: windows-latest  # For a list of available runner types, refer to
-                             # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+    runs-on: windows-latest
 
     env:
       Solution_Name: WhiteAlbum.sln                             # Replace with your solution name, i.e. MyWpfApp.sln.
       Test_Project_Path: WA.Test\WA.Test.csproj                 # Replace with the path to your test project, i.e. MyWpfApp.Tests\MyWpfApp.Tests.csproj.
-      Wap_Project_Directory: your-wap-project-directory-name    # Replace with the Wap project directory relative to the solution, i.e. MyWpfApp.Package.
-      Wap_Project_Path: your-wap-project-path                   # Replace with the path to your Wap project, i.e. MyWpf.App.Package\MyWpfApp.Package.wapproj.
       NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v2
       with:
         fetch-depth: 0
 
     - uses: actions/cache@v2
-      id: cache
       with:
         path: ${{env.NUGET_PACKAGES}}
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
         restore-keys: |
                 ${{ runner.os }}-nuget-
 
-    # Install the .NET Core workload
     - name: Install .NET Core
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.x
 
-    # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1.0.2
 
-    # restore
-    - name: Restore
+    - name: Restore x86
       run: msbuild $env:Solution_Name -t:Restore -p:Configuration=$env:Configuration -p:Platform=x86
       env:
         Configuration: ${{ matrix.configuration }}
 
-    - name: Build
+    - name: Build x86
       run: msbuild $env:Solution_Name -m -t:build -p:Configuration=$env:Configuration -p:Platform=x86
       env:
         Configuration: ${{ matrix.configuration }}
 
-    # Execute all unit tests in the solution
-    - name: Execute unit tests
-      run: dotnet test $env:Solution_Name -s WA.Test.runsettings --no-build --no-restore --logger "console;verbosity=detailed"
+    # dotnetのアーキテクチャx86を指定して取得できないと無理。そしてそれはまだできない
+    # - name: Test
+    #   run: dotnet test $env:Solution_Name -s WA.Test.runsettings --no-build --no-restore --logger "console;verbosity=detailed"
