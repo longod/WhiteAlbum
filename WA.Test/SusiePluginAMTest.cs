@@ -2,15 +2,18 @@
 using System.Collections.Generic;
 using System.Text;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace WA.Test
 {
     public class SusiePluginAMTest : IDisposable
     {
+
         private Susie.SusiePlugin _plugin;
 
-        public SusiePluginAMTest()
+        public SusiePluginAMTest(ITestOutputHelper testOutputHelper)
         {
+            testOutputHelper.WriteLine(AppContext.BaseDirectory);
 #if DEBUG
             string path = @"..\..\..\..\..\Bin\spi\Win32\Debug\axnull.spi";
 #else

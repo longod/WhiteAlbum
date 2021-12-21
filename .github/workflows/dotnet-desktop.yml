@@ -95,4 +95,4 @@ jobs:
 
     # Execute all unit tests in the solution
     - name: Execute unit tests
-      run: dotnet test $env:Solution_Name -s WA.Test.runsettings
+      run: dotnet test $env:Solution_Name -s WA.Test.runsettings --logger "console;verbosity=detailed"
