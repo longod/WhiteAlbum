@@ -53,14 +53,10 @@ jobs:
     runs-on: windows-latest
 
     env:
-      Solution_Name: WhiteAlbum.sln                             # Replace with your solution name, i.e. MyWpfApp.sln.
-      Test_Project_Path: WA.Test\WA.Test.csproj                 # Replace with the path to your test project, i.e. MyWpfApp.Tests\MyWpfApp.Tests.csproj.
       NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
 
     steps:
     - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
 
     - uses: actions/cache@v2
       with:
@@ -69,24 +65,22 @@ jobs:
         restore-keys: |
                 ${{ runner.os }}-nuget-
 
-    - name: Install .NET Core
-      uses: actions/setup-dotnet@v1
+    - uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.x
 
-    - name: Setup MSBuild.exe
-      uses: microsoft/setup-msbuild@v1.0.2
+    - uses: microsoft/setup-msbuild@v1.0.2
 
-    - name: Restore x86
-      run: msbuild $env:Solution_Name -t:Restore -p:Configuration=$env:Configuration -p:Platform=x86
+    - name: Restore Packages
+      run: msbuild WhiteAlbum.sln -t:restore -p:Configuration=$env:Configuration -p:Platform=x86
       env:
         Configuration: ${{ matrix.configuration }}
 
-    - name: Build x86
-      run: msbuild $env:Solution_Name -m -t:build -p:Configuration=$env:Configuration -p:Platform=x86
+    - name: Build
+      run: msbuild WhiteAlbum.sln -m -t:build -p:Configuration=$env:Configuration -p:Platform=x86
       env:
         Configuration: ${{ matrix.configuration }}
 
     # dotnetのアーキテクチャx86を指定して取得できないと無理。そしてそれはまだできない
     # - name: Test
-    #   run: dotnet test $env:Solution_Name -s WA.Test.runsettings --no-build --no-restore --logger "console;verbosity=detailed"
+    #   run: dotnet test WhiteAlbum.sln -s WA.Test.runsettings --no-build --no-restore --logger "console;verbosity=detailed"
