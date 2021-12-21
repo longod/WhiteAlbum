@@ -47,6 +47,15 @@
             }
         }
 
+        internal static async Task<T> CloneAsync<T>(T value, int capasity = 2048)
+        {
+            using (var stream = new MemoryStream(capasity))
+            {
+                await JsonSerializer.SerializeAsync(stream, value);
+                return await JsonSerializer.DeserializeAsync<T>(stream);
+            }
+        }
+
         internal static async Task<T> CloneSync<T>(T value, int capasity = 2048)
         {
             using (var stream = new MemoryStream(capasity))

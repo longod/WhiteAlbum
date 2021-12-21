@@ -39,97 +39,31 @@ namespace WA.Viewer.ViewModels
         public ReactivePropertySlim<Transform> ImageTransform { get; private set; }
 
         public DelegateCommand _showSettingsWindowCommand;
-        public DelegateCommand ShowSettingsWindowCommand
-        {
-            get
-            {
-                return _showSettingsWindowCommand ??= new DelegateCommand(ShowSettingsWindowEvent);
-            }
-        }
+        public DelegateCommand ShowSettingsWindowCommand => _showSettingsWindowCommand ??= new DelegateCommand(ShowSettingsWindowEvent);
         private DelegateCommand _exitCommand;
-        public DelegateCommand ExitCommand
-        {
-            get
-            {
-                return _exitCommand ??= new DelegateCommand(ExitEvent);
-            }
-        }
+        public DelegateCommand ExitCommand => _exitCommand ??= new DelegateCommand(ExitEvent);
 
         private DelegateCommand<RoutedEventArgs> _loadedCommand;
-        public DelegateCommand<RoutedEventArgs> LoadedCommand
-        {
-            get
-            {
-                return _loadedCommand ??= new DelegateCommand<RoutedEventArgs>(async (e) => await LoadedEvent(e));
-            }
-        }
+        public DelegateCommand<RoutedEventArgs> LoadedCommand => _loadedCommand ??= new DelegateCommand<RoutedEventArgs>(async (e) => await LoadedEvent(e));
         private DelegateCommand<DragEventArgs> _previewDragOverCommand;
-        public DelegateCommand<DragEventArgs> PreviewDragOverCommand
-        {
-            get
-            {
-                return _previewDragOverCommand ??= new DelegateCommand<DragEventArgs>(PreviewDragOverEvent);
-            }
-        }
+        public DelegateCommand<DragEventArgs> PreviewDragOverCommand => _previewDragOverCommand ??= new DelegateCommand<DragEventArgs>(PreviewDragOverEvent);
         private DelegateCommand<DragEventArgs> _dropCommand;
-        public DelegateCommand<DragEventArgs> DropCommand
-        {
-            get
-            {
-                return _dropCommand ??= new DelegateCommand<DragEventArgs>(async (e) => await DropEvent(e));
-            }
-        }
+        public DelegateCommand<DragEventArgs> DropCommand => _dropCommand ??= new DelegateCommand<DragEventArgs>(async (e) => await DropEvent(e));
 
         private DelegateCommand<MouseButtonEventArgs> _mouseDownCommand;
-        public DelegateCommand<MouseButtonEventArgs> MouseDownCommand
-        {
-            get
-            {
-                return _mouseDownCommand ??= new DelegateCommand<MouseButtonEventArgs>(MouseDownEvent);
-            }
-        }
+        public DelegateCommand<MouseButtonEventArgs> MouseDownCommand => _mouseDownCommand ??= new DelegateCommand<MouseButtonEventArgs>(MouseDownEvent);
         private DelegateCommand<MouseEventArgs> _mouseMoveCommand;
-        public DelegateCommand<MouseEventArgs> MouseMoveCommand
-        {
-            get
-            {
-                return _mouseMoveCommand ??= new DelegateCommand<MouseEventArgs>(MouseMoveEvent);
-            }
-        }
+        public DelegateCommand<MouseEventArgs> MouseMoveCommand => _mouseMoveCommand ??= new DelegateCommand<MouseEventArgs>(MouseMoveEvent);
         private DelegateCommand<MouseButtonEventArgs> _mouseUpCommand;
-        public DelegateCommand<MouseButtonEventArgs> MouseUpCommand
-        {
-            get
-            {
-                return _mouseUpCommand ??= new DelegateCommand<MouseButtonEventArgs>(MouseUpEvent);
-            }
-        }
+        public DelegateCommand<MouseButtonEventArgs> MouseUpCommand => _mouseUpCommand ??= new DelegateCommand<MouseButtonEventArgs>(MouseUpEvent);
         private DelegateCommand<MouseWheelEventArgs> _mouseWheelCommand;
-        public DelegateCommand<MouseWheelEventArgs> MouseWheelCommand
-        {
-            get
-            {
-                return _mouseWheelCommand ??= new DelegateCommand<MouseWheelEventArgs>(MouseWheelEvent);
-            }
-        }
+        public DelegateCommand<MouseWheelEventArgs> MouseWheelCommand => _mouseWheelCommand ??= new DelegateCommand<MouseWheelEventArgs>(MouseWheelEvent);
         private DelegateCommand<MouseButtonEventArgs> _mouseDoubleClickCommand;
-        public DelegateCommand<MouseButtonEventArgs> MouseDoubleClickCommand
-        {
-            get
-            {
-                return _mouseDoubleClickCommand ??= new DelegateCommand<MouseButtonEventArgs>(MouseDoubleClickEvent);
-            }
-        }
+        public DelegateCommand<MouseButtonEventArgs> MouseDoubleClickCommand => _mouseDoubleClickCommand ??= new DelegateCommand<MouseButtonEventArgs>(MouseDoubleClickEvent);
 
         // test
         private DelegateCommand _showConfigCommand;
-        public DelegateCommand ShowConfigCommand
-        {
-            get
-            {
-                return _showConfigCommand ??= new DelegateCommand(ShowConfigTestEvent);
-            }
-        }
+        public DelegateCommand ShowConfigCommand => _showConfigCommand ??= new DelegateCommand(ShowConfigTestEvent);
         PluginManager _pluginManager;
 
         public MainWindowViewModel(IRegionManager regionManager, IDialogService dialogService, CommandLineArgs args, AppSettings settings, ViewerModel viewer, PluginManager pluginManager, ILogger logger)

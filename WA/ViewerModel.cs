@@ -59,7 +59,7 @@
             _cacheManager = cacheManager;
             using (new StopwatchScope("ViewerModel", _logger))
             {
-                if (settings.EnableBuiltInDecoders)
+                if (settings.Data.EnableBuiltInDecoders)
                 {
                     RegisterBuiltInDecoders();
                 }
@@ -181,8 +181,10 @@
             _imageDecoders.Add(".bmp", new BuiltInImageDecoder(typeof(BmpBitmapDecoder)));
             _imageDecoders.Add(".png", new BuiltInImageDecoder(typeof(PngBitmapDecoder)));
             _imageDecoders.Add(".jpg", new BuiltInImageDecoder(typeof(JpegBitmapDecoder)));
-            _imageDecoders.Add(".git", new BuiltInImageDecoder(typeof(GifBitmapDecoder)));
+            _imageDecoders.Add(".jpeg", new BuiltInImageDecoder(typeof(JpegBitmapDecoder)));
+            _imageDecoders.Add(".gif", new BuiltInImageDecoder(typeof(GifBitmapDecoder)));
             _imageDecoders.Add(".tif", new BuiltInImageDecoder(typeof(TiffBitmapDecoder)));
+            _imageDecoders.Add(".tiff", new BuiltInImageDecoder(typeof(TiffBitmapDecoder)));
             _imageDecoders.Add(".wmp", new BuiltInImageDecoder(typeof(WmpBitmapDecoder)));
         }
 

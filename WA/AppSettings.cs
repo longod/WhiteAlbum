@@ -6,7 +6,7 @@
     using System.Threading.Tasks;
 
     [Serializable]
-    public class AppSettings
+    public class AppSettingsData
     {
         public List<string> PluginDirectories { get; set; } = new List<string>() { @"plugins\spi\" };
 
@@ -14,9 +14,15 @@
 
         public bool EnableLogging { get; set; } = true;
 
+    }
+
+    public class AppSettings
+    {
         private const string _name = "WA.Settings.json";
 
-        private static AppSettings _backup;
+        private static AppSettingsData _backup;
+
+        public AppSettingsData Data { get; private set; }
 
         public AppSettings()
         {
@@ -25,46 +31,59 @@
         public static AppSettings Load(bool reset = false)
         {
             string path = GetSettingsPath();
-            AppSettings settings = null;
+            AppSettings settings = new AppSettings();
             if (!reset && File.Exists(path))
             {
-                settings = JsonUtility.LoadFromFile<AppSettings>(path);
-                _backup = JsonUtility.Clone(settings); // fixme 効率が悪い
+                settings.Data = JsonUtility.LoadFromFile<AppSettingsData>(path);
+                _backup = JsonUtility.Clone(settings.Data); // fixme 効率が悪い
             }
             else
             {
-                settings = new AppSettings();
-                _backup = new AppSettings();
+                settings.Data = new AppSettingsData();
+                _backup = new AppSettingsData();
             }
 
             return settings;
         }
 
+        public static void Revert(AppSettings settings)
+        {
+            // instanceは維持してデータだけ差し替え
+            settings.Data = JsonUtility.Clone(_backup); // fixme 効率が悪い
+        }
+
         public static async Task<AppSettings> LoadAsync(bool reset = false)
         {
             string path = GetSettingsPath();
+            AppSettings settings = new AppSettings();
             if (!reset && File.Exists(path))
             {
-                return await JsonUtility.LoadFromFileAsync<AppSettings>(path);
+                settings.Data = await JsonUtility.LoadFromFileAsync<AppSettingsData>(path);
+                _backup = await JsonUtility.CloneAsync(settings.Data); // fixme 効率が悪い
+            }
+            else
+            {
+                settings.Data = new AppSettingsData();
+                _backup = new AppSettingsData();
             }
 
-            return new AppSettings();
+            return settings;
         }
 
         public void Save()
         {
             // todo if only changed
             string path = GetSettingsPath();
-            JsonUtility.SaveToFile(path, this);
-            _backup = JsonUtility.Clone(this); // fixme 効率が悪い
+            JsonUtility.SaveToFile(path, this.Data);
+            _backup = JsonUtility.Clone(this.Data); // fixme 効率が悪い
         }
 
         public async Task SaveAsync()
         {
             // todo if only changed
             string path = GetSettingsPath();
-            await JsonUtility.SaveToFileAsync(path, this)
-                .ContinueWith(_ => _backup = JsonUtility.Clone(this)); // fixme 効率が悪い
+            await JsonUtility.SaveToFileAsync(path, this.Data)
+                .ContinueWith(_ => _backup = JsonUtility.Clone(this.Data)); // fixme 効率が悪い
         }
 
         private static string GetSettingsPath()

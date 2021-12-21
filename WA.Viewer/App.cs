@@ -29,7 +29,7 @@ namespace WA.Viewer
                     var settings = Container.Resolve<AppSettings>();
 
                     builder.ClearProviders();
-                    if (settings.EnableLogging)
+                    if (settings.Data.EnableLogging)
                     {
 #if DEBUG
                         builder.SetMinimumLevel(LogLevel.Debug);

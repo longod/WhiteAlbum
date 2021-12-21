@@ -43,7 +43,7 @@
         {
             _logger = logger;
             _stringConverter = stringConverter;
-            _pluginDirectories = settings.PluginDirectories;
+            _pluginDirectories = settings.Data.PluginDirectories;
         }
 
         private IEnumerable<string> EnumeratePluginPath()
