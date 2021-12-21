@@ -93,12 +93,12 @@ jobs:
         Configuration: ${{ matrix.configuration }}
 
     - name: Prebuild axnull plugin
-      run: msbuild spi\axnull\axnull.vcxproj -p:Configuration=$env:Configuration -p:Platform=Win32 -p:SolutionDir=../../
+      run: msbuild spi\axnull\axnull.vcxproj -p:Configuration=$env:Configuration -p:Platform=Win32 -p:SolutionDir="${{ github.workspace }}"
       env:
         Configuration: ${{ matrix.configuration }}
 
     - name: Prebuild ifnull plugin
-      run: msbuild spi\ifnull\ifnull.vcxproj -p:Configuration=$env:Configuration -p:Platform=Win32 -p:SolutionDir=../../
+      run: msbuild spi\ifnull\ifnull.vcxproj -p:Configuration=$env:Configuration -p:Platform=Win32 -p:SolutionDir="${{ github.workspace }}"
       env:
         Configuration: ${{ matrix.configuration }}
 
