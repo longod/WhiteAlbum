@@ -86,22 +86,11 @@ jobs:
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1.0.2
 
-    # Restore the application to populate the obj folder with RuntimeIdentifiers
-    - name: Restore the application
-      run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration /p:Platform=x86
-      env:
-        Configuration: ${{ matrix.configuration }}
-
-    - name: Prebuild axnull plugin
-      run: msbuild spi\axnull\axnull.vcxproj -p:Configuration=$env:Configuration -p:Platform=Win32 -p:SolutionDir="${{ github.workspace }}"
-      env:
-        Configuration: ${{ matrix.configuration }}
-
-    - name: Prebuild ifnull plugin
-      run: msbuild spi\ifnull\ifnull.vcxproj -p:Configuration=$env:Configuration -p:Platform=Win32 -p:SolutionDir="${{ github.workspace }}"
+    - name: Build
+      run: msbuild $env:Solution_Name -m -t:build -p:Configuration=$env:Configuration -p:Platform=x86
       env:
         Configuration: ${{ matrix.configuration }}
 
     # Execute all unit tests in the solution
     - name: Execute unit tests
-      run: dotnet test $env:Solution_Name -s WA.Test.runsettings --logger "console;verbosity=detailed"
+      run: dotnet test $env:Solution_Name -s WA.Test.runsettings --no-build --no-restore --logger "console;verbosity=detailed"
