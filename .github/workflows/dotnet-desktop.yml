@@ -86,6 +86,12 @@ jobs:
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1.0.2
 
+    # restore
+    - name: Restore
+      run: msbuild $env:Solution_Name -t:Restore -p:Configuration=$env:Configuration -p:Platform=x86
+      env:
+        Configuration: ${{ matrix.configuration }}
+
     - name: Build
       run: msbuild $env:Solution_Name -m -t:build -p:Configuration=$env:Configuration -p:Platform=x86
       env:
