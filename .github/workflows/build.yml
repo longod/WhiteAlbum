@@ -36,7 +36,7 @@
 # For a complete CI/CD sample to get started with GitHub Action workflows for Desktop Applications,
 # refer to https://github.com/microsoft/github-actions-for-desktop-apps
 
-name: Build x86
+name: Build
 
 on:
   push:
@@ -48,11 +48,13 @@ jobs:
   build:
     strategy:
       matrix:
-        configuration: [Debug, Release]
+        configuration: ['Debug', 'Release']
+        platform: ['x86', 'x64', 'Any CPU']
 
     runs-on: windows-latest
 
     env:
+      SolutionPath: WhiteAlbum.sln
       NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
 
     steps:
@@ -72,15 +74,18 @@ jobs:
     - uses: microsoft/setup-msbuild@v1.0.2
 
     - name: Restore Packages
-      run: msbuild WhiteAlbum.sln -t:restore -p:Configuration=$env:Configuration -p:Platform=x86
+      run: msbuild $env:SolutionPath -t:restore -p:Configuration=$env:Configuration -p:Platform=$env:Platform
       env:
         Configuration: ${{ matrix.configuration }}
+        Platform: ${{ matrix.platform }}
 
     - name: Build
-      run: msbuild WhiteAlbum.sln -m -t:build -p:Configuration=$env:Configuration -p:Platform=x86
+      run: msbuild $env:SolutionPath -m -t:build -p:Configuration=$env:Configuration -p:Platform=$env:Platform
       env:
         Configuration: ${{ matrix.configuration }}
+        Platform: ${{ matrix.platform }}
 
     # dotnetのアーキテクチャx86を指定して取得できないと無理。そしてそれはまだできない
+    # https://github.com/actions/setup-dotnet/issues/72
     # - name: Test
-    #   run: dotnet test WhiteAlbum.sln -s WA.Test.runsettings --no-build --no-restore --logger "console;verbosity=detailed"
+    #   run: dotnet test $env:SolutionPath -s WA.Test.runsettings --no-build --no-restore --logger "console;verbosity=detailed"

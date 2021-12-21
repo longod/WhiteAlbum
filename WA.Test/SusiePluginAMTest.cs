@@ -2,24 +2,20 @@
 using System.Collections.Generic;
 using System.Text;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace WA.Test
 {
     public class SusiePluginAMTest : IDisposable
     {
-
         private Susie.SusiePlugin _plugin;
 
-        public SusiePluginAMTest(ITestOutputHelper testOutputHelper)
+        public SusiePluginAMTest()
         {
-            testOutputHelper.WriteLine("current directory: " + AppContext.BaseDirectory);
 #if DEBUG
             string path = @"..\..\..\..\..\Bin\spi\Win32\Debug\axnull.spi";
 #else
             string path = @"..\..\..\..\..\Bin\spi\Win32\Release\axnull.spi";
 #endif
-            testOutputHelper.WriteLine("plugin: " + System.IO.Path.GetFullPath(path));
             _plugin = new Susie.SusiePlugin(path, Susie.StringConverter.SJIS);
         }
 
