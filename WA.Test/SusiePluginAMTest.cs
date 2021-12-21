@@ -13,12 +13,13 @@ namespace WA.Test
 
         public SusiePluginAMTest(ITestOutputHelper testOutputHelper)
         {
-            testOutputHelper.WriteLine(AppContext.BaseDirectory);
+            testOutputHelper.WriteLine("current directory: " + AppContext.BaseDirectory);
 #if DEBUG
             string path = @"..\..\..\..\..\Bin\spi\Win32\Debug\axnull.spi";
 #else
             string path = @"..\..\..\..\..\Bin\spi\Win32\Release\axnull.spi";
 #endif
+            testOutputHelper.WriteLine("plugin: " + System.IO.Path.GetFullPath(path));
             _plugin = new Susie.SusiePlugin(path, Susie.StringConverter.SJIS);
         }
 
