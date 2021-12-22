@@ -18,14 +18,14 @@
 
         // animationを考慮すると、 ReadOnlyCollection<BitmapFrame> のようなほうがよい
         // boxingしまくりで遅そう…
-        internal override async Task<BitmapSource> DecodeAsync(FileLoader loader)
+        internal override async Task<ImageOutputResult> DecodeAsync(FileLoader loader)
         {
             _args[0] = loader.Stream;
             return await Task.Run(() =>
             {
                 BitmapDecoder decoder = (BitmapDecoder)_constructor.Invoke(_args);
-
-                return decoder.Frames[0];
+                ImageOutputResult result = new ImageOutputResult() { Bmp = decoder.Frames[0] };
+                return result;
             });
 
             // fallback

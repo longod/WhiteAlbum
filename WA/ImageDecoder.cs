@@ -18,7 +18,7 @@
     {
         private List<IPluginProxy> _decoders;
 
-        internal virtual async Task<BitmapSource> DecodeAsync(FileLoader loader)
+        internal virtual async Task<ImageOutputResult> DecodeAsync(FileLoader loader)
         {
             var image = await Task.Run(() =>
             {
@@ -42,7 +42,7 @@
             return null;
         }
 
-        private async Task<BitmapSource> Convert(ImageIntermediateResult image)
+        private async Task<ImageOutputResult> Convert(ImageIntermediateResult image)
         {
             var bmp = await Task.Run(() =>
             {
@@ -81,7 +81,8 @@
             // BitmapSourceの基点は左上だが、本来のbmp formatのpositive heightは左下基点で反転してしまう
             // 事前にメモリを反転して詰め直すか、scale transformで行なう
             // exif も追々考慮する必要がある
-            return bmp;
+            ImageOutputResult result = new ImageOutputResult() { Bmp = bmp };
+            return result;
         }
 
         private Transform GetTransform(ImageIntermediateResult image)

@@ -126,9 +126,9 @@
                             // builtinとの兼ね合いをどうするか…
                             using (new StopwatchScope("Decoding", _logger))
                             {
-                                var bmp = await decoder.DecodeAsync(loader);
-                                _cacheManager.Entry(LogicalPath, VirtualPath, bmp);
-                                Image = bmp;
+                                var result = await decoder.DecodeAsync(loader);
+                                //_cacheManager.Entry(LogicalPath, VirtualPath, bmp);
+                                Image = result.Bmp;
                             }
                         }
                     }

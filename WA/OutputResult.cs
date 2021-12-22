@@ -12,7 +12,7 @@
     {
         internal BitmapSource Bmp { get; set; }
 
-        internal ImageInfo Info { get; set; }
+        // add more info
     }
 
     // temp
