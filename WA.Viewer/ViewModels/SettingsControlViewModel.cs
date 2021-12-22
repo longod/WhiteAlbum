@@ -21,7 +21,6 @@ namespace WA.Viewer.ViewModels
         public ReactivePropertySlim<bool> EnableLogging { get; }
         public ReactivePropertySlim<bool> EnableBuiltInDecoders { get; }
 
-
         private DelegateCommand<string> _closeDialogCommand;
         public DelegateCommand<string> CloseDialogCommand => _closeDialogCommand ??= new DelegateCommand<string>(CloseDialog);
 

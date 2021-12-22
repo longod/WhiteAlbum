@@ -42,7 +42,7 @@
             return null;
         }
 
-        private async Task<BitmapSource> Convert(DecodedImage image)
+        private async Task<BitmapSource> Convert(ImageIntermediateResult image)
         {
             var bmp = await Task.Run(() =>
             {
@@ -50,10 +50,10 @@
                 BitmapPalette plaette = GetBitmapPalette(image);
                 Transform transform = GetTransform(image);
 
-                var stride = (((image.Width * image.BitsPerPixel) + 31u) & ~31u) >> 3;
+                var stride = (((image.Info.Width * image.Info.BitsPerPixel) + 31u) & ~31u) >> 3;
                 var b = BitmapSource.Create(
-                  (int)image.Width,
-                  (int)image.Height,
+                  (int)image.Info.Width,
+                  (int)image.Info.Height,
                   WpfUtility.DefaultDpiX,
                   WpfUtility.DefaultDpiX,
                   format,
@@ -84,20 +84,20 @@
             return bmp;
         }
 
-        private Transform GetTransform(DecodedImage image)
+        private Transform GetTransform(ImageIntermediateResult image)
         {
             RotateTransform rotate = null;
-            switch (image.Rotation)
+            switch (image.Info.Rotation)
             {
-                case DecodedImage.ImageRotation.None:
+                case ImageRotation.None:
                     break;
-                case DecodedImage.ImageRotation.Degree90:
+                case ImageRotation.Degree90:
                     rotate = new RotateTransform(90.0f);
                     break;
-                case DecodedImage.ImageRotation.Degree180:
+                case ImageRotation.Degree180:
                     rotate = new RotateTransform(180.0f);
                     break;
-                case DecodedImage.ImageRotation.Degree270:
+                case ImageRotation.Degree270:
                     rotate = new RotateTransform(270.0f);
                     break;
                 default:
@@ -105,11 +105,11 @@
             }
 
             ScaleTransform scale = null;
-            switch (image.Orientation)
+            switch (image.Info.Orientation)
             {
-                case DecodedImage.ImageOrientation.TopLeft:
+                case ImageOrientation.TopLeft:
                     break;
-                case DecodedImage.ImageOrientation.BottomLeft:
+                case ImageOrientation.BottomLeft:
                     scale = new ScaleTransform(1.0, -1.0);
                     break;
                 default:
@@ -136,7 +136,7 @@
             }
         }
 
-        private static BitmapPalette GetBitmapPalette(DecodedImage image)
+        private static BitmapPalette GetBitmapPalette(ImageIntermediateResult image)
         {
             if (image.Palette != null)
             {
@@ -144,11 +144,11 @@
             }
 
             // fallback
-            switch (image.Format)
+            switch (image.Info.Format)
             {
-                case DecodedImage.PixelFormat.Index:
+                case ImageFormat.Index:
                     // FIXME 元データのパレットを参照して生成する
-                    switch (image.BitsPerPixel)
+                    switch (image.Info.BitsPerPixel)
                     {
                         case 1:
                             return BitmapPalettes.BlackAndWhite; // 2 colors
@@ -159,7 +159,7 @@
                         case 8:
                             return BitmapPalettes.Halftone256; // 256 colors
                         default:
-                            throw new NotSupportedException($"image.BitsPerPixel : {image.BitsPerPixel}");
+                            throw new NotSupportedException($"image.BitsPerPixel : {image.Info.BitsPerPixel}");
                     }
 
                 default:
@@ -167,21 +167,21 @@
             }
         }
 
-        private static PixelFormat GetPixelFormat(DecodedImage image)
+        private static PixelFormat GetPixelFormat(ImageIntermediateResult image)
         {
-            switch (image.Format)
+            switch (image.Info.Format)
             {
-                case DecodedImage.PixelFormat.RGB:
+                case ImageFormat.RGB:
                     return PixelFormats.Rgb24;
-                case DecodedImage.PixelFormat.RGBA:
+                case ImageFormat.RGBA:
                     // argb, rgba
                     break;
-                case DecodedImage.PixelFormat.BGR:
+                case ImageFormat.BGR:
                     return PixelFormats.Bgr24;
-                case DecodedImage.PixelFormat.BGRA:
+                case ImageFormat.BGRA:
                     return PixelFormats.Bgra32;
-                case DecodedImage.PixelFormat.Index:
-                    switch (image.BitsPerPixel)
+                case ImageFormat.Index:
+                    switch (image.Info.BitsPerPixel)
                     {
                         case 1:
                             return PixelFormats.Indexed1;
@@ -200,7 +200,7 @@
                     break;
             }
 
-            throw new NotSupportedException($"image.Format: {image.Format}, image.BitsPerPixel: {image.BitsPerPixel}");
+            throw new NotSupportedException($"image.Format: {image.Info.Format}, image.BitsPerPixel: {image.Info.BitsPerPixel}");
         }
 
         internal void RegisterDecoder(IPluginProxy decoder)

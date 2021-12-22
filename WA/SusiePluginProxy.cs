@@ -49,7 +49,7 @@
             return _plugin.IsSupported(loader.Path, loader.RawBinary);
         }
 
-        public bool Decode(FileLoader loader, out DecodedImage image)
+        public bool Decode(FileLoader loader, out ImageIntermediateResult image)
         {
             switch (_plugin.Type)
             {
@@ -68,42 +68,42 @@
             return false;
         }
 
-        private bool GetPicture(FileLoader loader, out DecodedImage image)
+        private bool GetPicture(FileLoader loader, out ImageIntermediateResult image)
         {
             if (_plugin.GetPicture(loader.Binary, out var binary, out var info))
             {
                 // index colorの場合、ファイルに埋まっているpaletteは、どこからとってきてる？
                 // consider biCompression?
-                image = new DecodedImage();
-                image.Width = (uint)info.bmiHeader.biWidth;
-                image.Height = (uint)info.bmiHeader.biHeight;
-                image.DepthOrArray = 1;
-                image.MipLevels = 1;
-                image.BitsPerPixel = info.bmiHeader.biBitCount;
+                image = new ImageIntermediateResult();
+                image.Info.Width = (uint)info.bmiHeader.biWidth;
+                image.Info.Height = (uint)info.bmiHeader.biHeight;
+                image.Info.DepthOrArray = 1;
+                image.Info.MipLevels = 1;
+                image.Info.BitsPerPixel = info.bmiHeader.biBitCount;
                 switch (info.bmiHeader.biBitCount)
                 {
                     case 32:
-                        image.Format = DecodedImage.PixelFormat.BGRA;
+                        image.Info.Format = ImageFormat.BGRA;
                         break;
                     case 24:
-                        image.Format = DecodedImage.PixelFormat.BGR;
+                        image.Info.Format = ImageFormat.BGR;
                         break;
                     case 16:
-                        image.Format = DecodedImage.PixelFormat.BGR;
+                        image.Info.Format = ImageFormat.BGR;
                         break;
                     case 8:
-                        image.Format = DecodedImage.PixelFormat.Index;
+                        image.Info.Format = ImageFormat.Index;
                         break;
                     case 4:
-                        image.Format = DecodedImage.PixelFormat.Index;
+                        image.Info.Format = ImageFormat.Index;
                         break;
                     default:
                         throw new NotSupportedException($"info.biBitCount: {info.bmiHeader.biBitCount}");
                 }
 
-                image.Dimension = DecodedImage.ImageDimension.Texture2D;
-                image.Orientation = DecodedImage.ImageOrientation.BottomLeft;
-                image.Rotation = DecodedImage.ImageRotation.None;
+                image.Info.Dimension = ImageDimension.Texture2D;
+                image.Info.Orientation = ImageOrientation.BottomLeft;
+                image.Info.Rotation = ImageRotation.None;
                 image.Binary = binary;
                 if (info.bmiColors != null)
                 {
