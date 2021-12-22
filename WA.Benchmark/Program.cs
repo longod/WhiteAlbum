@@ -44,6 +44,7 @@ namespace WA.Benchmark
             config = DefaultConfig.Instance.AddJob(inProcess);
 #endif
 
+            BenchmarkRunner.Run<StringConvertion>(config);
             BenchmarkRunner.Run<MemoryCopying>(config);
         }
     }
