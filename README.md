@@ -2,6 +2,8 @@
 
 WHITE ALBUM is a lightweight Image Viewer with a mix of modern and legacy features.
 
+[![Build](https://github.com/longod/WhiteAlbum/actions/workflows/build.yml/badge.svg)](https://github.com/longod/WhiteAlbum/actions/workflows/build.yml)
+
 ## Concept
 - Fast and Lightweight
     - Avoid unnecessary decoration and animation, therefore white

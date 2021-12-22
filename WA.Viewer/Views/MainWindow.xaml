@@ -10,9 +10,6 @@
         AllowDrop="True">
     <Window.ContextMenu>
         <ContextMenu>
-            <MenuItem Header="Debug">
-                <MenuItem Header="Show Dialog" Command="{Binding Path=ShowConfigCommand}"/>
-            </MenuItem>
             <MenuItem Header="Settings" Command="{Binding Path=ShowSettingsWindowCommand}"/>
             <MenuItem Header="Exit (_E)" Command="{Binding Path=ExitCommand}"/>
         </ContextMenu>

@@ -2,12 +2,16 @@
 using Prism.Mvvm;
 using Prism.Services.Dialogs;
 using Reactive.Bindings;
+using Reactive.Bindings.Extensions;
 using System;
+using System.Reactive.Disposables;
 
 namespace WA.Viewer.ViewModels
 {
-    class SettingsControlViewModel : BindableBase, IDialogAware
+    class SettingsControlViewModel : BindableBase, IDialogAware, IDisposable
     {
+        private CompositeDisposable _disposable { get; } = new CompositeDisposable();
+
         public string Title => "Settings";
 
         public event Action<IDialogResult> RequestClose;
@@ -25,10 +29,10 @@ namespace WA.Viewer.ViewModels
         {
             _settings = settings;
 
-            EnableLogging = new ReactivePropertySlim<bool>(_settings.Data.EnableLogging);
+            EnableLogging = new ReactivePropertySlim<bool>(_settings.Data.EnableLogging).AddTo(_disposable);
             EnableLogging.Subscribe(x => _settings.Data.EnableLogging = x);
 
-            EnableBuiltInDecoders = new ReactivePropertySlim<bool>(_settings.Data.EnableBuiltInDecoders);
+            EnableBuiltInDecoders = new ReactivePropertySlim<bool>(_settings.Data.EnableBuiltInDecoders).AddTo(_disposable);
             EnableBuiltInDecoders.Subscribe(x => _settings.Data.EnableBuiltInDecoders = x);
         }
 
@@ -68,6 +72,11 @@ namespace WA.Viewer.ViewModels
         public virtual void RaiseRequestClose(IDialogResult dialogResult)
         {
             RequestClose?.Invoke(dialogResult);
+        }
+
+        public void Dispose()
+        {
+            _disposable.Dispose();
         }
     }
 }
