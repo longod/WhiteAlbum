@@ -26,19 +26,19 @@ WHITE ALBUM is a lightweight Image Viewer with a mix of modern and legacy featur
 | Project          | Description |
 |------------------|---|
 | WA.Viewer        | Main Viewer Application |
-| WA.Catalog (TBD) | Main Catalog Application |
+| WA.Album         | Main Browser Application |
 | WA               | Main Library |
 | WA.Susie         | Interoperate Susie Plugin |
 | WA.Test          | xUnit Test |
 | WA.Benchmark     | BenchmarkDotNet Benchmark |
 | WA.Blank         | Minimized WPF application for comparing |
-| axnull (VC)      | Stub (null) archive extractor Susie Plugin |
-| ifnull (VC)      | Stub (null) image filter Susie Plugin |
+| axnull (VC++)    | Stub (null) archive extractor Susie Plugin |
+| ifnull (VC++)    | Stub (null) image filter Susie Plugin |
 
 ### Dependency
 ```
 WA.Susie    ->  WA  ->  WA.Viewer
-                    ->  WA.Catalog (TBD) 
+                    ->  WA.Album
                     ->  WA.Test
                     ->  WA.Benchmark
 ```
