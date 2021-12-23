@@ -17,5 +17,25 @@
 
         [DllImport(Kernel32, CharSet = CharSet.Auto)]
         internal static extern unsafe bool LocalFree(void* hMem);
+
+        internal unsafe struct LocalLockScope<T> : System.IDisposable
+                where T : unmanaged
+        {
+            private void* _ptr;
+            private T* _local;
+
+            internal T* Pointer => _local;
+
+            internal LocalLockScope(void* ptr)
+            {
+                _ptr = ptr;
+                _local = (T*)LocalLock(_ptr);
+            }
+
+            public void Dispose()
+            {
+                _ = LocalUnlock(_ptr);
+            }
+        }
     }
 }

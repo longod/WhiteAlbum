@@ -17,6 +17,7 @@ namespace WA.Viewer.ViewModels
         public event Action<IDialogResult> RequestClose;
 
         private AppSettings _settings;
+        private PluginManager _pluginManager;
 
         public ReactivePropertySlim<bool> EnableLogging { get; }
         public ReactivePropertySlim<bool> EnableBuiltInDecoders { get; }
@@ -24,9 +25,10 @@ namespace WA.Viewer.ViewModels
         private DelegateCommand<string> _closeDialogCommand;
         public DelegateCommand<string> CloseDialogCommand => _closeDialogCommand ??= new DelegateCommand<string>(CloseDialog);
 
-        public SettingsControlViewModel(AppSettings settings)
+        public SettingsControlViewModel(AppSettings settings, PluginManager pluginManager)
         {
             _settings = settings;
+            _pluginManager = pluginManager;
 
             EnableLogging = new ReactivePropertySlim<bool>(_settings.Data.EnableLogging).AddTo(_disposable);
             EnableLogging.Subscribe(x => _settings.Data.EnableLogging = x);

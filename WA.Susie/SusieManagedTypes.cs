@@ -25,9 +25,10 @@
             if (info->hInfo != null)
             {
                 // Spi_api.txt には Globalメモリーのハンドルと書いてあるが、実際の型は HGLOBAL ではなく、HLOCAL である。どっちだ？
-                var ptr = (byte*)NativeMethods.LocalLock(info->hInfo);
-                Info = stringConverter.DecodeWithZeroTerminateUnsafe(ptr);
-                NativeMethods.LocalUnlock(info->hInfo);
+                using (var local = new NativeMethods.LocalLockScope<byte>(info->hInfo))
+                {
+                    Info = stringConverter.DecodeWithZeroTerminateUnsafe(local.Pointer);
+                }
             }
             else
             {

@@ -377,24 +377,25 @@
                         case API.ReturnCode.Success:
                             if (lphInf != null)
                             {
-                                var ptr = (API.FileInfo*)NativeMethods.LocalLock(lphInf);
-                                uint count = 0;
+                                using (var local = new NativeMethods.LocalLockScope<API.FileInfo>(lphInf))
                                 {
-                                    var p = ptr;
-                                    while (p != null && p->method[0] != 0)
+                                    var ptr = local.Pointer;
+                                    uint count = 0;
                                     {
-                                        ++count;
-                                        ++p;
+                                        var p = ptr;
+                                        while (p != null && p->method[0] != 0)
+                                        {
+                                            ++count;
+                                            ++p;
+                                        }
+                                    }
+
+                                    infos = new FileInfo[count];
+                                    for (int i = 0; i < infos.Length; ++i)
+                                    {
+                                        infos[i] = new FileInfo(&ptr[i], _stringConverter);
                                     }
                                 }
-
-                                infos = new FileInfo[count];
-                                for (int i = 0; i < infos.Length; ++i)
-                                {
-                                    infos[i] = new FileInfo(&ptr[i], _stringConverter);
-                                }
-
-                                NativeMethods.LocalUnlock(lphInf);
                             }
                             else
                             {
@@ -504,13 +505,13 @@
                             if (dest != null)
                             {
                                 file = new byte[info.FileSize];
-                                var ptr = (API.FileInfo*)NativeMethods.LocalLock(dest);
-                                fixed (void* p = file)
+                                using (var local = new NativeMethods.LocalLockScope<API.FileInfo>(dest))
                                 {
-                                    Unsafe.CopyBlock(p, ptr, (uint)file.Length);
+                                    fixed (void* p = file)
+                                    {
+                                        Unsafe.CopyBlock(p, local.Pointer, (uint)file.Length);
+                                    }
                                 }
-
-                                NativeMethods.LocalUnlock(dest);
                             }
                             else
                             {
@@ -732,43 +733,41 @@
 
             if (pHBInfo != null)
             {
-                var ptr = (BitMapInfoHeader*)NativeMethods.LocalLock(pHBInfo);
-
-                // copy to managed memory
-                Unsafe.Copy(ref info.bmiHeader, ptr);
-
-                // gettin palette
-                // biClrUsed は適切に設定されていないので自力で判定する
-                // TODO validate header
-                var bitCount = info.bmiHeader.biBitCount;
-                if (bitCount < 24)
+                using (var local = new NativeMethods.LocalLockScope<BitMapInfoHeader>(pHBInfo))
                 {
-                    var clrUsed = 1 << bitCount;
-                    info.bmiColors = new RGBQuad[clrUsed];
-                    Span<RGBQuad> palette = info.bmiColors.AsSpan();
+                    // copy to managed memory
+                    Unsafe.Copy(ref info.bmiHeader, local.Pointer);
 
-                    fixed (void* dest = palette)
+                    // gettin palette
+                    // biClrUsed は適切に設定されていないので自力で判定する
+                    // TODO validate header
+                    var bitCount = info.bmiHeader.biBitCount;
+                    if (bitCount < 24)
                     {
-                        var src = ptr + 1; // next
-                        Unsafe.CopyBlock(dest, src, (uint)(sizeof(RGBQuad) * palette.Length));
+                        var clrUsed = 1 << bitCount;
+                        info.bmiColors = new RGBQuad[clrUsed];
+                        Span<RGBQuad> palette = info.bmiColors.AsSpan();
+
+                        fixed (void* dest = palette)
+                        {
+                            var src = local.Pointer + 1; // next
+                            Unsafe.CopyBlock(dest, src, (uint)(sizeof(RGBQuad) * palette.Length));
+                        }
                     }
                 }
-
-                NativeMethods.LocalUnlock(pHBInfo);
             }
 
             if (pHBm != null)
             {
-                var ptr = NativeMethods.LocalLock(pHBm);
-
-                // copy to managed memory
-                image = new byte[info.bmiHeader.biSizeImage];
-                fixed (void* p = image)
+                using (var local = new NativeMethods.LocalLockScope<byte>(pHBm))
                 {
-                    Unsafe.CopyBlock(p, ptr, (uint)image.Length);
+                    // copy to managed memory
+                    image = new byte[info.bmiHeader.biSizeImage];
+                    fixed (void* p = image)
+                    {
+                        Unsafe.CopyBlock(p, local.Pointer, (uint)image.Length);
+                    }
                 }
-
-                NativeMethods.LocalUnlock(pHBm);
             }
         }
     }
