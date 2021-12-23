@@ -41,7 +41,7 @@
     {
         public readonly string Method;   // unsigned char[8] 圧縮法の種類
         public readonly uint Position;   // unsigned long  ファイル上での位置
-        public readonly uint CompSize;    // unsigned long  圧縮されたサイズ
+        public readonly uint CompSize;   // unsigned long  圧縮されたサイズ
         public readonly uint FileSize;   // unsigned long  元のファイルサイズ
         public readonly int Timestamp;   // time_t ファイルの更新日時
         public readonly string Path;     // char[200]  相対パス
