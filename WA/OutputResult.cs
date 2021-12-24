@@ -27,16 +27,22 @@
 
     internal class FileOutput
     {
-        internal struct File
-        {
-            internal string path;
-            internal long fileOffset;
-            internal long compressedSize;
-            internal long extractionSize;
-            internal long timestamp;
-        }
-
-        internal File[] files;
+        internal PackedFile[] files;
     }
+
+    // packed in archive
+    public class PackedFile
+    {
+        // root relative
+        public string Path { get; internal set; }
+        public long FileOffset { get; internal set; }
+        public long CompressedSize { get; internal set; }
+        public long ExtractionSize { get; internal set; }
+
+        // thumbnail
+        // 恐らく遅延で生成するが、 ObservableCollection内は通知されないので、このクラスを INotifyPropertyChanged する必要がある
+    }
+
+
 
 }

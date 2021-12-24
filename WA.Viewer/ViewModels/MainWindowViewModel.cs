@@ -148,6 +148,9 @@ namespace WA.Viewer.ViewModels
 
         private void MouseWheelEvent(MouseWheelEventArgs e)
         {
+            // TODO ZOOM IN/OUT
+            // https://stackoverflow.com/questions/741956/pan-zoom-image
+
             //System.Diagnostics.Trace.WriteLine("mouse wheel");
             // zoom ratioはintでもったほうがよさそう
             var win = Window.GetWindow((DependencyObject)e.Source);

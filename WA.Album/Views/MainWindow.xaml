@@ -17,8 +17,12 @@
         </bh:EventTrigger>
     </bh:Interaction.Triggers>
     <Grid>
-        <ListView>
-
+        <ListView ItemsSource="{Binding Path=Files}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Path=Path}"/>
+                </DataTemplate>
+            </ListView.ItemTemplate>
         </ListView>
         <ContentControl prism:RegionManager.RegionName="ContentRegion" />
     </Grid>

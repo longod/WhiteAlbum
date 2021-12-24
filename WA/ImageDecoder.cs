@@ -24,9 +24,9 @@
             {
                 foreach (var d in _decoders)
                 {
-                    if (d.Decode(loader, out var im))
+                    if (d.Decode(loader, out var r))
                     {
-                        return im;
+                        return r;
                     }
                 }
 
@@ -42,7 +42,7 @@
                 }
                 else if (result is ArchiveIntermediateResult)
                 {
-                    return await Convert((ArchiveIntermediateResult)result);
+                    return Convert((ArchiveIntermediateResult)result);
                 }
             }
 
@@ -99,9 +99,11 @@
             return result;
         }
 
-        private async Task<ImageOutputResult> Convert(ArchiveIntermediateResult image)
+        private ImageOutputResult Convert(ArchiveIntermediateResult image)
         {
-            throw new NotImplementedException();
+            // copyしたほうがよいが、最適化が必要
+            ImageOutputResult result = new ImageOutputResult() { Files = new FileOutput() { files = image.files } };
+            return result;
         }
 
         private Transform GetTransform(ImageIntermediateResult image)

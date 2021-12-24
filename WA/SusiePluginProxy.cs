@@ -65,7 +65,9 @@
                     if (GetArchiveInfo(loader, out var files))
                     {
                         result = files;
+                        return true;
                     }
+
                     break;
                 case SusiePlugin.PluginType.ExportFilter:
                     throw new NotSupportedException();
@@ -82,70 +84,79 @@
             return _plugin.ConfigurationDlg(hWnd);
         }
 
-        private bool GetPicture(FileLoader loader, out ImageIntermediateResult image)
+        private bool GetPicture(FileLoader loader, out ImageIntermediateResult result)
         {
             if (_plugin.GetPicture(loader.Binary, out var binary, out var info))
             {
                 // index colorの場合、ファイルに埋まっているpaletteは、どこからとってきてる？
                 // consider biCompression?
-                image = new ImageIntermediateResult();
-                image.Info.Width = (uint)info.bmiHeader.biWidth;
-                image.Info.Height = (uint)info.bmiHeader.biHeight;
-                image.Info.DepthOrArray = 1;
-                image.Info.MipLevels = 1;
-                image.Info.BitsPerPixel = info.bmiHeader.biBitCount;
+                result = new ImageIntermediateResult();
+                result.Info.Width = (uint)info.bmiHeader.biWidth;
+                result.Info.Height = (uint)info.bmiHeader.biHeight;
+                result.Info.DepthOrArray = 1;
+                result.Info.MipLevels = 1;
+                result.Info.BitsPerPixel = info.bmiHeader.biBitCount;
                 switch (info.bmiHeader.biBitCount)
                 {
                     case 32:
-                        image.Info.Format = ImageFormat.BGRA;
+                        result.Info.Format = ImageFormat.BGRA;
                         break;
                     case 24:
-                        image.Info.Format = ImageFormat.BGR;
+                        result.Info.Format = ImageFormat.BGR;
                         break;
                     case 16:
-                        image.Info.Format = ImageFormat.BGR;
+                        result.Info.Format = ImageFormat.BGR;
                         break;
                     case 8:
-                        image.Info.Format = ImageFormat.Index;
+                        result.Info.Format = ImageFormat.Index;
                         break;
                     case 4:
-                        image.Info.Format = ImageFormat.Index;
+                        result.Info.Format = ImageFormat.Index;
                         break;
                     default:
                         throw new NotSupportedException($"info.biBitCount: {info.bmiHeader.biBitCount}");
                 }
 
-                image.Info.Dimension = ImageDimension.Texture2D;
-                image.Info.Orientation = ImageOrientation.BottomLeft;
-                image.Info.Rotation = ImageRotation.None;
-                image.Binary = binary;
+                result.Info.Dimension = ImageDimension.Texture2D;
+                result.Info.Orientation = ImageOrientation.BottomLeft;
+                result.Info.Rotation = ImageRotation.None;
+                result.Binary = binary;
                 if (info.bmiColors != null)
                 {
-                    image.Palette = info.bmiColors.Select(x => Color.FromRgb(x.rgbRed, x.rgbGreen, x.rgbBlue)).ToArray();
+                    result.Palette = info.bmiColors.Select(x => Color.FromRgb(x.rgbRed, x.rgbGreen, x.rgbBlue)).ToArray();
                 }
 
                 return true;
             }
 
-            image = null;
+            result = null;
             return false;
         }
 
-
-        private bool GetArchiveInfo(FileLoader loader, out ArchiveIntermediateResult files)
+        private bool GetArchiveInfo(FileLoader loader, out ArchiveIntermediateResult result)
         {
             if (_plugin.GetArchiveInfo(loader.Binary, out var infos))
             {
                 // test extract
                 // _plugin.GetFile(loader.Binary, infos[0], out var dest);
                 // _plugin.GetFileInfo(loader.Binary, infos[0].FileName, out var info);
-                files = null;
-                throw new NotImplementedException();
+                result = new ArchiveIntermediateResult();
+                result.files = new PackedFile[infos.Length];
+
+                // todo optimize
+                for (int i = 0; i < result.files.Length; ++i)
+                {
+                    result.files[i] = new PackedFile();
+                    result.files[i].Path = System.IO.Path.Combine(infos[i].Path, infos[i].FileName);
+                    result.files[i].FileOffset = infos[i].Position;
+                    result.files[i].CompressedSize = infos[i].CompSize;
+                    result.files[i].ExtractionSize = infos[i].FileSize;
+                }
 
                 return true;
             }
 
-            files = null;
+            result = null;
             return false;
         }
     }

@@ -468,6 +468,11 @@
 
         public bool GetFile(ReadOnlyMemory<byte> binary, in FileInfo info, out byte[] file)
         {
+            return GetFile(binary, info.Position, info.FileSize, out file);
+        }
+
+        public bool GetFile(ReadOnlyMemory<byte> binary, uint offset, uint fileSize, out byte[] file)
+        {
             if (Type != PluginType.ArchiveExtractor)
             {
                 throw new InvalidOperationException();
@@ -488,7 +493,7 @@
                 // ここで与えるバッファ範囲は [info.Position, info.CompSize) ではない！
                 // プラグインによって動作することもあれば、失敗やハングアップすることもある
                 // [info.Position, Lengh - info.Position) である
-                var src = binary.Slice((int)info.Position);
+                var src = binary.Slice((int)offset);
                 void* dest = null;
                 int result = 0;
                 const uint flag = API.Constant.SrcOnMemory | API.Constant.DestOnMemory;
@@ -504,7 +509,7 @@
                         case API.ReturnCode.Success:
                             if (dest != null)
                             {
-                                file = new byte[info.FileSize];
+                                file = new byte[fileSize];
                                 using (var local = new NativeMethods.LocalLockScope<API.FileInfo>(dest))
                                 {
                                     fixed (void* p = file)

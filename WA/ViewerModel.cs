@@ -1,6 +1,7 @@
 ﻿namespace WA
 {
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.ComponentModel;
     using System.IO;
     using System.Runtime.CompilerServices;
@@ -64,6 +65,8 @@
                     RegisterBuiltInDecoders();
                 }
             }
+
+            Files = new ObservableCollection<PackedFile>();
         }
 
         private BitmapSource _image;
@@ -84,6 +87,26 @@
                 }
             }
         }
+
+        private ObservableCollection<PackedFile> _files;
+
+        public ObservableCollection<PackedFile> Files { get; internal set; }
+        //{
+        //    get
+        //    {
+        //        return _files;
+        //    }
+
+        //    private set
+        //    {
+        //        if (value != _files)
+        //        {
+        //            _files = value;
+        //            NotifyPropertyChanged(nameof(Files));
+        //        }
+        //    }
+        //}
+
 
         public async Task ProcessAsync(string logicalPath, string virtualPath = null)
         {
@@ -130,6 +153,16 @@
                                 if (result.Image != null)
                                 {
                                     Image = result.Image.bmp;
+                                }
+                                else if (result.Files != null)
+                                {
+                                    // fixme rangeで追加したい…
+                                    // 変更イベントが毎回発生してしまう
+                                    Files.Clear();
+                                    foreach (var f in result.Files.files)
+                                    {
+                                        Files.Add(f);
+                                    }
                                 }
                             }
                         }

@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Prism.Commands;
+using Microsoft.Extensions.Logging;
+using Prism.Commands;
 using Prism.Mvvm;
 using Prism.Regions;
 using Prism.Services.Dialogs;
@@ -10,6 +12,8 @@ using System.Reactive.Disposables;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace WA.Album.ViewModels
 {
@@ -37,6 +41,9 @@ namespace WA.Album.ViewModels
         private DelegateCommand<DragEventArgs> _dropCommand;
         public DelegateCommand<DragEventArgs> DropCommand => _dropCommand ??= new DelegateCommand<DragEventArgs>(async (e) => await DropEvent(e));
 
+        public ReadOnlyReactiveCollection<PackedFile> Files { get; }
+
+
         public MainWindowViewModel(IRegionManager regionManager, IDialogService dialogService, CommandLineArgs args, AppSettings settings, ViewerModel viewer, PluginManager pluginManager, ILogger logger)
         {
             _logger = logger;
@@ -46,6 +53,7 @@ namespace WA.Album.ViewModels
             _regionManager = regionManager;
             _dialogService = dialogService;
 
+            Files = _viewer.Files.ToReadOnlyReactiveCollection().AddTo(_disposable);
         }
 
         public void Dispose()

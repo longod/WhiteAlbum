@@ -24,5 +24,6 @@
     {
         // fileinfo
         // or extracted binary 別の型のほうがいいかもしれない
+        internal PackedFile[] files;
     }
 }
