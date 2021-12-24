@@ -122,7 +122,6 @@
         {
             using (new StopwatchScope("LoadAllPlugins", _logger))
             {
-
                 foreach (var path in _pluginPaths)
                 {
                     LoadPlugin(path);
@@ -163,7 +162,7 @@
                     {
                         using (new StopwatchScope("Try to find plugins on memory", _logger))
                         {
-
+                            // TODO parallel or sequenceial option
                             foreach (var p in _plugins)
                             {
                                 if (p.IsSupported(loader))
@@ -180,6 +179,7 @@
 
                     using (new StopwatchScope("Try to find plugins on drive", _logger))
                     {
+                        // TODO parallel or sequenceial option
                         var span = _leftPaths.Span;
                         for (int i = 0; i < span.Length; ++i)
                         {

@@ -49,14 +49,23 @@
             return _plugin.IsSupported(loader.Path, loader.RawBinary);
         }
 
-        public bool Decode(FileLoader loader, out ImageIntermediateResult image)
+        public bool Decode(FileLoader loader, out IIntermediateResult result)
         {
             switch (_plugin.Type)
             {
                 case SusiePlugin.PluginType.ImportFilter:
-                    return GetPicture(loader, out image);
+                    if (GetPicture(loader, out var image))
+                    {
+                        result = image;
+                        return true;
+                    }
+
+                    break;
                 case SusiePlugin.PluginType.ArchiveExtractor:
-                    GetArchiveInfo(loader); // test
+                    if (GetArchiveInfo(loader, out var files))
+                    {
+                        result = files;
+                    }
                     break;
                 case SusiePlugin.PluginType.ExportFilter:
                     throw new NotSupportedException();
@@ -64,8 +73,13 @@
                     throw new NotSupportedException();
             }
 
-            image = null;
+            result = null;
             return false;
+        }
+
+        internal bool ShowConfigTest(IntPtr hWnd)
+        {
+            return _plugin.ConfigurationDlg(hWnd);
         }
 
         private bool GetPicture(FileLoader loader, out ImageIntermediateResult image)
@@ -117,22 +131,21 @@
             return false;
         }
 
-        internal bool ShowConfigTest(IntPtr hWnd)
-        {
-            return _plugin.ConfigurationDlg(hWnd);
-        }
 
-        private bool GetArchiveInfo(FileLoader loader)
+        private bool GetArchiveInfo(FileLoader loader, out ArchiveIntermediateResult files)
         {
             if (_plugin.GetArchiveInfo(loader.Binary, out var infos))
             {
                 // test extract
                 // _plugin.GetFile(loader.Binary, infos[0], out var dest);
                 // _plugin.GetFileInfo(loader.Binary, infos[0].FileName, out var info);
+                files = null;
+                throw new NotImplementedException();
 
                 return true;
             }
 
+            files = null;
             return false;
         }
     }

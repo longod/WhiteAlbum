@@ -104,7 +104,6 @@
                 // ひとまずフルオンメモリー
                 using (new StopwatchScope("Process File", _logger))
                 {
-
                     // cache
                     if (_cacheManager.TryQuery(LogicalPath, VirtualPath, out var hit))
                     {
@@ -128,7 +127,10 @@
                             {
                                 var result = await decoder.DecodeAsync(loader);
                                 //_cacheManager.Entry(LogicalPath, VirtualPath, bmp);
-                                Image = result.Bmp;
+                                if (result.Image != null)
+                                {
+                                    Image = result.Image.bmp;
+                                }
                             }
                         }
                     }

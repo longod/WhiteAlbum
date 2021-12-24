@@ -24,7 +24,7 @@
             return await Task.Run(() =>
             {
                 BitmapDecoder decoder = (BitmapDecoder)_constructor.Invoke(_args);
-                ImageOutputResult result = new ImageOutputResult() { Bmp = decoder.Frames[0] };
+                ImageOutputResult result = new ImageOutputResult() { Image = new ImageOutput() { bmp = decoder.Frames[0] } };
                 return result;
             });
 

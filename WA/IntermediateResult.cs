@@ -9,6 +9,7 @@
     // 特定の画像フォーマットによらない中間画像情報
     // レンダラーを差し替えられるように考慮しているためであり、
     // 差し替えた場合そのレンダラーが要求するフォーマットに変換できるようにする
+    // グルーコードが増えてしまうが、レンダラーとデコーダーを分離可能にするため
     internal class ImageIntermediateResult : IIntermediateResult
     {
         internal ImageInfo Info;
@@ -21,5 +22,7 @@
     // temp
     internal class ArchiveIntermediateResult : IIntermediateResult
     {
+        // fileinfo
+        // or extracted binary 別の型のほうがいいかもしれない
     }
 }

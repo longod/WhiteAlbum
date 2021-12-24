@@ -20,7 +20,7 @@
 
         internal virtual async Task<ImageOutputResult> DecodeAsync(FileLoader loader)
         {
-            var image = await Task.Run(() =>
+            var result = await Task.Run(() =>
             {
                 foreach (var d in _decoders)
                 {
@@ -33,12 +33,26 @@
                 return null;
             });
 
-            if (image != null)
+            if (result != null)
             {
-                var source = await Convert(image);
-                return source;
+                // fixme もうちょっとスマートにpolymorph
+                if (result is ImageIntermediateResult)
+                {
+                    return await Convert((ImageIntermediateResult)result);
+                }
+                else if (result is ArchiveIntermediateResult)
+                {
+                    return await Convert((ArchiveIntermediateResult)result);
+                }
             }
 
+            return null;
+        }
+
+        // extract file in archive
+        // using virtualPath or something
+        internal virtual async Task<ImageOutputResult> DecodeAsync(FileLoader loader, string virtualPath)
+        {
             return null;
         }
 
@@ -81,8 +95,13 @@
             // BitmapSourceの基点は左上だが、本来のbmp formatのpositive heightは左下基点で反転してしまう
             // 事前にメモリを反転して詰め直すか、scale transformで行なう
             // exif も追々考慮する必要がある
-            ImageOutputResult result = new ImageOutputResult() { Bmp = bmp };
+            ImageOutputResult result = new ImageOutputResult() { Image = new ImageOutput() { bmp = bmp } };
             return result;
+        }
+
+        private async Task<ImageOutputResult> Convert(ArchiveIntermediateResult image)
+        {
+            throw new NotImplementedException();
         }
 
         private Transform GetTransform(ImageIntermediateResult image)
