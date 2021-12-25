@@ -180,6 +180,7 @@
                     using (new StopwatchScope("Try to find plugins on drive", _logger))
                     {
                         // TODO parallel or sequenceial option
+                        // todo discard option when done、失敗したやつは破棄するオプション
                         var span = _leftPaths.Span;
                         for (int i = 0; i < span.Length; ++i)
                         {

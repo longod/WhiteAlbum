@@ -4,7 +4,9 @@
         xmlns:bh="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:prism="http://prismlibrary.com/"
         prism:ViewModelLocator.AutoWireViewModel="True"
-        Title="{Binding Title}" Height="350" Width="525" >
+        x:Name="mainWindow"
+        Title="{Binding Title}" Height="350" Width="525"
+        AllowDrop="True">
     <bh:Interaction.Triggers>
         <bh:EventTrigger EventName="Loaded">
             <prism:InvokeCommandAction Command="{Binding Path=LoadedCommand}"/>

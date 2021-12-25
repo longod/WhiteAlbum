@@ -35,7 +35,7 @@
     // {
     // }
 
-    public class ViewerModel : INotifyPropertyChanged
+    public class ViewerModel : NotifyPropertyChangedBase
     {
         private readonly ILogger _logger;
         private readonly PluginManager _pluginManager;
@@ -80,15 +80,11 @@
 
             private set
             {
-                if (value != _image)
-                {
-                    _image = value;
-                    NotifyPropertyChanged(nameof(Image));
-                }
+                SetProperty(ref _image, value, nameof(Image));
             }
         }
 
-        private ObservableCollection<PackedFile> _files;
+        //private ObservableCollection<PackedFile> _files;
 
         public ObservableCollection<PackedFile> Files { get; internal set; }
         //{
@@ -96,14 +92,9 @@
         //    {
         //        return _files;
         //    }
-
         //    private set
         //    {
-        //        if (value != _files)
-        //        {
-        //            _files = value;
-        //            NotifyPropertyChanged(nameof(Files));
-        //        }
+        //        SetProperty(ref _image, value, nameof(Files));
         //    }
         //}
 
@@ -228,15 +219,5 @@
             // todo 過去に動作したdecoderを登録する
         }
 
-        // INotifyPropertyChanged
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
-        {
-            if (PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-            }
-        }
     }
 }
