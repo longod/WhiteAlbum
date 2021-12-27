@@ -5,6 +5,7 @@
     using System.Runtime.InteropServices;
     using System.Threading.Tasks;
 
+    // todo rename
     internal class FileLoader : IDisposable
     {
         private const int _macBinaryHeaderSize = 128;
@@ -18,6 +19,16 @@
         internal FileLoader(string path, int minFileSize)
         {
             _file = new FileInfo(path);
+            _minFileSize = minFileSize;
+        }
+
+        // todo 別のstreamとすることも検討する
+        internal FileLoader(string path, byte[] binary, int minFileSize)
+        {
+            _file = new FileInfo(path);
+            // FIXME minsizeに満たない場合、詰め直す必要がある
+            _binary = binary;
+            _actualFileSize = _binary.Length;
             _minFileSize = minFileSize;
         }
 

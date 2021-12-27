@@ -79,6 +79,26 @@
             return false;
         }
 
+        public bool Decode(FileLoader loader, PackedFile packed, out IIntermediateResult result)
+        {
+            switch (_plugin.Type)
+            {
+                case SusiePlugin.PluginType.ArchiveExtractor:
+                    if (GetFile(loader, packed.FileOffset, packed.FileSize, out var file))
+                    {
+                        result = new BinaryIntermediateResult() { Binary = file };
+                        return true;
+                    }
+
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
+
+            result = null;
+            return false;
+        }
+
         internal bool ShowConfigTest(IntPtr hWnd)
         {
             return _plugin.ConfigurationDlg(hWnd);
@@ -149,8 +169,9 @@
                     result.files[i] = new PackedFile();
                     result.files[i].Path = System.IO.Path.Combine(infos[i].Path, infos[i].FileName);
                     result.files[i].FileOffset = infos[i].Position;
-                    result.files[i].CompressedSize = infos[i].CompSize;
-                    result.files[i].ExtractionSize = infos[i].FileSize;
+                    result.files[i].PackedSize = infos[i].CompSize;
+                    result.files[i].FileSize = infos[i].FileSize;
+                    result.files[i].Date = infos[i].Timestamp;
                 }
 
                 return true;
@@ -158,6 +179,11 @@
 
             result = null;
             return false;
+        }
+
+        private bool GetFile(FileLoader loader, long offset, long fileSize, out byte[] result)
+        {
+            return _plugin.GetFile(loader.Binary, (uint)offset, (uint)fileSize, out result);
         }
     }
 }

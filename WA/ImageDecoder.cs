@@ -51,8 +51,29 @@
 
         // extract file in archive
         // using virtualPath or something
-        internal virtual async Task<ImageOutputResult> DecodeAsync(FileLoader loader, string virtualPath)
+        internal virtual async Task<FileLoader> DecodeAsync(FileLoader loader, PackedFile packed)
         {
+            var result = await Task.Run(() =>
+            {
+                foreach (var d in _decoders)
+                {
+                    if (d.Decode(loader, packed, out var r))
+                    {
+                        return r;
+                    }
+                }
+
+                return null;
+            });
+            if (result != null)
+            {
+                // fixme もうちょっとスマートにpolymorph
+                if (result is BinaryIntermediateResult)
+                {
+                    return Convert(packed, (BinaryIntermediateResult)result);
+                }
+            }
+
             return null;
         }
 
@@ -104,6 +125,12 @@
             // copyしたほうがよいが、最適化が必要
             ImageOutputResult result = new ImageOutputResult() { Files = new FileOutput() { files = image.files } };
             return result;
+        }
+
+        private FileLoader Convert(PackedFile packed, BinaryIntermediateResult image)
+        {
+            FileLoader loader = new FileLoader(packed.Path, image.Binary, Susie.API.Constant.MinFileSize); // 委譲
+            return loader;
         }
 
         private Transform GetTransform(ImageIntermediateResult image)

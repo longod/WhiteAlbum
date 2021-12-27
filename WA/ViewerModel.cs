@@ -147,12 +147,43 @@
                                 }
                                 else if (result.Files != null)
                                 {
-                                    // fixme rangeで追加したい…
-                                    // 変更イベントが毎回発生してしまう
-                                    Files.Clear();
-                                    foreach (var f in result.Files.files)
+                                    // todo split virtual path
+                                    if (VirtualPath != null)
                                     {
-                                        Files.Add(f);
+                                        // find
+                                        // todo binary search or dictionary
+                                        foreach (var f in result.Files.files)
+                                        {
+                                            if (VirtualPath == f.Path)
+                                            {
+                                                // nest
+                                                using (var extractedLoader = await decoder.DecodeAsync(loader, f))
+                                                {
+                                                    var extractedDecoder = await FindDecoderAsync(extractedLoader);
+                                                    if (extractedDecoder != null)
+                                                    {
+                                                        var extractedResult = await extractedDecoder.DecodeAsync(extractedLoader);
+                                                        if (extractedResult.Image != null)
+                                                        {
+                                                            Image = extractedResult.Image.bmp;
+                                                        }
+                                                        // todo recursively
+                                                    }
+                                                }
+
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // fixme rangeで追加したい…
+                                        // 変更イベントが毎回発生してしまう
+                                        Files.Clear();
+                                        foreach (var f in result.Files.files)
+                                        {
+                                            Files.Add(f);
+                                        }
                                     }
                                 }
                             }

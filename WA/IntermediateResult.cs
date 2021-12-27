@@ -26,4 +26,10 @@
         // or extracted binary 別の型のほうがいいかもしれない
         internal PackedFile[] files;
     }
+
+    internal class BinaryIntermediateResult : IIntermediateResult
+    {
+        internal byte[] Binary { get; set; }
+    }
+
 }

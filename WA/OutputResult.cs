@@ -36,8 +36,9 @@
         // root relative
         public string Path { get; internal set; }
         public long FileOffset { get; internal set; }
-        public long CompressedSize { get; internal set; }
-        public long ExtractionSize { get; internal set; }
+        public long FileSize { get; internal set; }
+        public long PackedSize { get; internal set; }
+        public long Date { get; internal set; } // todo datetime
 
         // thumbnail
         // 恐らく遅延で生成するが、 ObservableCollection内は通知されないので、このクラスを INotifyPropertyChanged する必要がある
