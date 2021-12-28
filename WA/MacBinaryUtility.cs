@@ -5,6 +5,9 @@
     using System.Runtime.InteropServices;
     using System.Text;
 
+    // 古のMacBinaryを考慮するutility
+    // susie pluginは issupport 内でそれぞれMacBinaryの場合を考慮しているらしいが、実際のでコード処理は考慮していないこともあるらしい
+    // いずれにせよ実装依存なのでこちらが考慮してやった方がいいだろう
     internal static class MacBinaryUtility
     {
         private const int HeaderSize = 128;

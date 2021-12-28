@@ -9,6 +9,7 @@ using System;
 using System.Reactive.Disposables;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -39,8 +40,11 @@ namespace WA.Album.ViewModels
         private DelegateCommand<DragEventArgs> _dropCommand;
         public DelegateCommand<DragEventArgs> DropCommand => _dropCommand ??= new DelegateCommand<DragEventArgs>(async (e) => await DropEvent(e));
 
-        public ReadOnlyReactiveCollection<PackedFile> Files { get; }
+        private DelegateCommand<MouseButtonEventArgs> _mouseDoubleClickCommand;
+        public DelegateCommand<MouseButtonEventArgs> MouseDoubleClickCommand => _mouseDoubleClickCommand ??= new DelegateCommand<MouseButtonEventArgs>(MouseDoubleClickEvent);
 
+
+        public ReadOnlyReactiveCollection<PackedFile> Files { get; }
 
         public MainWindowViewModel(IRegionManager regionManager, IDialogService dialogService, CommandLineArgs args, AppSettings settings, ViewerModel viewer, PluginManager pluginManager, ILogger logger)
         {
@@ -98,6 +102,28 @@ namespace WA.Album.ViewModels
         {
             string[] paths = (string[])e.Data.GetData(DataFormats.FileDrop);
             await _viewer.ProcessAsync(paths[0]);
+        }
+
+        private void MouseDoubleClickEvent(MouseButtonEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                // TODOE ListViewItem 単位でイベントを発生させたい
+                // これはあくまで全体のダブルクリックイベント処理
+                // WPFは実現したいことを実現するための道のりが無意味に複雑で明示されていなくて、過ちが散乱していて、ひたすらに時間の浪費をさせられる
+                // 冗長のくせに複数解あってどれもこれもまともに動かん
+                var list = (ListView)e.Source;
+                var items = list?.SelectedItems;
+                if (items != null)
+                {
+                    foreach (var item in items)
+                    {
+                        var file = (PackedFile)item;
+                        // await _viewer.ProcessAsync(path, file.FileOffset, file.FileSize.);
+                        // then switch navigate or new image window
+                    }
+                }
+            }
         }
     }
 }
