@@ -41,7 +41,7 @@ namespace WA.Album.ViewModels
         public DelegateCommand<DragEventArgs> DropCommand => _dropCommand ??= new DelegateCommand<DragEventArgs>(async (e) => await DropEvent(e));
 
         private DelegateCommand<MouseButtonEventArgs> _mouseDoubleClickCommand;
-        public DelegateCommand<MouseButtonEventArgs> MouseDoubleClickCommand => _mouseDoubleClickCommand ??= new DelegateCommand<MouseButtonEventArgs>(MouseDoubleClickEvent);
+        public DelegateCommand<MouseButtonEventArgs> MouseDoubleClickCommand => _mouseDoubleClickCommand ??= new DelegateCommand<MouseButtonEventArgs>(async (e) => await MouseDoubleClickEvent(e));
 
 
         public ReadOnlyReactiveCollection<PackedFile> Files { get; }
@@ -104,7 +104,7 @@ namespace WA.Album.ViewModels
             await _viewer.ProcessAsync(paths[0]);
         }
 
-        private void MouseDoubleClickEvent(MouseButtonEventArgs e)
+        private async Task MouseDoubleClickEvent(MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
@@ -117,8 +117,8 @@ namespace WA.Album.ViewModels
                     foreach (var item in items)
                     {
                         var file = (PackedFile)item;
-                        //await _viewer.ProcessAsync(path, file);
-                        // then switch navigate or new image window
+                        await _viewer.ProcessAsync(file);
+                        // todo then switch navigate or new image window
                     }
                 }
             }

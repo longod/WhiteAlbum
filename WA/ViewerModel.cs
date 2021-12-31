@@ -144,11 +144,10 @@
                         }
                         else
                         {
-
                             var decoder = await FindDecoderAsync(loader);
                             if (decoder != null)
                             {
-                                using (new StopwatchScope("Decode a image", _logger))
+                                using (new StopwatchScope("Decode a file", _logger))
                                 {
                                     result = await decoder.DecodeImageAsync(loader);
                                 }
@@ -180,9 +179,36 @@
             }
         }
 
-        public Task ProcessAsync(string path, PackedFile file)
+        public async Task ProcessAsync(PackedFile file)
         {
-            throw new System.NotImplementedException();
+            // todo reuse instance
+            using (var loader = new FileLoader(LogicalPath, Susie.API.Constant.MinFileSize))
+            {
+                await loader.ReadAsync();
+
+                var decoder = await FindDecoderAsync(loader);
+                if (decoder != null)
+                {
+                    using (new StopwatchScope("Decode a file", _logger))
+                    {
+                        var result = await ProcessAsyncInArchive(loader, decoder, file);
+                        if (result.Image != null)
+                        {
+                            Image = result.Image.bmp;
+                        }
+                        else if (result.Files != null)
+                        {
+                            // fixme rangeで追加したい…
+                            // 変更イベントが毎回発生してしまう
+                            Files.Clear();
+                            foreach (var f in result.Files.files)
+                            {
+                                Files.Add(f);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         private async Task<ImageOutputResult> ProcessAsyncInArchive(FileLoader loader, string virtualPath)
