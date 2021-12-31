@@ -22,6 +22,9 @@ namespace WA.Viewer.ViewModels
         public ReactivePropertySlim<bool> EnableLogging { get; }
         public ReactivePropertySlim<bool> EnableBuiltInDecoders { get; }
 
+        public ReadOnlyReactiveCollection<string> PluginDirectories { get; }
+        public ReadOnlyReactiveCollection<string> PluginList { get; }
+
         private DelegateCommand<string> _closeDialogCommand;
         public DelegateCommand<string> CloseDialogCommand => _closeDialogCommand ??= new DelegateCommand<string>(CloseDialog);
 
@@ -35,6 +38,11 @@ namespace WA.Viewer.ViewModels
 
             EnableBuiltInDecoders = new ReactivePropertySlim<bool>(_settings.Data.EnableBuiltInDecoders).AddTo(_disposable);
             EnableBuiltInDecoders.Subscribe(x => _settings.Data.EnableBuiltInDecoders = x);
+
+            _pluginManager.ScanPluginDirectory();
+
+            PluginDirectories = _pluginManager.PluginDirectories.ToReadOnlyReactiveCollection().AddTo(_disposable);
+            PluginList = _pluginManager.PluginList.ToReadOnlyReactiveCollection().AddTo(_disposable);
         }
 
         public bool CanCloseDialog()

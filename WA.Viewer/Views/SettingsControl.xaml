@@ -7,13 +7,13 @@
              prism:ViewModelLocator.AutoWireViewModel="True"
              xmlns:local="clr-namespace:WA.Viewer.Views"
              mc:Ignorable="d" 
-             d:DesignHeight="400" d:DesignWidth="600">
+             d:DesignHeight="600" d:DesignWidth="600">
     <prism:Dialog.WindowStyle>
         <Style TargetType="Window">
             <Setter Property="prism:Dialog.WindowStartupLocation" Value="CenterOwner" />
-            <Setter Property="ResizeMode" Value="NoResize"/>
+            <Setter Property="ResizeMode" Value="CanResize"/>
             <Setter Property="ShowInTaskbar" Value="False"/>
-            <Setter Property="SizeToContent" Value="WidthAndHeight"/>
+            <Setter Property="SizeToContent" Value="Manual"/>
         </Style>
     </prism:Dialog.WindowStyle>
     <Grid>
@@ -36,7 +36,16 @@
                                 <ColumnDefinition/>
                                 <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
-                            <ListBox Grid.Column="0" Height="Auto">
+                            <ListBox ItemsSource="{Binding Path=PluginDirectories}"
+                                     Grid.Column="0" Height="200"
+                                     HorizontalContentAlignment="Stretch" SelectionMode="Single"
+                                     ScrollViewer.CanContentScroll="True"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                     ScrollViewer.IsDeferredScrollingEnabled="True"
+                                     ScrollViewer.PanningMode="VerticalOnly"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     VirtualizingPanel.IsVirtualizing="True"
+                                     VirtualizingPanel.VirtualizationMode="Recycling">
                             </ListBox>
                             <StackPanel Grid.Column="1">
                                 <Button Content="up"/>
@@ -53,13 +62,22 @@
                                 <ColumnDefinition/>
                                 <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
-                            <ListView  Grid.Column="0" Height="Auto">
-                                <ListView.View>
+                            <ListView ItemsSource="{Binding Path=PluginList}"
+                                      Grid.Column="0" Height="200"
+                                      HorizontalContentAlignment="Stretch" SelectionMode="Single"
+                                      ScrollViewer.CanContentScroll="True"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                      ScrollViewer.IsDeferredScrollingEnabled="True"
+                                      ScrollViewer.PanningMode="VerticalOnly"
+                                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                      VirtualizingPanel.IsVirtualizing="True"
+                                      VirtualizingPanel.VirtualizationMode="Recycling">
+                                <!--<ListView.View>
                                     <GridView AllowsColumnReorder="true">
                                         <GridViewColumn DisplayMemberBinding="{Binding Path=PluginPath}" Header="Path"/>
                                         <GridViewColumn DisplayMemberBinding="{Binding Path=PluginName}" Header="Name"/>
                                     </GridView>
-                                </ListView.View>
+                                </ListView.View>-->
                             </ListView>
                             <StackPanel Grid.Column="1">
                                 <Button Content="scan"/>

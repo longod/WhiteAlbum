@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Linq;
@@ -19,6 +20,10 @@
         private string[] _pluginPaths = null;
         private ReadOnlyMemory<string> _leftPaths;
         private List<IPluginProxy> _plugins = new List<IPluginProxy>();
+
+        public ObservableCollection<string> PluginDirectories { get; } = new ObservableCollection<string>();
+
+        public ObservableCollection<string> PluginList { get; } = new ObservableCollection<string>();
 
         ~PluginManager()
         {
@@ -43,7 +48,12 @@
         {
             _logger = logger;
             _stringConverter = stringConverter;
+            // todo optimize
             _pluginDirectories = settings.Data.PluginDirectories;
+            foreach (var d in _pluginDirectories)
+            {
+                PluginDirectories.Add(d);
+            }
         }
 
         private IEnumerable<string> EnumeratePluginPath()
@@ -58,7 +68,7 @@
                         .Select(x => x.FullName);
         }
 
-        internal void ScanPluginDirectory(bool rescan = false)
+        public void ScanPluginDirectory(bool rescan = false)
         {
             if (!rescan && _pluginPaths != null)
             {
@@ -68,6 +78,12 @@
             using (new StopwatchScope("Scan plugin directory", _logger))
             {
                 _pluginPaths = EnumeratePluginPath().ToArray();
+            }
+
+            PluginList.Clear();
+            foreach (var path in _pluginPaths)
+            {
+                PluginList.Add(path);
             }
 
             _logger.ZLogInformation("Find plugin count: {0}", _pluginPaths.Length);
