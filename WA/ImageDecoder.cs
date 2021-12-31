@@ -18,7 +18,7 @@
     {
         private List<IPluginProxy> _decoders;
 
-        internal virtual async Task<ImageOutputResult> DecodeAsync(FileLoader loader)
+        internal virtual async Task<ImageOutputResult> DecodeImageAsync(FileLoader loader)
         {
             var result = await Task.Run(() =>
             {
@@ -70,7 +70,33 @@
                 // fixme もうちょっとスマートにpolymorph
                 if (result is BinaryIntermediateResult)
                 {
-                    return Convert(packed, (BinaryIntermediateResult)result);
+                    return Convert(packed.Path, (BinaryIntermediateResult)result);
+                }
+            }
+
+            return null;
+        }
+
+        internal virtual async Task<FileLoader> DecodeAsync(FileLoader loader, string path)
+        {
+            var result = await Task.Run(() =>
+            {
+                foreach (var d in _decoders)
+                {
+                    if (d.Decode(loader, path, out var r))
+                    {
+                        return r;
+                    }
+                }
+
+                return null;
+            });
+            if (result != null)
+            {
+                // fixme もうちょっとスマートにpolymorph
+                if (result is BinaryIntermediateResult)
+                {
+                    return Convert(path, (BinaryIntermediateResult)result);
                 }
             }
 
@@ -127,9 +153,9 @@
             return result;
         }
 
-        private FileLoader Convert(PackedFile packed, BinaryIntermediateResult image)
+        private FileLoader Convert(string path, BinaryIntermediateResult image)
         {
-            FileLoader loader = new FileLoader(packed.Path, image.Binary, Susie.API.Constant.MinFileSize); // 委譲
+            FileLoader loader = new FileLoader(path, image.Binary, Susie.API.Constant.MinFileSize); // 委譲
             return loader;
         }
 

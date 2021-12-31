@@ -108,10 +108,8 @@ namespace WA.Album.ViewModels
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
-                // TODOE ListViewItem 単位でイベントを発生させたい
+                // TODO ListViewItem 単位でイベントを発生させたい
                 // これはあくまで全体のダブルクリックイベント処理
-                // WPFは実現したいことを実現するための道のりが無意味に複雑で明示されていなくて、過ちが散乱していて、ひたすらに時間の浪費をさせられる
-                // 冗長のくせに複数解あってどれもこれもまともに動かん
                 var list = (ListView)e.Source;
                 var items = list?.SelectedItems;
                 if (items != null)
@@ -119,7 +117,7 @@ namespace WA.Album.ViewModels
                     foreach (var item in items)
                     {
                         var file = (PackedFile)item;
-                        // await _viewer.ProcessAsync(path, file.FileOffset, file.FileSize.);
+                        //await _viewer.ProcessAsync(path, file);
                         // then switch navigate or new image window
                     }
                 }

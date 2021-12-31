@@ -13,6 +13,7 @@
         // todo PackedFileは適切でないかもしれないが、抽象的に解凍可能な情報を含んだ型が必要
         // todo 上と同じ単一のインターフェイスにしたい
         bool Decode(FileLoader loader, PackedFile packed, out IIntermediateResult result);
+        bool Decode(FileLoader loader, string path, out IIntermediateResult result);
 
         bool IsSupported(FileLoader loader);
     }

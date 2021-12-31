@@ -99,9 +99,41 @@
             return false;
         }
 
+        public bool Decode(FileLoader loader, string path, out IIntermediateResult result)
+        {
+            switch (_plugin.Type)
+            {
+                case SusiePlugin.PluginType.ArchiveExtractor:
+                    if (GetFileInfo(loader, path, out var info))
+                    {
+                        PackedFile packed = ToPackedFile(info);
+                        return Decode(loader, packed, out result);
+                    }
+
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
+
+            result = null;
+            return false;
+
+        }
+
         internal bool ShowConfigTest(IntPtr hWnd)
         {
             return _plugin.ConfigurationDlg(hWnd);
+        }
+
+        private static PackedFile ToPackedFile(in FileInfo info)
+        {
+            var packed = new PackedFile();
+            packed.Path = System.IO.Path.Combine(info.Path, info.FileName);
+            packed.FileOffset = info.Position;
+            packed.PackedSize = info.CompSize;
+            packed.FileSize = info.FileSize;
+            packed.Date = info.Timestamp;
+            return packed;
         }
 
         private bool GetPicture(FileLoader loader, out ImageIntermediateResult result)
@@ -166,12 +198,7 @@
                 // todo optimize
                 for (int i = 0; i < result.files.Length; ++i)
                 {
-                    result.files[i] = new PackedFile();
-                    result.files[i].Path = System.IO.Path.Combine(infos[i].Path, infos[i].FileName);
-                    result.files[i].FileOffset = infos[i].Position;
-                    result.files[i].PackedSize = infos[i].CompSize;
-                    result.files[i].FileSize = infos[i].FileSize;
-                    result.files[i].Date = infos[i].Timestamp;
+                    result.files[i] = ToPackedFile(infos[i]);
                 }
 
                 return true;
@@ -184,6 +211,11 @@
         private bool GetFile(FileLoader loader, long offset, long fileSize, out byte[] result)
         {
             return _plugin.GetFile(loader.Binary, (uint)offset, (uint)fileSize, out result);
+        }
+
+        private bool GetFileInfo(FileLoader loader, string path, out FileInfo info)
+        {
+            return _plugin.GetFileInfo(loader.Binary, path, out info);
         }
     }
 }

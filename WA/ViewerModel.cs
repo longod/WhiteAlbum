@@ -1,5 +1,6 @@
 ﻿namespace WA
 {
+    using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.ComponentModel;
@@ -106,6 +107,7 @@
             await ProcessAsync();
         }
 
+        // todo obsolete no args
         private async Task ProcessAsync()
         {
             // load
@@ -125,67 +127,47 @@
                         return;
                     }
 
+                    // todo archive操作用にどこかでキャッシュor保持しておいた方がよい
                     using (var loader = new FileLoader(LogicalPath, Susie.API.Constant.MinFileSize))
                     {
                         // FIXME support判定に必要な分だけ PeekAsyncで先にまず読んでおいて、
                         // プラグインの検索と並列に読み進めるのが理想的
                         await loader.ReadAsync();
 
-                        var decoder = await FindDecoderAsync(loader);
-                        if (decoder != null)
+                        // TODO アーカイブの場合を考慮すると、bmp以外の IDecodedResult をかえす
+                        // 実データが返ってくるまでvirtual pathを使って再帰的に処理を繰り返す必要がある
+                        // builtinとの兼ね合いをどうするか…
+                        ImageOutputResult result = null;
+                        if (!string.IsNullOrEmpty(VirtualPath))
                         {
-                            // TODO アーカイブの場合を考慮すると、bmp以外の IDecodedResult をかえす
-                            // 実データが返ってくるまでvirtual pathを使って再帰的に処理を繰り返す必要がある
-                            // builtinとの兼ね合いをどうするか…
-                            using (new StopwatchScope("Decoding", _logger))
-                            {
-                                var result = await decoder.DecodeAsync(loader);
-                                //_cacheManager.Entry(LogicalPath, VirtualPath, bmp);
-                                if (result.Image != null)
-                                {
-                                    Image = result.Image.bmp;
-                                }
-                                else if (result.Files != null)
-                                {
-                                    // todo split virtual path
-                                    if (VirtualPath != null)
-                                    {
-                                        // find
-                                        // todo binary search or dictionary
-                                        foreach (var f in result.Files.files)
-                                        {
-                                            if (VirtualPath == f.Path)
-                                            {
-                                                // nest
-                                                using (var extractedLoader = await decoder.DecodeAsync(loader, f))
-                                                {
-                                                    var extractedDecoder = await FindDecoderAsync(extractedLoader);
-                                                    if (extractedDecoder != null)
-                                                    {
-                                                        var extractedResult = await extractedDecoder.DecodeAsync(extractedLoader);
-                                                        if (extractedResult.Image != null)
-                                                        {
-                                                            Image = extractedResult.Image.bmp;
-                                                        }
-                                                        // todo recursively
-                                                    }
-                                                }
+                            result = await ProcessAsyncInArchive(loader, VirtualPath);
+                        }
+                        else
+                        {
 
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        // fixme rangeで追加したい…
-                                        // 変更イベントが毎回発生してしまう
-                                        Files.Clear();
-                                        foreach (var f in result.Files.files)
-                                        {
-                                            Files.Add(f);
-                                        }
-                                    }
+                            var decoder = await FindDecoderAsync(loader);
+                            if (decoder != null)
+                            {
+                                using (new StopwatchScope("Decode a image", _logger))
+                                {
+                                    result = await decoder.DecodeImageAsync(loader);
                                 }
+                            }
+                        }
+
+                        //_cacheManager.Entry(LogicalPath, VirtualPath, bmp);
+                        if (result.Image != null)
+                        {
+                            Image = result.Image.bmp;
+                        }
+                        else if (result.Files != null)
+                        {
+                            // fixme rangeで追加したい…
+                            // 変更イベントが毎回発生してしまう
+                            Files.Clear();
+                            foreach (var f in result.Files.files)
+                            {
+                                Files.Add(f);
                             }
                         }
                     }
@@ -196,6 +178,46 @@
                 // special case
                 // directory loader
             }
+        }
+
+        public Task ProcessAsync(string path, PackedFile file)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        private async Task<ImageOutputResult> ProcessAsyncInArchive(FileLoader loader, string virtualPath)
+        {
+            var vpaths = SplitVirtualPath(virtualPath);
+
+            // extract chaining archives
+            using (new StopwatchScope("Decode a image into archive", _logger))
+            {
+                for (int i = 0; i < vpaths.Length; ++i)
+                {
+                    var decoder = await FindDecoderAsync(loader);
+                    loader = await decoder.DecodeAsync(loader, vpaths[i]); // file handleを所有していないストリームなのでdisposeは不要
+                }
+
+                // decode final image
+                var imageDecoder = await FindDecoderAsync(loader);
+                var result = await imageDecoder.DecodeImageAsync(loader);
+                return result;
+            }
+        }
+
+        private async Task<ImageOutputResult> ProcessAsyncInArchive(FileLoader loader, ImageDecoder decoder, PackedFile packedFile)
+        {
+            // nest
+            using (var extractedLoader = await decoder.DecodeAsync(loader, packedFile))
+            {
+                var extractedDecoder = await FindDecoderAsync(extractedLoader);
+                if (extractedDecoder != null)
+                {
+                    return await extractedDecoder.DecodeImageAsync(extractedLoader);
+                }
+            }
+
+            return null;
         }
 
         private async Task<ImageDecoder> FindDecoderAsync(FileLoader loader)
@@ -248,6 +270,14 @@
         private void RegisterDecoders()
         {
             // todo 過去に動作したdecoderを登録する
+        }
+
+        private static string[] SplitVirtualPath(string virtualPath)
+        {
+            // pathに使用できない文字をデリミタとする
+            // 例えば、foo.zip/bar.jpg はファイルではなくディレクトリを示すが、
+            // foo.zip|bar.jpg はアーカイブ内にあることを指している
+            return virtualPath.Split('|');
         }
 
     }
