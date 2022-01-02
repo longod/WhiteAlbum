@@ -47,6 +47,7 @@
 
         private IntPtr _handle;
         private bool _disposed = false;
+        private string _path;
         private string _name;
         private Function _func;
         private List<Tuple<string, string>> _fileFormats;
@@ -89,6 +90,7 @@
             _stringConverter = stringConverter;
             _handle = NativeLibrary.Load(path);
             GetPluginVersion();
+            _path = path;
         }
 
         ~SusiePlugin()
@@ -128,11 +130,12 @@
             {
                 int result = 0;
                 var mbpath = _stringConverter.Encode(path);
-
                 using (var ptr = mbpath.Pin())
                 {
                     using (var handle = binary.Pin())
                     {
+                        // Critical error detected c0000374
+                        // ヒープを破壊されると、以降の他のプラグインもどうしようもなくなる
                         result = _func.IsSupported(ptr.Pointer, handle.Pointer);
                     }
                 }

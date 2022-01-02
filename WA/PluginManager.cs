@@ -181,10 +181,19 @@
                             // TODO parallel or sequenceial option
                             foreach (var p in _plugins)
                             {
-                                if (p.IsSupported(loader))
+                                try
                                 {
-                                    // todo どこかに対応付けをしておく
-                                    return p;
+                                    if (p.IsSupported(loader))
+                                    {
+                                        // todo どこかに対応付けをしておく
+                                        return p;
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+                                    // 様子見
+                                    // ここで死ぬと、後続のプラグインが対応しているかどうか確認できないので
+                                    _logger.LogError(e, "error was occured into plugin {0}", p);
                                 }
                             }
                         }

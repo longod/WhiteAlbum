@@ -4,12 +4,13 @@
         xmlns:bh="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:diag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
         xmlns:prism="http://prismlibrary.com/"
+        xmlns:wpftk="clr-namespace:WpfToolkit.Controls;assembly=VirtualizingWrapPanel"
         prism:ViewModelLocator.AutoWireViewModel="True"
         x:Name="mainWindow"
-        Title="{Binding Title}" Height="350" Width="525"
+        Title="{Binding Title}" Height="600" Width="600"
         AllowDrop="True">
     <Window.Resources>
-        <ResourceDictionary>
+        <!--<ResourceDictionary>
             <DataTemplate x:Key="GridViewCellTemplateStyle">
                 <TextBlock Text="{Binding}">
                     <TextBlock.InputBindings>
@@ -17,7 +18,32 @@
                     </TextBlock.InputBindings>
                 </TextBlock>
             </DataTemplate>
-        </ResourceDictionary>
+        </ResourceDictionary>-->
+        <DataTemplate x:Key="ItemTemplate" DataType="local:TestItem">
+            <StackPanel
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                >
+                <TextBlock
+                    Width="100"
+                    FontSize="20"
+                    TextAlignment="Center"
+                    Text="{Binding Path, Mode=OneWay}"
+                    Padding="8" />
+                <TextBlock
+                    TextAlignment="Center"
+                    Text="{Binding Date, Mode=OneTime}"
+                    Padding="8" />
+                <TextBlock
+                    TextAlignment="Center"
+                    Text="{Binding FileSize, Mode=OneTime}"
+                    Padding="8" />
+                <TextBlock
+                    TextAlignment="Center"
+                    Text="{Binding PackedSize, Mode=OneTime}"
+                    Padding="8" />
+            </StackPanel>
+        </DataTemplate>
     </Window.Resources>
     <bh:Interaction.Triggers>
         <bh:EventTrigger EventName="Loaded">
@@ -31,7 +57,13 @@
         </bh:EventTrigger>
     </bh:Interaction.Triggers>
     <Grid>
-        <ListView x:Name="listView" ItemsSource="{Binding Path=Files}"
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <ListView x:Name="listView"
+                  Grid.Row="0"
+                  ItemsSource="{Binding Path=Files}"
                   HorizontalContentAlignment="Stretch" SelectionMode="Single"
                   ScrollViewer.CanContentScroll="True"
                   ScrollViewer.HorizontalScrollBarVisibility="Auto"
@@ -88,6 +120,20 @@
                 </bh:EventTrigger>
             </bh:Interaction.Triggers>
         </ListView>
+        <wpftk:GridView
+            ItemsSource="{Binding Path=Files}"
+                  Grid.Row="1"
+                Margin="0,2,0,0"
+                ItemTemplate="{StaticResource ItemTemplate}"
+                VirtualizingPanel.CacheLengthUnit="{Binding CacheUnit, Mode=OneWay}"
+                VirtualizingPanel.CacheLength="{Binding CacheLength, Mode=OneWay}"
+                VirtualizingPanel.ScrollUnit="{Binding ScrollUnit, Mode=OneWay}"
+                VirtualizingPanel.VirtualizationMode="{Binding VirtualizationMode, Mode=OneWay}"
+                ScrollViewer.HorizontalScrollBarVisibility="{Binding HorizontalScrollBarVisibility, Mode=TwoWay}"
+                ScrollViewer.VerticalScrollBarVisibility="{Binding VerticalScrollBarVisibility, Mode=TwoWay}"
+                Orientation="{Binding Orientation, Mode=OneWay}"
+                SpacingMode="{Binding SpacingMode, Mode=OneWay}"
+                StretchItems="{Binding StretchItems, Mode=OneWay}"/>
         <ContentControl prism:RegionManager.RegionName="ContentRegion" />
     </Grid>
 </Window>
