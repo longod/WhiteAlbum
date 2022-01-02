@@ -551,7 +551,7 @@
         {
             if (ptr != null)
             {
-                NativeMethods.LocalFree(ptr);
+                _ = NativeMethods.LocalFree(ptr);
             }
         }
 
@@ -744,7 +744,11 @@
                 using (var local = new NativeMethods.LocalLockScope<BitMapInfoHeader>(pHBInfo))
                 {
                     // copy to managed memory
-                    Unsafe.Copy(ref info.bmiHeader, local.Pointer);
+                    fixed (void* dest = &info.bmiHeader)
+                    {
+                        // Unsafe.Copy(ref info.bmiHeader, local.Pointer);
+                        Unsafe.CopyBlock(dest, local.Pointer, (uint)sizeof(BitMapInfoHeader));
+                    }
 
                     // gettin palette
                     // biClrUsed は適切に設定されていないので自力で判定する
@@ -755,7 +759,6 @@
                         var clrUsed = 1 << bitCount;
                         info.bmiColors = new RGBQuad[clrUsed];
                         Span<RGBQuad> palette = info.bmiColors.AsSpan();
-
                         fixed (void* dest = palette)
                         {
                             var src = local.Pointer + 1; // next

@@ -32,12 +32,11 @@
         public readonly Byte rgbReserved;
     }
 
-    // todo readonly
     // https://docs.microsoft.com/ja-jp/windows/win32/api/wingdi/ns-wingdi-bitmapinfo
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
     public struct BitMapInfo
     {
-        public BitMapInfoHeader bmiHeader;
+        public readonly BitMapInfoHeader bmiHeader;
         public RGBQuad[] bmiColors;
     }
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
