@@ -14,6 +14,10 @@
             <MenuItem Header="Exit (_E)" Command="{Binding Path=ExitCommand}"/>
         </ContextMenu>
     </Window.ContextMenu>
+    <Window.InputBindings>
+        <KeyBinding Key="Add" Command="{Binding Path=ZoomInCommand}"/>
+        <KeyBinding Key="Subtract" Command="{Binding Path=ZoomOutCommand}"/>
+    </Window.InputBindings>
     <bh:Interaction.Triggers>
         <bh:EventTrigger EventName="Loaded">
             <prism:InvokeCommandAction Command="{Binding Path=LoadedCommand}"/>

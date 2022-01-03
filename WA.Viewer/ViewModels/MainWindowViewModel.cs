@@ -61,6 +61,11 @@ namespace WA.Viewer.ViewModels
         private DelegateCommand<MouseButtonEventArgs> _mouseDoubleClickCommand;
         public DelegateCommand<MouseButtonEventArgs> MouseDoubleClickCommand => _mouseDoubleClickCommand ??= new DelegateCommand<MouseButtonEventArgs>(MouseDoubleClickEvent);
 
+        private DelegateCommand _zoomInCommand;
+        public DelegateCommand ZoomInCommand => _zoomInCommand ??= new DelegateCommand(ZoomInEvent);
+        private DelegateCommand _zoomOutCommand;
+        public DelegateCommand ZoomOutCommand => _zoomOutCommand ??= new DelegateCommand(ZoomOutEvent);
+
         // test
         private DelegateCommand _showConfigCommand;
         public DelegateCommand ShowConfigCommand => _showConfigCommand ??= new DelegateCommand(ShowConfigTestEvent);
@@ -154,36 +159,31 @@ namespace WA.Viewer.ViewModels
             //System.Diagnostics.Trace.WriteLine("mouse wheel");
             // zoom ratioはintでもったほうがよさそう
             var win = Window.GetWindow((DependencyObject)e.Source);
-            _scalingPivot = e.GetPosition(win);
+            var position = e.GetPosition(win);
             var matrix = ImageTransform.Value.Value;
             // scalingしてspaceをあわせないといけない
-            _scalingPivot.X -= matrix.OffsetX;
-            _scalingPivot.Y -= matrix.OffsetY;
-            //_scalingPivot = matrix.Transform(_scalingPivot);
-            System.Diagnostics.Trace.WriteLine("mouse wheel " + _scalingPivot);
-            const double scale = 1.2;
-            // 逆方向に回転させても、1, 2tick前回の挙動になるのは…
+
+            //Point m = new Point(matrix.OffsetX, matrix.OffsetY);
+            //var delta = position - m;
+            ////delta.X = m.X + position.X;
+            ////delta.Y = m.Y + position.Y;
+            //var space = matrix.Transform(position);
+            //var delta2 = matrix.Transform(delta);
+
+            //System.Diagnostics.Trace.WriteLine("position " + position);
+            //System.Diagnostics.Trace.WriteLine("matrix" + m);
+            //System.Diagnostics.Trace.WriteLine("delta " + delta);
+            //System.Diagnostics.Trace.WriteLine("space " + space);
+            //const double scale = 1.2;
             if (e.Delta > 0)
             {
-                _scale *= 2;
-                // mag
-                Matrix s = Matrix.Identity;
-                s.ScaleAt(_scale, _scale, 0, 0);
-                //matrix.ScaleAtPrepend(scale, scale, _scalingPivot.X, _scalingPivot.Y);
-                matrix *= s;
-                //matrix = s * matrix;
-                System.Diagnostics.Trace.WriteLine("mouse wheel delta up" + e.Delta);
+                //System.Diagnostics.Trace.WriteLine("mouse wheel delta up" + e.Delta);
+                matrix.ScaleAt(2.0, 2.0, position.X, position.Y);
             }
             else
             {
-                _scale *= 0.5;
-                Matrix s = Matrix.Identity;
-                s.ScaleAt(_scale, _scale, 0, 0);
-                matrix *= s;
-                // min
-                //matrix.ScaleAtPrepend(1.0 / scale, 1.0 / scale, _scalingPivot.X, _scalingPivot.Y);
-                //matrix = s * matrix;
-                System.Diagnostics.Trace.WriteLine("mouse wheel delta down" + e.Delta);
+                //System.Diagnostics.Trace.WriteLine("mouse wheel delta down" + e.Delta);
+                matrix.ScaleAt(0.5, 0.5, position.X, position.Y);
             }
             ImageTransform.Value = new MatrixTransform(matrix);
         }
@@ -196,6 +196,33 @@ namespace WA.Viewer.ViewModels
                 // reset
                 ImageTransform.Value = new MatrixTransform(Matrix.Identity);
             }
+        }
+
+        private void ZoomInEvent()
+        {
+
+            var matrix = ImageTransform.Value.Value;
+            //_scalingPivot.X = matrix.OffsetX;
+            //_scalingPivot.Y = matrix.OffsetY;
+            //matrix.OffsetX = 0;
+            //matrix.OffsetY = 0;
+            matrix.ScaleAt(2.0, 2.0, 0.0, 400.0);
+            //matrix.OffsetX = _scalingPivot.X;
+            //matrix.OffsetY = _scalingPivot.Y;
+            ImageTransform.Value = new MatrixTransform(matrix);
+        }
+
+        private void ZoomOutEvent()
+        {
+            var matrix = ImageTransform.Value.Value;
+            //_scalingPivot.X = matrix.OffsetX;
+            //_scalingPivot.Y = matrix.OffsetY;
+            //matrix.OffsetX = 0;
+            //matrix.OffsetY = 0;
+            matrix.ScaleAt(0.5, 0.5, 0.0, 400.0);
+            //matrix.OffsetX = _scalingPivot.X;
+            //matrix.OffsetY = _scalingPivot.Y;
+            ImageTransform.Value = new MatrixTransform(matrix);
         }
 
         private async Task LoadedEvent(RoutedEventArgs e)
