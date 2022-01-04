@@ -15,8 +15,8 @@
         </ContextMenu>
     </Window.ContextMenu>
     <Window.InputBindings>
-        <KeyBinding Key="Add" Command="{Binding Path=ZoomInCommand}"/>
-        <KeyBinding Key="Subtract" Command="{Binding Path=ZoomOutCommand}"/>
+        <KeyBinding Key="Add" Command="{Binding Path=ZoomInCommand}" CommandParameter="{Binding ElementName=mainWindow}"/>
+        <KeyBinding Key="Subtract" Command="{Binding Path=ZoomOutCommand}" CommandParameter="{Binding ElementName=mainWindow}"/>
     </Window.InputBindings>
     <bh:Interaction.Triggers>
         <bh:EventTrigger EventName="Loaded">
