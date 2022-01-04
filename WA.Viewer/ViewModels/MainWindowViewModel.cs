@@ -35,6 +35,8 @@ namespace WA.Viewer.ViewModels
 
         // https://docs.microsoft.com/ja-jp/dotnet/desktop/wpf/advanced/optimizing-performance-2d-graphics-and-imaging?view=netframeworkdesktop-4.8
         public ReadOnlyReactivePropertySlim<BitmapSource> Image { get; }
+        // todo 縮小中は、linearなどであってほしい
+        public ReactivePropertySlim<BitmapScalingMode> ScalingMode { get; } = new ReactivePropertySlim<BitmapScalingMode>(BitmapScalingMode.NearestNeighbor);
 
         public ReactivePropertySlim<Transform> ImageTransform { get; private set; }
 

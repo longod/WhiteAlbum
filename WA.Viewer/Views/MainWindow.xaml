@@ -46,7 +46,9 @@
     </bh:Interaction.Triggers>
     <Grid>
         <Border x:Name="border" ClipToBounds="False">
-            <Image x:Name="image" Stretch="None" Source="{Binding Path=Image.Value}"  RenderTransform="{Binding Path=ImageTransform.Value, Mode=OneWay}"/>
+            <Image x:Name="image" Stretch="None"
+                   Source="{Binding Path=Image.Value}"  RenderTransform="{Binding Path=ImageTransform.Value, Mode=OneWay}"
+                   RenderOptions.BitmapScalingMode="{Binding Path=ScalingMode.Value, Mode=OneWay}"/>
         </Border>
         <!--<ContentControl prism:RegionManager.RegionName="ContentRegion" />-->
     </Grid>
