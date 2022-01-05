@@ -26,7 +26,6 @@ namespace WA.Viewer.ViewModels
         private ILogger _logger;
 
         private Point _movingOffset;
-        private Point _scalingPivot;
 
         private CompositeDisposable _disposable { get; } = new CompositeDisposable();
 
@@ -106,8 +105,9 @@ namespace WA.Viewer.ViewModels
         {
             Vector delta = point - _movingOffset;
             var matrix = ImageTransform.Value.Value;
-            matrix.OffsetX = delta.X;
-            matrix.OffsetY = delta.Y;
+            // fit pixel
+            matrix.OffsetX = Math.Round(delta.X);
+            matrix.OffsetY = Math.Round(delta.Y);
             return matrix;
         }
 
@@ -169,9 +169,13 @@ namespace WA.Viewer.ViewModels
             {
                 matrix.ScaleAt(0.5, 0.5, position.X, position.Y);
             }
+
+            // fit pixel
+            matrix.OffsetX = Math.Round(matrix.OffsetX);
+            matrix.OffsetY = Math.Round(matrix.OffsetY);
+
             ImageTransform.Value = new MatrixTransform(matrix);
         }
-        double _scale = 1;
 
         private void MouseDoubleClickEvent(MouseButtonEventArgs e)
         {
@@ -189,6 +193,11 @@ namespace WA.Viewer.ViewModels
             var position = Mouse.GetPosition((IInputElement)e);
             var matrix = ImageTransform.Value.Value;
             matrix.ScaleAt(2.0, 2.0, position.X, position.Y);
+
+            // fit pixel
+            matrix.OffsetX = Math.Round(matrix.OffsetX);
+            matrix.OffsetY = Math.Round(matrix.OffsetY);
+
             ImageTransform.Value = new MatrixTransform(matrix);
         }
 
@@ -199,6 +208,11 @@ namespace WA.Viewer.ViewModels
             var position = Mouse.GetPosition((IInputElement)e);
             var matrix = ImageTransform.Value.Value;
             matrix.ScaleAt(0.5, 0.5, position.X, position.Y);
+
+            // fit pixel
+            matrix.OffsetX = Math.Round(matrix.OffsetX);
+            matrix.OffsetY = Math.Round(matrix.OffsetY);
+
             ImageTransform.Value = new MatrixTransform(matrix);
         }
 
