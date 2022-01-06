@@ -39,6 +39,8 @@ namespace WA.Viewer.ViewModels
 
         public ReactivePropertySlim<Transform> ImageTransform { get; private set; }
 
+        private DelegateCommand _exportCommand;
+        public DelegateCommand ExportCommand => _exportCommand ??= new DelegateCommand(ExportEvent);
         public DelegateCommand _showSettingsWindowCommand;
         public DelegateCommand ShowSettingsWindowCommand => _showSettingsWindowCommand ??= new DelegateCommand(ShowSettingsWindowEvent);
         private DelegateCommand _exitCommand;
@@ -262,6 +264,13 @@ namespace WA.Viewer.ViewModels
         {
             string[] paths = (string[])e.Data.GetData(DataFormats.FileDrop);
             await _viewer.ProcessAsync(paths[0]);
+        }
+
+        private void ExportEvent()
+        {
+            // todo open dialog and choise format
+            string path = "export.bmp";
+            _viewer.Export(path, Image.Value);
         }
 
         private void ExitEvent()

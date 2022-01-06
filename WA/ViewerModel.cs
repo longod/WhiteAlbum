@@ -306,5 +306,15 @@
             return virtualPath.Split('|');
         }
 
+        // async version?
+        public void Export(string path, BitmapSource image)
+        {
+            using (FileStream stream = new FileStream(path, FileMode.Create))
+            {
+                BmpBitmapEncoder encoder = new BmpBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(image));
+                encoder.Save(stream);
+            }
+        }
     }
 }
