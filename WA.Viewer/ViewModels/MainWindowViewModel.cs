@@ -274,11 +274,12 @@ namespace WA.Viewer.ViewModels
             dialog.RestoreDirectory = true;
             dialog.FileName = "export"; // todo getting from original filename
             // todo gettng from view property
-            dialog.Filter = "Bitmap|*.bmp"; // spliter |, multi extensions ;
+            dialog.Filter = _viewer.ExportFilter; // "Bitmap|*.bmp"; // spliter |, multi extensions ;
             //dialog.FilterIndex // これは覚えてくれない, filterの数は減ることは無いはずだが、一応clampしておくべきだろう
             dialog.AddExtension = true;
             if (dialog.ShowDialog() == true)
             {
+                // todo 個別のsettingsどうする？追加のウインドウ？
                 _viewer.Export(dialog.FileName, Image.Value);
             }
         }

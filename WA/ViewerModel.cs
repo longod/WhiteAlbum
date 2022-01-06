@@ -5,7 +5,9 @@
     using System.Collections.ObjectModel;
     using System.ComponentModel;
     using System.IO;
+    using System.Linq;
     using System.Runtime.CompilerServices;
+    using System.Text;
     using System.Threading.Tasks;
     using System.Windows.Media.Imaging;
     using Microsoft.Extensions.Logging;
@@ -43,6 +45,7 @@
         private readonly CacheManager<BitmapSource> _cacheManager;
 
         private Dictionary<string, ImageDecoder> _imageDecoders = new Dictionary<string, ImageDecoder>();
+        private Dictionary<string, BuiltInImageEncoder> _imageEncoders = null;
 
         // filesystem path
         private string LogicalPath { get; set; }
@@ -286,11 +289,12 @@
             _imageDecoders.Add(".bmp", new BuiltInImageDecoder(typeof(BmpBitmapDecoder)));
             _imageDecoders.Add(".png", new BuiltInImageDecoder(typeof(PngBitmapDecoder)));
             _imageDecoders.Add(".jpg", new BuiltInImageDecoder(typeof(JpegBitmapDecoder)));
-            _imageDecoders.Add(".jpeg", new BuiltInImageDecoder(typeof(JpegBitmapDecoder)));
+            _imageDecoders.Add(".jpeg", _imageDecoders[".jpg"]);
             _imageDecoders.Add(".gif", new BuiltInImageDecoder(typeof(GifBitmapDecoder)));
             _imageDecoders.Add(".tif", new BuiltInImageDecoder(typeof(TiffBitmapDecoder)));
-            _imageDecoders.Add(".tiff", new BuiltInImageDecoder(typeof(TiffBitmapDecoder)));
-            _imageDecoders.Add(".wmp", new BuiltInImageDecoder(typeof(WmpBitmapDecoder)));
+            _imageDecoders.Add(".tiff", _imageDecoders[".tif"]);
+            _imageDecoders.Add(".hdp", new BuiltInImageDecoder(typeof(WmpBitmapDecoder)));
+            _imageDecoders.Add(".wdp", _imageDecoders[".hdp"]);
         }
 
         private void RegisterDecoders()
@@ -319,6 +323,13 @@
                 throw new ArgumentNullException("image must be not null.");
             }
 
+            // initial registry
+            if (_imageEncoders == null)
+            {
+                _imageEncoders = new Dictionary<string, BuiltInImageEncoder>();
+                RegisterBuiltinEncoders();
+            }
+
             var file = new FileInfo(path);
             // find encoder
             var ext = file.Extension;
@@ -333,12 +344,48 @@
                 Directory.CreateDirectory(file.Directory.FullName);
             }
 
-            using (FileStream stream = new FileStream(path, FileMode.Create))
+            // todo tweakable quality
+            if (_imageEncoders.TryGetValue(ext, out var encoder))
             {
-                BmpBitmapEncoder encoder = new BmpBitmapEncoder();
-                encoder.Frames.Add(BitmapFrame.Create(image));
-                encoder.Save(stream);
+                encoder.EncodeToFile(path, image);
             }
+            else
+            {
+                // todo error
+            }
+        }
+
+        private string _exportFilter;
+        public string ExportFilter
+        {
+            get
+            {
+                if (_exportFilter == null)
+                {
+                    if (_imageEncoders == null)
+                    {
+                        _imageEncoders = new Dictionary<string, BuiltInImageEncoder>();
+                        RegisterBuiltinEncoders();
+                    }
+                    // | 区切りのフィルタ生成
+                    // 複数拡張子は ; 区切り
+                    // fixme 複数の拡張子を表現できない
+                    var filter = _imageEncoders.Select(x => string.Concat(x.Value.FormatName, "|", "*", x.Key));
+                    _exportFilter = string.Join('|', filter);
+                }
+
+                return _exportFilter;
+            }
+        }
+
+        private void RegisterBuiltinEncoders()
+        {
+            _imageEncoders.Add(".bmp", new BuiltInImageEncoder("Bitmap", new BmpBitmapEncoder()));
+            _imageEncoders.Add(".png", new BuiltInImageEncoder("PNG", new PngBitmapEncoder() { Interlace = PngInterlaceOption.Default }));
+            _imageEncoders.Add(".jpg", new BuiltInImageEncoder("Jpeg", new JpegBitmapEncoder() { QualityLevel = 100 }));
+            _imageEncoders.Add(".gif", new BuiltInImageEncoder("GIF", new GifBitmapEncoder()));
+            _imageEncoders.Add(".tif", new BuiltInImageEncoder("TIFF", new TiffBitmapEncoder() { Compression = TiffCompressOption.Default }));
+            _imageEncoders.Add(".hdp", new BuiltInImageEncoder("HDP", new WmpBitmapEncoder()));
         }
     }
 }
