@@ -14,6 +14,7 @@
     // internal interface IImageDecoder<Resource> {}
     // これでバックエンドに対応するとマッピング時に型が必要になってしまう…
     // bitmap info, image desc, stream, span
+    // todo archiveも扱っているので、リネームなりinterfaceつくって分離なり
     internal class ImageDecoder
     {
         private List<IPluginProxy> _decoders;

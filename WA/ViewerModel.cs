@@ -309,6 +309,30 @@
         // async version?
         public void Export(string path, BitmapSource image)
         {
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new ArgumentNullException("path must be not null.");
+            }
+
+            if (image == null)
+            {
+                throw new ArgumentNullException("image must be not null.");
+            }
+
+            var file = new FileInfo(path);
+            // find encoder
+            var ext = file.Extension;
+            if (string.IsNullOrEmpty(ext))
+            {
+                // default or failed
+                throw new ArgumentException();
+            }
+
+            if (!Directory.Exists(file.Directory.FullName))
+            {
+                Directory.CreateDirectory(file.Directory.FullName);
+            }
+
             using (FileStream stream = new FileStream(path, FileMode.Create))
             {
                 BmpBitmapEncoder encoder = new BmpBitmapEncoder();

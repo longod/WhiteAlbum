@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Win32;
 using Prism.Commands;
 using Prism.Mvvm;
 using Prism.Regions;
@@ -40,7 +41,7 @@ namespace WA.Viewer.ViewModels
         public ReactivePropertySlim<Transform> ImageTransform { get; private set; }
 
         private DelegateCommand _exportCommand;
-        public DelegateCommand ExportCommand => _exportCommand ??= new DelegateCommand(ExportEvent);
+        public DelegateCommand ExportCommand => _exportCommand ??= new DelegateCommand(ExportEvent, () => Image?.Value != null);
         public DelegateCommand _showSettingsWindowCommand;
         public DelegateCommand ShowSettingsWindowCommand => _showSettingsWindowCommand ??= new DelegateCommand(ShowSettingsWindowEvent);
         private DelegateCommand _exitCommand;
@@ -268,9 +269,18 @@ namespace WA.Viewer.ViewModels
 
         private void ExportEvent()
         {
-            // todo open dialog and choise format
-            string path = "export.bmp";
-            _viewer.Export(path, Image.Value);
+            var dialog = new SaveFileDialog();
+            dialog.OverwritePrompt = true;
+            dialog.RestoreDirectory = true;
+            dialog.FileName = "export"; // todo getting from original filename
+            // todo gettng from view property
+            dialog.Filter = "Bitmap|*.bmp"; // spliter |, multi extensions ;
+            //dialog.FilterIndex // これは覚えてくれない, filterの数は減ることは無いはずだが、一応clampしておくべきだろう
+            dialog.AddExtension = true;
+            if (dialog.ShowDialog() == true)
+            {
+                _viewer.Export(dialog.FileName, Image.Value);
+            }
         }
 
         private void ExitEvent()
