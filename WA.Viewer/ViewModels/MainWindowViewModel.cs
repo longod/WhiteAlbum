@@ -27,6 +27,7 @@ namespace WA.Viewer.ViewModels
         private ILogger _logger;
 
         private Point _movingOffset;
+        private int _exportFilterIndex = 0;
 
         private CompositeDisposable _disposable { get; } = new CompositeDisposable();
 
@@ -273,12 +274,13 @@ namespace WA.Viewer.ViewModels
             dialog.OverwritePrompt = true;
             dialog.RestoreDirectory = true;
             dialog.FileName = "export"; // todo getting from original filename
-            // todo gettng from view property
-            dialog.Filter = _viewer.ExportFilter; // "Bitmap|*.bmp"; // spliter |, multi extensions ;
-            //dialog.FilterIndex // これは覚えてくれない, filterの数は減ることは無いはずだが、一応clampしておくべきだろう
+            dialog.Filter = _viewer.ExportFilter;
+            // todo filterの数は減ることは無いはずだが、一応clampしておくべきだろう
+            dialog.FilterIndex = _exportFilterIndex;
             dialog.AddExtension = true;
             if (dialog.ShowDialog() == true)
             {
+                _exportFilterIndex = dialog.FilterIndex; // cancel時はこのindexも反映されていない
                 // todo 個別のsettingsどうする？追加のウインドウ？
                 _viewer.Export(dialog.FileName, Image.Value);
             }

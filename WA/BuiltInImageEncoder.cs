@@ -6,6 +6,8 @@
     using System.Text;
     using System.Windows.Media.Imaging;
 
+    // todo non build exporter
+    // todo quality settings interface
     internal class BuiltInImageEncoder
     {
         private BitmapEncoder _encoder;

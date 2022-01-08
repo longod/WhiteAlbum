@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:bh="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:prism="http://prismlibrary.com/"
+        xmlns:local="clr-namespace:WA.Viewer"
         prism:ViewModelLocator.AutoWireViewModel="True"
         x:Name="mainWindow"
         Title="{Binding Title.Value}" Width="800" Height="600"
@@ -47,9 +48,11 @@
     </bh:Interaction.Triggers>
     <Grid>
         <Border x:Name="border" ClipToBounds="False">
-            <Image x:Name="image" Stretch="None"
+            <local:DpiAwareDecorator Enable="True">
+                <Image x:Name="image" Stretch="None"
                    Source="{Binding Path=Image.Value}"  RenderTransform="{Binding Path=ImageTransform.Value, Mode=OneWay}"
                    RenderOptions.BitmapScalingMode="{Binding Path=ScalingMode.Value, Mode=OneWay}"/>
+            </local:DpiAwareDecorator>
         </Border>
         <!--<ContentControl prism:RegionManager.RegionName="ContentRegion" />-->
     </Grid>
