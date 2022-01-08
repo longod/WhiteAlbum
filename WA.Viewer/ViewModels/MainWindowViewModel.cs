@@ -41,6 +41,11 @@ namespace WA.Viewer.ViewModels
 
         public ReactivePropertySlim<Transform> ImageTransform { get; private set; }
 
+        // といっても、rootから乗算されたtransformが入ってきているわけではなさそう
+        // ちゃんと水得するにはuielementが必要
+        // https://stackoverflow.com/questions/5131118/find-the-applied-scaletransform-on-a-control-or-uielement
+        public ReactivePropertySlim<Transform> ParentTransform { get; private set; }
+
         private DelegateCommand _exportCommand;
         public DelegateCommand ExportCommand => _exportCommand ??= new DelegateCommand(ExportEvent, () => Image?.Value != null);
         public DelegateCommand _showSettingsWindowCommand;
@@ -90,6 +95,7 @@ namespace WA.Viewer.ViewModels
 
                 Image = _viewer.ObserveProperty(x => x.Image).ToReadOnlyReactivePropertySlim().AddTo(_disposable); // FIXME これ遅すぎる debugger経由だと100ms以上かかる
                 ImageTransform = new ReactivePropertySlim<Transform>(MatrixTransform.Identity);
+                ParentTransform = new ReactivePropertySlim<Transform>();
             }
         }
 
@@ -107,9 +113,15 @@ namespace WA.Viewer.ViewModels
 
         private Matrix MoveOffsetImage(Point point)
         {
+            // aware position
+            var parent = ParentTransform.Value.Value;
+            point.X /= parent.M11;
+            point.Y /= parent.M22;
+
             Vector delta = point - _movingOffset;
             var matrix = ImageTransform.Value.Value;
             // fit pixel
+            // OnDpiChanged に対応して同様の丸めをしないとずれるかも？
             matrix.OffsetX = Math.Round(delta.X);
             matrix.OffsetY = Math.Round(delta.Y);
             return matrix;
@@ -122,9 +134,16 @@ namespace WA.Viewer.ViewModels
                 var win = Window.GetWindow((DependencyObject)e.Source);
                 // set relative offset
                 var matrix = ImageTransform.Value.Value;
+                Vector point = new Vector(matrix.OffsetX, matrix.OffsetY);
+
                 _movingOffset = e.GetPosition(win);
-                _movingOffset.X -= matrix.OffsetX;
-                _movingOffset.Y -= matrix.OffsetY;
+
+                // aware position
+                var parent = ParentTransform.Value.Value;
+                _movingOffset.X /= parent.M11;
+                _movingOffset.Y /= parent.M22;
+
+                _movingOffset -= point;
 
                 // エレメント外にでてもマウスイベントを受け取る
                 // 呼び出した瞬間に、この関数が終わる前にmoveイベントが動き出すので、やることを済ませておく
@@ -164,6 +183,12 @@ namespace WA.Viewer.ViewModels
             // todo apply to scale delta value
             var win = Window.GetWindow((DependencyObject)e.Source);
             var position = e.GetPosition(win);
+
+            // aware position
+            var parent = ParentTransform.Value.Value;
+            position.X /= parent.M11;
+            position.Y /= parent.M22;
+
             var matrix = ImageTransform.Value.Value;
             if (e.Delta > 0)
             {
@@ -195,6 +220,12 @@ namespace WA.Viewer.ViewModels
             // todo 領域外の場合にclipするなど
             // todo easing
             var position = Mouse.GetPosition((IInputElement)e);
+
+            // aware position
+            var parent = ParentTransform.Value.Value;
+            position.X /= parent.M11;
+            position.Y /= parent.M22;
+
             var matrix = ImageTransform.Value.Value;
             matrix.ScaleAt(2.0, 2.0, position.X, position.Y);
 
@@ -210,6 +241,12 @@ namespace WA.Viewer.ViewModels
             // todo 領域外の場合にclipするなど
             // todo easing
             var position = Mouse.GetPosition((IInputElement)e);
+
+            // aware position
+            var parent = ParentTransform.Value.Value;
+            position.X /= parent.M11;
+            position.Y /= parent.M22;
+
             var matrix = ImageTransform.Value.Value;
             matrix.ScaleAt(0.5, 0.5, position.X, position.Y);
 

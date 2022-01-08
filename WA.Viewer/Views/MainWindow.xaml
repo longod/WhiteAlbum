@@ -48,7 +48,7 @@
     </bh:Interaction.Triggers>
     <Grid>
         <Border x:Name="border" ClipToBounds="False">
-            <local:DpiAwareDecorator Enable="True">
+            <local:DpiAwareDecorator Enable="True" LayoutTransform="{Binding Path=ParentTransform.Value, Mode=OneWayToSource}">
                 <Image x:Name="image" Stretch="None"
                    Source="{Binding Path=Image.Value}"  RenderTransform="{Binding Path=ImageTransform.Value, Mode=OneWay}"
                    RenderOptions.BitmapScalingMode="{Binding Path=ScalingMode.Value, Mode=OneWay}"/>
