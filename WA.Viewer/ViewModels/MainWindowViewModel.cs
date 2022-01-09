@@ -29,6 +29,12 @@ namespace WA.Viewer.ViewModels
         private Point _movingOffset;
         private int _exportFilterIndex = 0;
 
+        // scale = _mantissa ^ _exponent
+        // この管理方法は明確だが、任意のスケーリング率の指定には向いていない
+        private int _exponent = 0; // ^n
+        private const double _mantissa = 2.0;
+        private const int _maxExponent = 6; // todo image解像度に依存するようにする
+
         private CompositeDisposable _disposable { get; } = new CompositeDisposable();
 
         // fixme readonly one way, getting fileinfo
@@ -111,7 +117,7 @@ namespace WA.Viewer.ViewModels
             }
         }
 
-        private Matrix MoveOffsetImage(Point point)
+        private Matrix MoveImage(Point point)
         {
             // aware position
             var parent = ParentTransform.Value.Value;
@@ -124,6 +130,41 @@ namespace WA.Viewer.ViewModels
             // OnDpiChanged に対応して同様の丸めをしないとずれるかも？
             matrix.OffsetX = Math.Round(delta.X);
             matrix.OffsetY = Math.Round(delta.Y);
+            return matrix;
+        }
+
+        private Matrix ScaleImage(Point point, int zoom)
+        {
+            var matrix = ImageTransform.Value.Value;
+            if (Math.Abs(_exponent + zoom) > _maxExponent)
+            {
+                return matrix; // 再代入がはいるので無駄に更新が走るが…
+            }
+
+            // todo pointが領域外の場合にclipするなど
+            // todo easing
+
+            // aware position
+            var parent = ParentTransform.Value.Value;
+            point.X /= parent.M11;
+            point.Y /= parent.M22;
+
+            // FIXME window size != image sizeのときにpointがずれる
+            if (zoom > 0)
+            {
+                matrix.ScaleAt(_mantissa, _mantissa, point.X, point.Y);
+                ++_exponent;
+            }
+            else if (zoom < 0)
+            {
+                matrix.ScaleAt(1.0 / _mantissa, 1.0 / _mantissa, point.X, point.Y);
+                --_exponent;
+            }
+
+            // fit pixel
+            matrix.OffsetX = Math.Round(matrix.OffsetX);
+            matrix.OffsetY = Math.Round(matrix.OffsetY);
+
             return matrix;
         }
 
@@ -157,7 +198,7 @@ namespace WA.Viewer.ViewModels
             if (win.IsMouseCaptured)
             {
                 var point = e.GetPosition(win);
-                Matrix matrix = MoveOffsetImage(point);
+                Matrix matrix = MoveImage(point);
                 ImageTransform.Value = new MatrixTransform(matrix);
             }
 
@@ -171,38 +212,16 @@ namespace WA.Viewer.ViewModels
                 win.ReleaseMouseCapture();
                 // set final location
                 var point = e.GetPosition(win);
-                Matrix matrix = MoveOffsetImage(point);
+                Matrix matrix = MoveImage(point);
                 ImageTransform.Value = new MatrixTransform(matrix);
             }
         }
 
         private void MouseWheelEvent(MouseWheelEventArgs e)
         {
-            // todo 領域外の場合にclipするなど
-            // todo easing
-            // todo apply to scale delta value
             var win = Window.GetWindow((DependencyObject)e.Source);
-            var position = e.GetPosition(win);
-
-            // aware position
-            var parent = ParentTransform.Value.Value;
-            position.X /= parent.M11;
-            position.Y /= parent.M22;
-
-            var matrix = ImageTransform.Value.Value;
-            if (e.Delta > 0)
-            {
-                matrix.ScaleAt(2.0, 2.0, position.X, position.Y);
-            }
-            else
-            {
-                matrix.ScaleAt(0.5, 0.5, position.X, position.Y);
-            }
-
-            // fit pixel
-            matrix.OffsetX = Math.Round(matrix.OffsetX);
-            matrix.OffsetY = Math.Round(matrix.OffsetY);
-
+            var point = e.GetPosition(win);
+            Matrix matrix = ScaleImage(point, e.Delta >= 0 ? 1 : -1);
             ImageTransform.Value = new MatrixTransform(matrix);
         }
 
@@ -212,48 +231,21 @@ namespace WA.Viewer.ViewModels
             {
                 // reset
                 ImageTransform.Value = new MatrixTransform(Matrix.Identity);
+                _exponent = 0;
             }
         }
 
         private void ZoomInEvent(object e)
         {
-            // todo 領域外の場合にclipするなど
-            // todo easing
-            var position = Mouse.GetPosition((IInputElement)e);
-
-            // aware position
-            var parent = ParentTransform.Value.Value;
-            position.X /= parent.M11;
-            position.Y /= parent.M22;
-
-            var matrix = ImageTransform.Value.Value;
-            matrix.ScaleAt(2.0, 2.0, position.X, position.Y);
-
-            // fit pixel
-            matrix.OffsetX = Math.Round(matrix.OffsetX);
-            matrix.OffsetY = Math.Round(matrix.OffsetY);
-
+            var point = Mouse.GetPosition((IInputElement)e);
+            Matrix matrix = ScaleImage(point, 1);
             ImageTransform.Value = new MatrixTransform(matrix);
         }
 
         private void ZoomOutEvent(object e)
         {
-            // todo 領域外の場合にclipするなど
-            // todo easing
-            var position = Mouse.GetPosition((IInputElement)e);
-
-            // aware position
-            var parent = ParentTransform.Value.Value;
-            position.X /= parent.M11;
-            position.Y /= parent.M22;
-
-            var matrix = ImageTransform.Value.Value;
-            matrix.ScaleAt(0.5, 0.5, position.X, position.Y);
-
-            // fit pixel
-            matrix.OffsetX = Math.Round(matrix.OffsetX);
-            matrix.OffsetY = Math.Round(matrix.OffsetY);
-
+            var point = Mouse.GetPosition((IInputElement)e);
+            Matrix matrix = ScaleImage(point, -1);
             ImageTransform.Value = new MatrixTransform(matrix);
         }
 
