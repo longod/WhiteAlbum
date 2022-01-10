@@ -53,7 +53,7 @@ namespace WA.Viewer.ViewModels
         public ReactivePropertySlim<Transform> ParentTransform { get; private set; }
 
         private DelegateCommand _exportCommand;
-        public DelegateCommand ExportCommand => _exportCommand ??= new DelegateCommand(ExportEvent, () => Image?.Value != null);
+        public DelegateCommand ExportCommand => _exportCommand ??= new DelegateCommand(ExportEvent, ImageExsits);
         public DelegateCommand _showSettingsWindowCommand;
         public DelegateCommand ShowSettingsWindowCommand => _showSettingsWindowCommand ??= new DelegateCommand(ShowSettingsWindowEvent);
         private DelegateCommand _exitCommand;
@@ -67,20 +67,20 @@ namespace WA.Viewer.ViewModels
         public DelegateCommand<DragEventArgs> DropCommand => _dropCommand ??= new DelegateCommand<DragEventArgs>(async (e) => await DropEvent(e));
 
         private DelegateCommand<MouseButtonEventArgs> _mouseDownCommand;
-        public DelegateCommand<MouseButtonEventArgs> MouseDownCommand => _mouseDownCommand ??= new DelegateCommand<MouseButtonEventArgs>(MouseDownEvent);
+        public DelegateCommand<MouseButtonEventArgs> MouseDownCommand => _mouseDownCommand ??= new DelegateCommand<MouseButtonEventArgs>(MouseDownEvent, _ => ImageExsits());
         private DelegateCommand<MouseEventArgs> _mouseMoveCommand;
-        public DelegateCommand<MouseEventArgs> MouseMoveCommand => _mouseMoveCommand ??= new DelegateCommand<MouseEventArgs>(MouseMoveEvent);
+        public DelegateCommand<MouseEventArgs> MouseMoveCommand => _mouseMoveCommand ??= new DelegateCommand<MouseEventArgs>(MouseMoveEvent, _ => ImageExsits());
         private DelegateCommand<MouseButtonEventArgs> _mouseUpCommand;
-        public DelegateCommand<MouseButtonEventArgs> MouseUpCommand => _mouseUpCommand ??= new DelegateCommand<MouseButtonEventArgs>(MouseUpEvent);
+        public DelegateCommand<MouseButtonEventArgs> MouseUpCommand => _mouseUpCommand ??= new DelegateCommand<MouseButtonEventArgs>(MouseUpEvent, _ => ImageExsits());
         private DelegateCommand<MouseWheelEventArgs> _mouseWheelCommand;
-        public DelegateCommand<MouseWheelEventArgs> MouseWheelCommand => _mouseWheelCommand ??= new DelegateCommand<MouseWheelEventArgs>(MouseWheelEvent);
+        public DelegateCommand<MouseWheelEventArgs> MouseWheelCommand => _mouseWheelCommand ??= new DelegateCommand<MouseWheelEventArgs>(MouseWheelEvent, _ => ImageExsits());
         private DelegateCommand<MouseButtonEventArgs> _mouseDoubleClickCommand;
         public DelegateCommand<MouseButtonEventArgs> MouseDoubleClickCommand => _mouseDoubleClickCommand ??= new DelegateCommand<MouseButtonEventArgs>(MouseDoubleClickEvent);
 
         private DelegateCommand<object> _zoomInCommand;
-        public DelegateCommand<object> ZoomInCommand => _zoomInCommand ??= new DelegateCommand<object>(ZoomInEvent);
+        public DelegateCommand<object> ZoomInCommand => _zoomInCommand ??= new DelegateCommand<object>(ZoomInEvent, _ => ImageExsits());
         private DelegateCommand<object> _zoomOutCommand;
-        public DelegateCommand<object> ZoomOutCommand => _zoomOutCommand ??= new DelegateCommand<object>(ZoomOutEvent);
+        public DelegateCommand<object> ZoomOutCommand => _zoomOutCommand ??= new DelegateCommand<object>(ZoomOutEvent, _ => ImageExsits());
 
         // test
         private DelegateCommand _showConfigCommand;
@@ -115,6 +115,11 @@ namespace WA.Viewer.ViewModels
                     region.RemoveAll();
                 }
             }
+        }
+
+        private bool ImageExsits()
+        {
+            return Image?.Value != null;
         }
 
         private Matrix MoveImage(Point point)
@@ -229,10 +234,15 @@ namespace WA.Viewer.ViewModels
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {
-                // reset
-                ImageTransform.Value = new MatrixTransform(Matrix.Identity);
-                _exponent = 0;
+                ResetImageTransform();
             }
+        }
+
+        private void ResetImageTransform()
+        {
+            // reset
+            ImageTransform.Value = new MatrixTransform(Matrix.Identity);
+            _exponent = 0;
         }
 
         private void ZoomInEvent(object e)
@@ -293,6 +303,7 @@ namespace WA.Viewer.ViewModels
 
         private async Task DropEvent(DragEventArgs e)
         {
+            ResetImageTransform(); // image変更に対してsubscribeする方がよいかも
             string[] paths = (string[])e.Data.GetData(DataFormats.FileDrop);
             await _viewer.ProcessAsync(paths[0]);
         }
