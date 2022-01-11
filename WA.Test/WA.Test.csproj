@@ -6,6 +6,7 @@
     <IsPackable>false</IsPackable>
 
     <Platforms>AnyCPU;x86;x64</Platforms>
+    <IsPublishable>false</IsPublishable>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
