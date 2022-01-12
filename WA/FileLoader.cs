@@ -5,7 +5,7 @@
     using System.Runtime.InteropServices;
     using System.Threading.Tasks;
 
-    // todo rename
+    // fixme loaderとmemoryは分けた方がよい, filehandleは速やかにdisposeしたいが、memoryは維持したい
     internal class FileLoader : IDisposable
     {
         private FileStream _stream;

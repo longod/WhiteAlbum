@@ -7,7 +7,9 @@
     {
         // renderer backendの多用化を考えると、この段階ではBitmapSource じゃない中間フォーマットを返して欲しい
         // bitmap info, image desc, stream, span
-        bool Decode(FileLoader loader, out IIntermediateResult result);
+
+        // or thumbnail専用apiをつくる
+        bool Decode(FileLoader loader, out IIntermediateResult result, bool thumbnail);
 
         // extrac archive
         // todo PackedFileは適切でないかもしれないが、抽象的に解凍可能な情報を含んだ型が必要

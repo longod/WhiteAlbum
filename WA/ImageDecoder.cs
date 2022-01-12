@@ -19,13 +19,13 @@
     {
         private List<IPluginProxy> _decoders;
 
-        internal virtual async Task<ImageOutputResult> DecodeImageAsync(FileLoader loader)
+        internal virtual async Task<ImageOutputResult> DecodeImageAsync(FileLoader loader, bool thumbnail = false)
         {
             var result = await Task.Run(() =>
             {
                 foreach (var d in _decoders)
                 {
-                    if (d.Decode(loader, out var r))
+                    if (d.Decode(loader, out var r, thumbnail))
                     {
                         return r;
                     }

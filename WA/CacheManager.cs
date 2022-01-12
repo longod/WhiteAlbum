@@ -6,7 +6,7 @@
     using System.Diagnostics.CodeAnalysis;
     using System.Text;
 
-    public class CacheManager<T>
+    internal class CacheManager<T>
     {
         private readonly ILogger _logger;
 

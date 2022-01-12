@@ -49,11 +49,18 @@
             return _plugin.IsSupported(loader.Path, loader.RawBinary);
         }
 
-        public bool Decode(FileLoader loader, out IIntermediateResult result)
+        public bool Decode(FileLoader loader, out IIntermediateResult result, bool thumbnail)
         {
             switch (_plugin.Type)
             {
                 case SusiePlugin.PluginType.ImportFilter:
+                    // 任意apiなので失敗したらfallback
+                    if (thumbnail && GetPreview(loader, out var thumb))
+                    {
+                        result = thumb;
+                        return true;
+                    }
+
                     if (GetPicture(loader, out var image))
                     {
                         result = image;
@@ -140,49 +147,65 @@
         {
             if (_plugin.GetPicture(loader.Binary, out var binary, out var info))
             {
-                // index colorの場合、ファイルに埋まっているpaletteは、どこからとってきてる？
-                // consider biCompression?
-                result = new ImageIntermediateResult();
-                result.Info.Width = (uint)info.bmiHeader.biWidth;
-                result.Info.Height = (uint)info.bmiHeader.biHeight;
-                result.Info.DepthOrArray = 1;
-                result.Info.MipLevels = 1;
-                result.Info.BitsPerPixel = info.bmiHeader.biBitCount;
-                switch (info.bmiHeader.biBitCount)
-                {
-                    case 32:
-                        result.Info.Format = ImageFormat.BGRA;
-                        break;
-                    case 24:
-                        result.Info.Format = ImageFormat.BGR;
-                        break;
-                    case 16:
-                        result.Info.Format = ImageFormat.BGR;
-                        break;
-                    case 8:
-                        result.Info.Format = ImageFormat.Index;
-                        break;
-                    case 4:
-                        result.Info.Format = ImageFormat.Index;
-                        break;
-                    default:
-                        throw new NotSupportedException($"info.biBitCount: {info.bmiHeader.biBitCount}");
-                }
-
-                result.Info.Dimension = ImageDimension.Texture2D;
-                result.Info.Orientation = ImageOrientation.BottomLeft;
-                result.Info.Rotation = ImageRotation.None;
-                result.Binary = binary;
-                if (info.bmiColors != null)
-                {
-                    result.Palette = info.bmiColors.Select(x => Color.FromRgb(x.rgbRed, x.rgbGreen, x.rgbBlue)).ToArray();
-                }
-
+                result = PackImageResult(binary, info);
                 return true;
             }
 
             result = null;
             return false;
+        }
+
+        private bool GetPreview(FileLoader loader, out ImageIntermediateResult result)
+        {
+            if (_plugin.GetPreview(loader.Binary, out var binary, out var info))
+            {
+                result = PackImageResult(binary, info);
+                return true;
+            }
+
+            result = null;
+            return false;
+        }
+
+        private static ImageIntermediateResult PackImageResult(byte[] binary, BitMapInfo info)
+        {
+            ImageIntermediateResult result = new ImageIntermediateResult();
+            result.Info.Width = (uint)info.bmiHeader.biWidth;
+            result.Info.Height = (uint)info.bmiHeader.biHeight;
+            result.Info.DepthOrArray = 1;
+            result.Info.MipLevels = 1;
+            result.Info.BitsPerPixel = info.bmiHeader.biBitCount;
+            switch (info.bmiHeader.biBitCount)
+            {
+                case 32:
+                    result.Info.Format = ImageFormat.BGRA;
+                    break;
+                case 24:
+                    result.Info.Format = ImageFormat.BGR;
+                    break;
+                case 16:
+                    result.Info.Format = ImageFormat.BGR;
+                    break;
+                case 8:
+                    result.Info.Format = ImageFormat.Index;
+                    break;
+                case 4:
+                    result.Info.Format = ImageFormat.Index;
+                    break;
+                default:
+                    throw new NotSupportedException($"info.biBitCount: {info.bmiHeader.biBitCount}");
+            }
+
+            result.Info.Dimension = ImageDimension.Texture2D;
+            result.Info.Orientation = ImageOrientation.BottomLeft;
+            result.Info.Rotation = ImageRotation.None;
+            result.Binary = binary;
+            if (info.bmiColors != null)
+            {
+                result.Palette = info.bmiColors.Select(x => Color.FromRgb(x.rgbRed, x.rgbGreen, x.rgbBlue)).ToArray();
+            }
+
+            return result;
         }
 
         private bool GetArchiveInfo(FileLoader loader, out ArchiveIntermediateResult result)

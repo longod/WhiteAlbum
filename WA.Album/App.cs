@@ -60,7 +60,6 @@ namespace WA.Album
             });
             containerRegistry.RegisterSingleton<Susie.StringConverter>(() => Susie.StringConverter.SJIS);
             containerRegistry.RegisterSingleton<PluginManager>();
-            containerRegistry.RegisterSingleton<CacheManager<BitmapSource>>();
             containerRegistry.RegisterSingleton<ViewerModel>();
         }
 

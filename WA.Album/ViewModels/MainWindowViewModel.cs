@@ -90,6 +90,15 @@ namespace WA.Album.ViewModels
             }
 
             await _viewer.ProcessAsync(LogicalPath, VirtualPath);
+
+            // test load all thumbnails
+            if (_viewer.Files?.Count > 0)
+            {
+                foreach (var file in _viewer.Files)
+                {
+                    await _viewer.LoadThumbnail(file);
+                }
+            }
         }
 
         private void PreviewDragOverEvent(DragEventArgs e)

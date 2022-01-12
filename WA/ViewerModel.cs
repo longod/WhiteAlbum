@@ -42,7 +42,7 @@
     {
         private readonly ILogger _logger;
         private readonly PluginManager _pluginManager;
-        private readonly CacheManager<BitmapSource> _cacheManager;
+        private readonly CacheManager<ImageOutputResult> _cacheManager;
 
         private Dictionary<string, ImageDecoder> _imageDecoders = new Dictionary<string, ImageDecoder>();
         private Dictionary<string, BuiltInImageEncoder> _imageEncoders = null;
@@ -57,11 +57,11 @@
         // x86 dllを読めるようにしないといけない 現実的にはx86アプリにする…x64がいいんだけれど
         // 一応、out-of-process com serverでいける https://qiita.com/mima_ita/items/57d7c1101543e214b1d6
 
-        public ViewerModel(AppSettings settings, PluginManager pluginManager, CacheManager<BitmapSource> cacheManager, ILogger logger)
+        public ViewerModel(AppSettings settings, PluginManager pluginManager, ILogger logger)
         {
             _logger = logger;
             _pluginManager = pluginManager;
-            _cacheManager = cacheManager;
+            _cacheManager = new CacheManager<ImageOutputResult>(settings, logger);
             using (new StopwatchScope("ViewerModel", _logger))
             {
                 if (settings.Data.EnableBuiltInDecoders)
@@ -126,8 +126,7 @@
                     // cache
                     if (_cacheManager.TryQuery(LogicalPath, VirtualPath, out var hit))
                     {
-                        Image = hit;
-                        return;
+                        return; // todo
                     }
 
                     // todo archive操作用にどこかでキャッシュor保持しておいた方がよい
@@ -157,7 +156,7 @@
                             }
                         }
 
-                        //_cacheManager.Entry(LogicalPath, VirtualPath, bmp);
+                        _cacheManager.Entry(LogicalPath, VirtualPath, result);
                         if (result.Image != null)
                         {
                             Image = result.Image.bmp;
@@ -184,6 +183,11 @@
 
         public async Task ProcessAsync(PackedFile file)
         {
+            if (_cacheManager.TryQuery(LogicalPath, file.Path, out var hit))
+            {
+                return; // todo
+            }
+
             // todo reuse instance
             using (var loader = new FileLoader(LogicalPath, Susie.API.Constant.MinFileSize))
             {
@@ -194,7 +198,9 @@
                 {
                     using (new StopwatchScope("Decode a file", _logger))
                     {
-                        var result = await ProcessAsyncInArchive(loader, decoder, file);
+                        var result = await ProcessAsyncInArchive(loader, decoder, file, false);
+
+                        _cacheManager.Entry(LogicalPath, file.Path, result);
                         if (result.Image != null)
                         {
                             Image = result.Image.bmp;
@@ -234,7 +240,7 @@
             }
         }
 
-        private async Task<ImageOutputResult> ProcessAsyncInArchive(FileLoader loader, ImageDecoder decoder, PackedFile packedFile)
+        private async Task<ImageOutputResult> ProcessAsyncInArchive(FileLoader loader, ImageDecoder decoder, PackedFile packedFile, bool thumbnail)
         {
             // nest
             using (var extractedLoader = await decoder.DecodeAsync(loader, packedFile))
@@ -242,12 +248,54 @@
                 var extractedDecoder = await FindDecoderAsync(extractedLoader);
                 if (extractedDecoder != null)
                 {
-                    return await extractedDecoder.DecodeImageAsync(extractedLoader);
+                    return await extractedDecoder.DecodeImageAsync(extractedLoader, thumbnail);
                 }
             }
 
             return null;
         }
+
+        public async Task LoadThumbnail(PackedFile file)
+        {
+            //if (_cacheManager.TryQuery(LogicalPath, file.Path, out var hit))
+            //{
+            //    return; // todo
+            //}
+
+            // fixme todo reuse instance
+            using (var loader = new FileLoader(LogicalPath, Susie.API.Constant.MinFileSize))
+            {
+                await loader.ReadAsync();
+
+                var decoder = await FindDecoderAsync(loader);
+                if (decoder != null)
+                {
+                    using (new StopwatchScope("Decode a file", _logger))
+                    {
+                        var result = await ProcessAsyncInArchive(loader, decoder, file, true);
+
+                        //_cacheManager.Entry(LogicalPath, file.Path, result);
+                        if (result.Image != null)
+                        {
+                            file.Thumbnail = result.Image.bmp;
+                        }
+                        else if (result.Files != null)
+                        {
+                            // load file icon
+
+                            // fixme rangeで追加したい…
+                            // 変更イベントが毎回発生してしまう
+                            //Files.Clear();
+                            //foreach (var f in result.Files.files)
+                            //{
+                            //    Files.Add(f);
+                            //}
+                        }
+                    }
+                }
+            }
+        }
+
 
         private async Task<ImageDecoder> FindDecoderAsync(FileLoader loader)
         {

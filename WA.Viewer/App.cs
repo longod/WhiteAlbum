@@ -60,7 +60,6 @@ namespace WA.Viewer
             });
             containerRegistry.RegisterSingleton<Susie.StringConverter>(() => Susie.StringConverter.SJIS);
             containerRegistry.RegisterSingleton<PluginManager>();
-            containerRegistry.RegisterSingleton<CacheManager<BitmapSource>>();
             containerRegistry.RegisterSingleton<ViewerModel>();
 
             // https://prismlibrary.com/docs/wpf/dialog-service.html
