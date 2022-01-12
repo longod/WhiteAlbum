@@ -37,7 +37,7 @@ namespace WA.Album
                         builder.SetMinimumLevel(LogLevel.Debug); // todo enable debug logging
                                                                  //builder.SetMinimumLevel(LogLevel.Information);
 #endif
-                        builder.AddZLoggerFile(Path.Combine(AppContext.BaseDirectory, "WA.Album.log"), options =>
+                        builder.AddZLoggerFile(Path.Combine(DirectoryUtility.GetBaseDirectory(), "WA.Album.log"), options =>
                         {
                             SetupLoggerOptions(options);
                         });

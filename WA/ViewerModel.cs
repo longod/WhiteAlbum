@@ -356,6 +356,7 @@
         }
 
         private string _exportFilter;
+
         public string ExportFilter
         {
             get

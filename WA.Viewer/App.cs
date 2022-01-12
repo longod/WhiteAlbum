@@ -37,7 +37,7 @@ namespace WA.Viewer
                         builder.SetMinimumLevel(LogLevel.Debug); // todo enable debug logging
                                                                  //builder.SetMinimumLevel(LogLevel.Information);
 #endif
-                        builder.AddZLoggerFile(Path.Combine(AppContext.BaseDirectory, "WA.Viewer.log"), options =>
+                        builder.AddZLoggerFile(Path.Combine(DirectoryUtility.GetBaseDirectory(), "WA.Viewer.log"), options =>
                         {
                             SetupLoggerOptions(options);
                         });

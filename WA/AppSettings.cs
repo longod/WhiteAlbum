@@ -88,8 +88,7 @@
 
         private static string GetSettingsPath()
         {
-            // fixme いまどきは AppData に読み書きするのが正しい, publish先もそこが妥当
-            var directory = AppContext.BaseDirectory;
+            var directory = DirectoryUtility.GetBaseDirectory();
             var path = Path.Combine(directory, _name);
             return path;
         }
