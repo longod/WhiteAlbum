@@ -36,7 +36,7 @@
                                 <ColumnDefinition/>
                                 <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
-                            <ListBox ItemsSource="{Binding Path=PluginDirectories}"
+                            <ListBox x:Name="pluginDirectory" ItemsSource="{Binding Path=PluginDirectories}"
                                      Grid.Column="0" Height="200"
                                      HorizontalContentAlignment="Stretch" SelectionMode="Single"
                                      ScrollViewer.CanContentScroll="True"
@@ -48,10 +48,10 @@
                                      VirtualizingPanel.VirtualizationMode="Recycling">
                             </ListBox>
                             <StackPanel Grid.Column="1">
-                                <Button Content="up"/>
-                                <Button Content="down"/>
-                                <Button Content="add"/>
-                                <Button Content="remove"/>
+                                <Button Content="up" Command="{Binding Path=PluginDirectoryUpCommand}" CommandParameter="{Binding ElementName=pluginDirectory}"/>
+                                <Button Content="down" Command="{Binding Path=PluginDirectoryDownCommand}" CommandParameter="{Binding ElementName=pluginDirectory}"/>
+                                <Button Content="add" Command="{Binding Path=PluginDirectoryAddCommand}" CommandParameter="{Binding ElementName=pluginDirectory}"/>
+                                <Button Content="remove" Command="{Binding Path=PluginDirectoryRemoveCommand}" CommandParameter="{Binding ElementName=pluginDirectory}"/>
                                 <CheckBox Content="Include Sub Directory"/>
                             </StackPanel>
                         </Grid>
@@ -62,7 +62,7 @@
                                 <ColumnDefinition/>
                                 <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
-                            <ListView ItemsSource="{Binding Path=PluginList}"
+                            <ListView  x:Name="pluginList" ItemsSource="{Binding Path=PluginList}"
                                       Grid.Column="0" Height="200"
                                       HorizontalContentAlignment="Stretch" SelectionMode="Single"
                                       ScrollViewer.CanContentScroll="True"
@@ -80,9 +80,9 @@
                                 </ListView.View>-->
                             </ListView>
                             <StackPanel Grid.Column="1">
-                                <Button Content="scan"/>
-                                <Button Content="load"/>
-                                <Button Content="config"/>
+                                <Button Content="rescan" Command="{Binding Path=PluginListRescanCommand}" CommandParameter="{Binding ElementName=pluginList}"/>
+                                <Button Content="load" />
+                                <Button Content="config" Command="{Binding Path=PluginListConfigCommand}" CommandParameter="{Binding ElementName=pluginList}"/>
                             </StackPanel>
                         </Grid>
                     </GroupBox>

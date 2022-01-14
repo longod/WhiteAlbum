@@ -127,7 +127,13 @@
                 ScrollViewer.VerticalScrollBarVisibility="{Binding VerticalScrollBarVisibility, Mode=TwoWay}"
                 Orientation="{Binding Orientation, Mode=OneWay}"
                 SpacingMode="{Binding SpacingMode, Mode=OneWay}"
-                StretchItems="{Binding StretchItems, Mode=OneWay}"/>
+                StretchItems="{Binding StretchItems, Mode=OneWay}">
+            <bh:Interaction.Triggers>
+                <bh:EventTrigger EventName="MouseDoubleClick">
+                    <prism:InvokeCommandAction Command="{Binding Path=MouseDoubleClickCommand}"/>
+                </bh:EventTrigger>
+            </bh:Interaction.Triggers>
+        </wpftk:GridView>
         <ContentControl prism:RegionManager.RegionName="ContentRegion" />
     </Grid>
 </Window>

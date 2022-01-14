@@ -7,6 +7,7 @@
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
+    using System.Windows.Interop;
     using Microsoft.Extensions.Logging;
     using ZLogger;
 
@@ -90,18 +91,14 @@
             _leftPaths = _pluginPaths;
         }
 
-        // test
-        public void ShowConfigTest(IntPtr hWnd)
+        public void ShowConfig(string path, WindowInteropHelper handle)
         {
-            foreach (var d in _plugins)
+            // todo find loaded plugin and more
+            using (var plugin = new SusiePluginProxy(new Susie.SusiePlugin(path, _stringConverter)))
             {
-                var susie = d as SusiePluginProxy;
-                if (susie != null)
+                if (plugin.ShowConfig(handle.Handle) == false)
                 {
-                    if (susie.ShowConfigTest(hWnd))
-                    {
-                        break;
-                    }
+                    _logger.ZLogInformation("has not config: {0}", path);
                 }
             }
         }

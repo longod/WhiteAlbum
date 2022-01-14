@@ -5,6 +5,8 @@ using Reactive.Bindings;
 using Reactive.Bindings.Extensions;
 using System;
 using System.Reactive.Disposables;
+using System.Windows;
+using System.Windows.Controls;
 
 namespace WA.Viewer.ViewModels
 {
@@ -24,6 +26,20 @@ namespace WA.Viewer.ViewModels
 
         public ReadOnlyReactiveCollection<string> PluginDirectories { get; }
         public ReadOnlyReactiveCollection<string> PluginList { get; }
+
+        private DelegateCommand<object> _pluginDirectoryUpCommand;
+        public DelegateCommand<object> PluginDirectoryUpCommand => _pluginDirectoryUpCommand ??= new DelegateCommand<object>(PluginDirectoryUpEvent);
+        private DelegateCommand<object> _pluginDirectoryDownCommand;
+        public DelegateCommand<object> PluginDirectoryDownCommand => _pluginDirectoryDownCommand ??= new DelegateCommand<object>(PluginDirectoryDownEvent);
+        private DelegateCommand<object> _pluginDirectoryAddCommand;
+        public DelegateCommand<object> PluginDirectoryAddCommand => _pluginDirectoryAddCommand ??= new DelegateCommand<object>(PluginDirectoryAddEvent);
+        private DelegateCommand<object> _pluginDirectoryRemoveCommand;
+        public DelegateCommand<object> PluginDirectoryRemoveCommand => _pluginDirectoryRemoveCommand ??= new DelegateCommand<object>(PluginDirectoryRemoveEvent);
+
+        private DelegateCommand<object> _pluginListRescanCommand;
+        public DelegateCommand<object> PluginListRescanCommand => _pluginListRescanCommand ??= new DelegateCommand<object>(PluginListRescanEvent);
+        private DelegateCommand<object> _pluginListConfigCommand;
+        public DelegateCommand<object> PluginListConfigCommand => _pluginListConfigCommand ??= new DelegateCommand<object>(PluginListConfigEvent);
 
         private DelegateCommand<string> _closeDialogCommand;
         public DelegateCommand<string> CloseDialogCommand => _closeDialogCommand ??= new DelegateCommand<string>(CloseDialog);
@@ -56,6 +72,41 @@ namespace WA.Viewer.ViewModels
 
         public void OnDialogOpened(IDialogParameters parameters)
         {
+        }
+
+        private void PluginDirectoryUpEvent(object e)
+        {
+        }
+        private void PluginDirectoryDownEvent(object e)
+        {
+        }
+        private void PluginDirectoryAddEvent(object e)
+        {
+            var dialog = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog();
+            if (dialog.ShowDialog() == true)
+            {
+            }
+        }
+        private void PluginDirectoryRemoveEvent(object e)
+        {
+        }
+
+        private void PluginListRescanEvent(object e)
+        {
+        }
+        private void PluginListConfigEvent(object e)
+        {
+            // test
+            // todo 無かった場合のケアとかをしたいが…戻り値はかえすべきではないらしいフォールバックをどうにか
+            var list = (ListView)e;
+            var item = (string)list?.SelectedItem;
+            if (item != null)
+            {
+                var win = Window.GetWindow((DependencyObject)e);
+                var handle = new System.Windows.Interop.WindowInteropHelper(win);
+                _pluginManager.ShowConfig(item, handle);
+            }
+
         }
 
         protected virtual void CloseDialog(string parameter)

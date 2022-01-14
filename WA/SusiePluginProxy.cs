@@ -127,7 +127,7 @@
 
         }
 
-        internal bool ShowConfigTest(IntPtr hWnd)
+        internal bool ShowConfig(IntPtr hWnd)
         {
             return _plugin.ConfigurationDlg(hWnd);
         }

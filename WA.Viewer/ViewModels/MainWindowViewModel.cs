@@ -82,11 +82,6 @@ namespace WA.Viewer.ViewModels
         private DelegateCommand<object> _zoomOutCommand;
         public DelegateCommand<object> ZoomOutCommand => _zoomOutCommand ??= new DelegateCommand<object>(ZoomOutEvent, _ => ImageExsits());
 
-        // test
-        private DelegateCommand _showConfigCommand;
-        public DelegateCommand ShowConfigCommand => _showConfigCommand ??= new DelegateCommand(ShowConfigTestEvent);
-        PluginManager _pluginManager;
-
         public MainWindowViewModel(IRegionManager regionManager, IDialogService dialogService, CommandLineArgs args, AppSettings settings, ViewerModel viewer, PluginManager pluginManager, ILogger logger)
         {
             _logger = logger;
@@ -97,7 +92,6 @@ namespace WA.Viewer.ViewModels
 
                 _regionManager = regionManager;
                 _dialogService = dialogService;
-                _pluginManager = pluginManager; // test
 
                 Image = _viewer.ObserveProperty(x => x.Image).ToReadOnlyReactivePropertySlim().AddTo(_disposable); // FIXME これ遅すぎる debugger経由だと100ms以上かかる
                 ImageTransform = new ReactivePropertySlim<Transform>(MatrixTransform.Identity);
@@ -335,14 +329,5 @@ namespace WA.Viewer.ViewModels
         {
             _dialogService.ShowDialog("SettingsWindow");
         }
-
-        private void ShowConfigTestEvent()
-        {
-            // fixme 必要悪, 引数から取得する方法を考える
-            var win = Application.Current.MainWindow;
-            var handle = new System.Windows.Interop.WindowInteropHelper(win);
-            _pluginManager.ShowConfigTest(handle.Handle);
-        }
-
     }
 }
