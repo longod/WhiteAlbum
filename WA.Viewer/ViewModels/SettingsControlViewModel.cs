@@ -76,24 +76,48 @@ namespace WA.Viewer.ViewModels
 
         private void PluginDirectoryUpEvent(object e)
         {
+            var list = (ListBox)e;
+            var index = list?.SelectedIndex;
+            if (index.HasValue && index.Value > 0)
+            {
+                _pluginManager.SwapDirectory(index.Value, index.Value - 1);
+            }
         }
+
         private void PluginDirectoryDownEvent(object e)
         {
+            var list = (ListBox)e;
+            var index = list?.SelectedIndex;
+            if (index.HasValue && index.Value < list.Items.Count - 1)
+            {
+                _pluginManager.SwapDirectory(index.Value, index.Value + 1);
+            }
         }
+
         private void PluginDirectoryAddEvent(object e)
         {
             var dialog = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog();
             if (dialog.ShowDialog() == true)
             {
+                _pluginManager.AddDirectory(dialog.SelectedPath);
             }
         }
         private void PluginDirectoryRemoveEvent(object e)
         {
+            // confirm dialog?
+            var list = (ListBox)e;
+            var index = list?.SelectedIndex;
+            if (index.HasValue)
+            {
+                _pluginManager.RemoveDirectory(index.Value);
+            }
         }
 
         private void PluginListRescanEvent(object e)
         {
+            _pluginManager.ScanPluginDirectory(true);
         }
+
         private void PluginListConfigEvent(object e)
         {
             // test

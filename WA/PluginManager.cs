@@ -16,7 +16,7 @@
         private readonly ILogger _logger;
         private readonly Susie.StringConverter _stringConverter;
         private bool _disposed = false;
-        private List<string> _pluginDirectories;
+        private List<string> _pluginDirectories; // todo use settings
         private bool _searchSubDirectory = true; // directory単位で持つかも
         private string[] _pluginPaths = null;
         private ReadOnlyMemory<string> _leftPaths;
@@ -98,7 +98,7 @@
             {
                 if (plugin.ShowConfig(handle.Handle) == false)
                 {
-                    _logger.ZLogInformation("has not config: {0}", path);
+                    _logger.ZLogInformation("Has not config: {0}", path);
                 }
             }
         }
@@ -128,6 +128,33 @@
             }
 
             return plugin;
+        }
+
+        public void SwapDirectory(int from, int to)
+        {
+            // todo write settings
+            var temp = _pluginDirectories[from];
+            _pluginDirectories[from] = _pluginDirectories[to];
+            _pluginDirectories[to] = temp;
+            PluginDirectories[from] = _pluginDirectories[from];
+            PluginDirectories[to] = _pluginDirectories[to];
+            // rescan?
+        }
+
+        public void RemoveDirectory(int index)
+        {
+            // todo write settings
+            _pluginDirectories.RemoveAt(index);
+            PluginDirectories.RemoveAt(index);
+            // rescan?
+        }
+
+        public void AddDirectory(string path)
+        {
+            // todo write settings
+            _pluginDirectories.Add(path);
+            PluginDirectories.Add(path);
+            // rescan?
         }
 
         // test
@@ -190,7 +217,7 @@
                                 {
                                     // 様子見
                                     // ここで死ぬと、後続のプラグインが対応しているかどうか確認できないので
-                                    _logger.LogError(e, "error was occured into plugin {0}", p);
+                                    _logger.LogError(e, "Error was occured into plugin {0}", p);
                                 }
                             }
                         }
