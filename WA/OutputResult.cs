@@ -33,13 +33,19 @@
     // packed in archive
     public class PackedFile : NotifyPropertyChangedBase
     {
+        private BitmapSource _thumbnail;
+
         // root relative
         public string Path { get; internal set; }
+
         public long FileOffset { get; internal set; }
+
         public long FileSize { get; internal set; }
+
         public long PackedSize { get; internal set; }
+
         public long Date { get; internal set; } // todo datetime
-        private BitmapSource _thumbnail;
+
         public BitmapSource Thumbnail
         {
             get
@@ -51,7 +57,9 @@
             {
                 SetProperty(ref _thumbnail, value, nameof(Thumbnail));
             }
-        }        //public FileLoader parent { get; internal set;}
+        }
+
+        // public FileLoader parent { get; internal set;}
         // thumbnail
         // 恐らく遅延で生成するが、 ObservableCollection内は通知されないので、このクラスを INotifyPropertyChanged する必要がある
     }

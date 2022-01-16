@@ -12,6 +12,8 @@ namespace WA.Viewer.ViewModels
 {
     class SettingsControlViewModel : BindableBase, IDialogAware, IDisposable
     {
+        private bool _executedClosingCommand = false;
+
         private CompositeDisposable _disposable { get; } = new CompositeDisposable();
 
         public string Title => "Settings";
@@ -48,6 +50,7 @@ namespace WA.Viewer.ViewModels
         {
             _settings = settings;
             _pluginManager = pluginManager;
+            _pluginManager.ScanPluginDirectory();
 
             EnableLogging = new ReactivePropertySlim<bool>(_settings.Data.EnableLogging).AddTo(_disposable);
             EnableLogging.Subscribe(x => _settings.Data.EnableLogging = x);
@@ -55,9 +58,8 @@ namespace WA.Viewer.ViewModels
             EnableBuiltInDecoders = new ReactivePropertySlim<bool>(_settings.Data.EnableBuiltInDecoders).AddTo(_disposable);
             EnableBuiltInDecoders.Subscribe(x => _settings.Data.EnableBuiltInDecoders = x);
 
-            _pluginManager.ScanPluginDirectory();
 
-            PluginDirectories = _pluginManager.PluginDirectories.ToReadOnlyReactiveCollection().AddTo(_disposable);
+            PluginDirectories = _settings.Data.PluginDirectories.ToReadOnlyReactiveCollection().AddTo(_disposable);
             PluginList = _pluginManager.PluginList.ToReadOnlyReactiveCollection().AddTo(_disposable);
         }
 
@@ -68,19 +70,53 @@ namespace WA.Viewer.ViewModels
 
         public void OnDialogClosed()
         {
+            if (!_executedClosingCommand)
+            {
+                // cancel
+                AppSettings.Revert(_settings);
+            }
         }
 
         public void OnDialogOpened(IDialogParameters parameters)
         {
         }
 
+        private void SwapDirectory(int from, int to)
+        {
+            if (from < 0 || from >= _settings.Data.PluginDirectories.Count)
+            {
+                return;
+            }
+            if (to < 0 || to >= _settings.Data.PluginDirectories.Count)
+            {
+                return;
+            }
+            var list = _settings.Data.PluginDirectories;
+            var temp = list[from];
+            list[from] = list[to];
+            list[to] = temp;
+        }
+
+        private void RemoveDirectory(int index)
+        {
+            if (index >= 0 && index < _settings.Data.PluginDirectories.Count)
+            {
+                _settings.Data.PluginDirectories.RemoveAt(index);
+            }
+        }
+
+        private void AddDirectory(string path)
+        {
+            _settings.Data.PluginDirectories.Add(path);
+        }
+
         private void PluginDirectoryUpEvent(object e)
         {
             var list = (ListBox)e;
             var index = list?.SelectedIndex;
-            if (index.HasValue && index.Value > 0)
+            if (index.HasValue)
             {
-                _pluginManager.SwapDirectory(index.Value, index.Value - 1);
+                SwapDirectory(index.Value, index.Value - 1);
             }
         }
 
@@ -88,9 +124,9 @@ namespace WA.Viewer.ViewModels
         {
             var list = (ListBox)e;
             var index = list?.SelectedIndex;
-            if (index.HasValue && index.Value < list.Items.Count - 1)
+            if (index.HasValue)
             {
-                _pluginManager.SwapDirectory(index.Value, index.Value + 1);
+                SwapDirectory(index.Value, index.Value + 1);
             }
         }
 
@@ -99,7 +135,7 @@ namespace WA.Viewer.ViewModels
             var dialog = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog();
             if (dialog.ShowDialog() == true)
             {
-                _pluginManager.AddDirectory(dialog.SelectedPath);
+                AddDirectory(dialog.SelectedPath);
             }
         }
         private void PluginDirectoryRemoveEvent(object e)
@@ -109,7 +145,7 @@ namespace WA.Viewer.ViewModels
             var index = list?.SelectedIndex;
             if (index.HasValue)
             {
-                _pluginManager.RemoveDirectory(index.Value);
+                RemoveDirectory(index.Value);
             }
         }
 
@@ -149,7 +185,7 @@ namespace WA.Viewer.ViewModels
                 AppSettings.Revert(_settings);
                 result = ButtonResult.Cancel;
             }
-
+            _executedClosingCommand = true;
             RaiseRequestClose(new DialogResult(result));
         }
 

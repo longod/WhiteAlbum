@@ -13,16 +13,13 @@
 
     public class PluginManager : IDisposable
     {
+        private readonly AppSettings _settings;
         private readonly ILogger _logger;
         private readonly Susie.StringConverter _stringConverter;
         private bool _disposed = false;
-        private List<string> _pluginDirectories; // todo use settings
-        private bool _searchSubDirectory = true; // directory単位で持つかも
         private string[] _pluginPaths = null;
         private ReadOnlyMemory<string> _leftPaths;
         private List<IPluginProxy> _plugins = new List<IPluginProxy>();
-
-        public ObservableCollection<string> PluginDirectories { get; } = new ObservableCollection<string>();
 
         public ObservableCollection<string> PluginList { get; } = new ObservableCollection<string>();
 
@@ -47,14 +44,9 @@
 
         public PluginManager(AppSettings settings, Susie.StringConverter stringConverter, ILogger logger)
         {
+            _settings = settings;
             _logger = logger;
             _stringConverter = stringConverter;
-            // todo optimize
-            _pluginDirectories = settings.Data.PluginDirectories;
-            foreach (var d in _pluginDirectories)
-            {
-                PluginDirectories.Add(d);
-            }
         }
 
         private IEnumerable<string> EnumeratePluginPath()
@@ -64,7 +56,7 @@
             // 浅い階層を優先する
             // 同一階層のファイルは名前昇順を優先する
             // 同一階層のディレクトリは名前昇順を優先する
-            return _pluginDirectories.SelectMany(x => SearchPlugin(new DirectoryInfo(x), _searchSubDirectory))
+            return _settings.Data.PluginDirectories.SelectMany(x => SearchPlugin(new DirectoryInfo(x), _settings.Data.ScanSubDirectory))
                         // .Distinct(new SameNameFileInfoEQ()) // unique
                         .Select(x => x.FullName);
         }
@@ -82,9 +74,9 @@
             }
 
             PluginList.Clear();
-            foreach (var path in _pluginPaths)
+            foreach (var p in _pluginPaths)
             {
-                PluginList.Add(path);
+                PluginList.Add(p);
             }
 
             _logger.ZLogInformation("Find plugin count: {0}", _pluginPaths.Length);
@@ -128,33 +120,6 @@
             }
 
             return plugin;
-        }
-
-        public void SwapDirectory(int from, int to)
-        {
-            // todo write settings
-            var temp = _pluginDirectories[from];
-            _pluginDirectories[from] = _pluginDirectories[to];
-            _pluginDirectories[to] = temp;
-            PluginDirectories[from] = _pluginDirectories[from];
-            PluginDirectories[to] = _pluginDirectories[to];
-            // rescan?
-        }
-
-        public void RemoveDirectory(int index)
-        {
-            // todo write settings
-            _pluginDirectories.RemoveAt(index);
-            PluginDirectories.RemoveAt(index);
-            // rescan?
-        }
-
-        public void AddDirectory(string path)
-        {
-            // todo write settings
-            _pluginDirectories.Add(path);
-            PluginDirectories.Add(path);
-            // rescan?
         }
 
         // test

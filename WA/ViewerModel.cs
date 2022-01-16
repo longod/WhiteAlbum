@@ -46,6 +46,22 @@
 
         private Dictionary<string, ImageDecoder> _imageDecoders = new Dictionary<string, ImageDecoder>();
         private Dictionary<string, BuiltInImageEncoder> _imageEncoders = null;
+        private BitmapSource _image;
+
+        public BitmapSource Image
+        {
+            get
+            {
+                return _image;
+            }
+
+            private set
+            {
+                SetProperty(ref _image, value, nameof(Image));
+            }
+        }
+
+        public ObservableCollection<PackedFile> Files { get; internal set; } = new ObservableCollection<PackedFile>();
 
         // filesystem path
         private string LogicalPath { get; set; }
@@ -69,39 +85,7 @@
                     RegisterBuiltInDecoders();
                 }
             }
-
-            Files = new ObservableCollection<PackedFile>();
         }
-
-        private BitmapSource _image;
-
-        public BitmapSource Image
-        {
-            get
-            {
-                return _image;
-            }
-
-            private set
-            {
-                SetProperty(ref _image, value, nameof(Image));
-            }
-        }
-
-        //private ObservableCollection<PackedFile> _files;
-
-        public ObservableCollection<PackedFile> Files { get; internal set; }
-        //{
-        //    get
-        //    {
-        //        return _files;
-        //    }
-        //    private set
-        //    {
-        //        SetProperty(ref _image, value, nameof(Files));
-        //    }
-        //}
-
 
         public async Task ProcessAsync(string logicalPath, string virtualPath = null)
         {
@@ -282,14 +266,6 @@
                         else if (result.Files != null)
                         {
                             // load file icon
-
-                            // fixme rangeで追加したい…
-                            // 変更イベントが毎回発生してしまう
-                            //Files.Clear();
-                            //foreach (var f in result.Files.files)
-                            //{
-                            //    Files.Add(f);
-                            //}
                         }
                     }
                 }

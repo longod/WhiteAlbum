@@ -2,17 +2,20 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.IO;
     using System.Threading.Tasks;
 
     [Serializable]
-    public class AppSettingsData
+    public class AppSettingsData : NotifyPropertyChangedBase
     {
-        public List<string> PluginDirectories { get; set; } = new List<string>() { @"plugins\spi\" };
+        public ObservableCollection<string> PluginDirectories { get; set; } = new ObservableCollection<string>() { @"plugins\spi\" };
 
         public bool EnableBuiltInDecoders { get; set; } = true;
 
         public bool EnableLogging { get; set; } = true;
+
+        public bool ScanSubDirectory { get; set; } = true;
 
     }
 
