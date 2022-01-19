@@ -110,7 +110,22 @@
                     // cache
                     if (_cacheManager.TryQuery(LogicalPath, VirtualPath, out var hit))
                     {
-                        return; // todo
+                        if (hit.Image != null)
+                        {
+                            Image = hit.Image.bmp;
+                        }
+                        else if (hit.Files != null)
+                        {
+                            // fixme rangeで追加したい…
+                            // 変更イベントが毎回発生してしまう
+                            Files.Clear();
+                            foreach (var f in hit.Files.files)
+                            {
+                                Files.Add(f);
+                            }
+                        }
+
+                        return;
                     }
 
                     // todo archive操作用にどこかでキャッシュor保持しておいた方がよい
@@ -169,7 +184,22 @@
         {
             if (_cacheManager.TryQuery(LogicalPath, file.Path, out var hit))
             {
-                return; // todo
+                if (hit.Image != null)
+                {
+                    Image = hit.Image.bmp;
+                }
+                else if (hit.Files != null)
+                {
+                    // fixme rangeで追加したい…
+                    // 変更イベントが毎回発生してしまう
+                    Files.Clear();
+                    foreach (var f in hit.Files.files)
+                    {
+                        Files.Add(f);
+                    }
+                }
+
+                return;
             }
 
             // todo reuse instance
