@@ -2,7 +2,6 @@
 {
     using System;
     using System.IO;
-    using System.Runtime.InteropServices;
     using System.Threading.Tasks;
 
     // fixme loaderとmemoryは分けた方がよい, filehandleは速やかにdisposeしたいが、memoryは維持したい
@@ -24,6 +23,7 @@
         internal FileLoader(string path, byte[] binary, int minFileSize)
         {
             _file = new FileInfo(path);
+
             // FIXME minsizeに満たない場合、詰め直す必要がある
             _binary = binary;
             _actualFileSize = _binary.Length;
@@ -112,6 +112,7 @@
             {
                 return;
             }
+
             var offset = _stream.Position;
 
             // todo try catch

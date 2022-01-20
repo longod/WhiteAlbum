@@ -6,6 +6,7 @@
     internal interface IOutputResult<TImageOutput, TFileOutput>
     {
         TImageOutput Image { get; }
+
         TFileOutput Files { get; }
     }
 
@@ -17,7 +18,6 @@
         public ImageOutput Image { get; internal set; }
 
         public FileOutput Files { get; internal set; }
-
     }
 
     internal class ImageOutput

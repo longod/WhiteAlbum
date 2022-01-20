@@ -31,5 +31,4 @@
     {
         internal byte[] Binary { get; set; }
     }
-
 }

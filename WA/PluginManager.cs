@@ -6,7 +6,6 @@
     using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Linq;
-    using System.Threading.Tasks;
     using System.Windows.Interop;
     using Microsoft.Extensions.Logging;
     using ZLogger;
@@ -156,68 +155,63 @@
             return plugins;
         }
 
-        internal async Task<IPluginProxy> FindDecodablePluginAsync(FileLoader loader/*, bool enumerateAll = false*/)
+        internal IPluginProxy FindDecodablePlugin(FileLoader loader/*, bool enumerateAll = false*/)
         {
             using (new StopwatchScope("Find decodable plugin", _logger))
             {
-                var plugin = await Task.Run(() =>
+                // try already loaded plugin
+                if (_plugins?.Count > 0)
                 {
-                    // try already loaded plugin
-                    if (_plugins?.Count > 0)
-                    {
-                        using (new StopwatchScope("Try to find plugins on memory", _logger))
-                        {
-                            // TODO parallel or sequenceial option
-                            foreach (var p in _plugins)
-                            {
-                                try
-                                {
-                                    if (p.IsSupported(loader))
-                                    {
-                                        // todo どこかに対応付けをしておく
-                                        return p;
-                                    }
-                                }
-                                catch (Exception e)
-                                {
-                                    // 様子見
-                                    // ここで死ぬと、後続のプラグインが対応しているかどうか確認できないので
-                                    _logger.LogError(e, "Error was occured into plugin {0}", p);
-                                }
-                            }
-                        }
-                    }
-
-                    // on demand plugin
-                    ScanPluginDirectory();
-
-                    using (new StopwatchScope("Try to find plugins on drive", _logger))
+                    using (new StopwatchScope("Try to find plugins on memory", _logger))
                     {
                         // TODO parallel or sequenceial option
-                        // todo discard option when done、失敗したやつは破棄するオプション
-                        var span = _leftPaths.Span;
-                        for (int i = 0; i < span.Length; ++i)
+                        foreach (var plugin in _plugins)
                         {
-
-                            var p = LoadPlugin(span[i]);
-                            if (p != null && p.IsSupported(loader))
+                            try
                             {
-                                // slide
-                                _leftPaths = _leftPaths.Slice(i + 1);
-
-                                // todo どこかに対応付けをしておく
-                                return p;
+                                if (plugin.IsSupported(loader))
+                                {
+                                    // todo どこかに対応付けをしておく
+                                    return plugin;
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                // 様子見
+                                // ここで死ぬと、後続のプラグインが対応しているかどうか確認できないので
+                                _logger.LogError(e, "Error was occured into plugin {0}", plugin);
                             }
                         }
+                    }
+                }
 
-                        // not found
-                        _leftPaths = _leftPaths.Slice(_leftPaths.Length); // slide to end
+                // on demand plugin
+                ScanPluginDirectory();
+
+                using (new StopwatchScope("Try to find plugins on drive", _logger))
+                {
+                    // TODO parallel or sequenceial option
+                    // todo discard option when done、失敗したやつは破棄するオプション
+                    var span = _leftPaths.Span;
+                    for (int i = 0; i < span.Length; ++i)
+                    {
+
+                        var plugin = LoadPlugin(span[i]);
+                        if (plugin != null && plugin.IsSupported(loader))
+                        {
+                            // slide
+                            _leftPaths = _leftPaths.Slice(i + 1);
+
+                            // todo どこかに対応付けをしておく
+                            return plugin;
+                        }
                     }
 
-                    return null;
-                });
+                    // not found
+                    _leftPaths = _leftPaths.Slice(_leftPaths.Length); // slide to end
+                }
 
-                return plugin;
+                return null;
             }
         }
 

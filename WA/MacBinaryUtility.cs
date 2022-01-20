@@ -49,7 +49,6 @@
                         {
                             return true; // V3
                         }
-
                     }
                     else if (h[122] == 129)
                     {
@@ -96,6 +95,7 @@
                     }
                 }
             }
+
             return crc;
         }
     }

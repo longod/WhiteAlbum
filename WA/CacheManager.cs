@@ -10,7 +10,7 @@
     {
         private readonly ILogger _logger;
 
-        private int cacheSizeLimit = 8;
+        private readonly int _cacheSizeLimit = 8;
 
         // cache strategy
         // 1. 時間的局所性 最終参照時間
@@ -21,14 +21,13 @@
 
         // todo test
         // https://docs.microsoft.com/en-us/aspnet/core/performance/caching/memory?view=aspnetcore-3.1#use-setsize-size-and-sizelimit-to-limit-cache-size
-
         // todo concurrent
         // https://michaelscodingspot.com/cache-implementations-in-csharp-net/
 
         private IMemoryCache _cache;
 
         // objectだが、string想定されているようなのでstringでkeyを表現する
-        static string GetKey(string logicalPath, string virtualPath)
+        private static string GetKey(string logicalPath, string virtualPath)
         {
             logicalPath = Path.GetFullPath(logicalPath); // always fullpath
             if (string.IsNullOrEmpty(virtualPath))
@@ -48,7 +47,7 @@
             // genericじゃないのがやりにくい。どうやってもboxingが生じる。
             // keyが不明瞭 addressで評価されても困る。なんらかinterfaceでも要求してくれ
             var options = new MemoryCacheOptions();
-            options.SizeLimit = cacheSizeLimit; // sizelimitは個数は全体の個数では無さそう
+            options.SizeLimit = _cacheSizeLimit; // sizelimitは個数は全体の個数では無さそう
             _cache = new MemoryCache(new MemoryCacheOptions());
         }
 

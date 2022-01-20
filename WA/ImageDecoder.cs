@@ -2,9 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
 
@@ -19,27 +16,23 @@
     {
         private List<IPluginProxy> _decoders;
 
-        internal virtual async Task<ImageOutputResult> DecodeImageAsync(FileLoader loader, bool thumbnail = false)
+        internal virtual ImageOutputResult DecodeImage(FileLoader loader, bool thumbnail = false)
         {
-            var result = await Task.Run(() =>
+            IIntermediateResult result = null;
+            foreach (var d in _decoders)
             {
-                foreach (var d in _decoders)
+                if (d.Decode(loader, out result, thumbnail))
                 {
-                    if (d.Decode(loader, out var r, thumbnail))
-                    {
-                        return r;
-                    }
+                    break;
                 }
-
-                return null;
-            });
+            }
 
             if (result != null)
             {
                 // fixme もうちょっとスマートにpolymorph
                 if (result is ImageIntermediateResult)
                 {
-                    return await Convert((ImageIntermediateResult)result);
+                    return Convert((ImageIntermediateResult)result);
                 }
                 else if (result is ArchiveIntermediateResult)
                 {
@@ -52,20 +45,17 @@
 
         // extract file in archive
         // using virtualPath or something
-        internal virtual async Task<FileLoader> DecodeAsync(FileLoader loader, PackedFile packed)
+        internal virtual FileLoader Decode(FileLoader loader, PackedFile packed)
         {
-            var result = await Task.Run(() =>
+            IIntermediateResult result = null;
+            foreach (var d in _decoders)
             {
-                foreach (var d in _decoders)
+                if (d.Decode(loader, packed, out result))
                 {
-                    if (d.Decode(loader, packed, out var r))
-                    {
-                        return r;
-                    }
+                    break;
                 }
+            }
 
-                return null;
-            });
             if (result != null)
             {
                 // fixme もうちょっとスマートにpolymorph
@@ -78,20 +68,17 @@
             return null;
         }
 
-        internal virtual async Task<FileLoader> DecodeAsync(FileLoader loader, string path)
+        internal virtual FileLoader Decode(FileLoader loader, string path)
         {
-            var result = await Task.Run(() =>
+            IIntermediateResult result = null;
+            foreach (var d in _decoders)
             {
-                foreach (var d in _decoders)
+                if (d.Decode(loader, path, out result))
                 {
-                    if (d.Decode(loader, path, out var r))
-                    {
-                        return r;
-                    }
+                    break;
                 }
+            }
 
-                return null;
-            });
             if (result != null)
             {
                 // fixme もうちょっとスマートにpolymorph
@@ -104,34 +91,27 @@
             return null;
         }
 
-        private async Task<ImageOutputResult> Convert(ImageIntermediateResult image)
+        private ImageOutputResult Convert(ImageIntermediateResult image)
         {
-            var bmp = await Task.Run(() =>
+            BitmapSource bmp = null;
+            PixelFormat format = GetPixelFormat(image);
+            BitmapPalette plaette = GetBitmapPalette(image);
+            Transform transform = GetTransform(image);
+
+            var stride = (((image.Info.Width * image.Info.BitsPerPixel) + 31u) & ~31u) >> 3;
+            bmp = BitmapSource.Create(
+              (int)image.Info.Width,
+              (int)image.Info.Height,
+              WpfUtility.DefaultDpiX,
+              WpfUtility.DefaultDpiX,
+              format,
+              plaette,
+              image.Binary,
+              (int)stride);
+            if (transform != null)
             {
-                PixelFormat format = GetPixelFormat(image);
-                BitmapPalette plaette = GetBitmapPalette(image);
-                Transform transform = GetTransform(image);
-
-                var stride = (((image.Info.Width * image.Info.BitsPerPixel) + 31u) & ~31u) >> 3;
-                var b = BitmapSource.Create(
-                  (int)image.Info.Width,
-                  (int)image.Info.Height,
-                  WpfUtility.DefaultDpiX,
-                  WpfUtility.DefaultDpiX,
-                  format,
-                  plaette,
-                  image.Binary,
-                  (int)stride);
-                if (transform == null)
-                {
-                    b.Freeze();
-                    return b;
-                }
-
-                var tb = new TransformedBitmap(b, transform);
-                tb.Freeze();
-                return tb;
-            });
+                bmp = new TransformedBitmap(bmp, transform);
+            }
 
             // BitmapSourceは Must create DependencySource on same Thread as the DependencyObject
             // を発生させるので、freezeする
@@ -139,6 +119,7 @@
             // BitmapSourceはそこをケアしていないのだろう
             // どこかの生成器でリークしているかも
             // https://pierre3.hatenablog.com/entry/2015/10/25/001207
+            bmp.Freeze();
 
             // BitmapSourceの基点は左上だが、本来のbmp formatのpositive heightは左下基点で反転してしまう
             // 事前にメモリを反転して詰め直すか、scale transformで行なう

@@ -124,7 +124,6 @@
 
             result = null;
             return false;
-
         }
 
         internal bool ShowConfig(IntPtr hWnd)

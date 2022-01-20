@@ -2,7 +2,6 @@
 {
     using System;
     using System.IO;
-    using System.Threading.Tasks;
     using System.Windows.Media.Imaging;
 
     internal class BuiltInImageDecoder : ImageDecoder
@@ -18,27 +17,25 @@
 
         // animationを考慮すると、 ReadOnlyCollection<BitmapFrame> のようなほうがよい
         // boxingしまくりで遅そう…
-        internal override async Task<ImageOutputResult> DecodeImageAsync(FileLoader loader, bool thumbnail = false)
+        internal override ImageOutputResult DecodeImage(FileLoader loader, bool thumbnail = false)
         {
             _args[0] = loader.Stream;
-            return await Task.Run(() =>
+            BitmapDecoder decoder = (BitmapDecoder)_constructor.Invoke(_args);
+            ImageOutputResult result = new ImageOutputResult() { Image = new ImageOutput() };
+            if (thumbnail && decoder.Thumbnail != null)
             {
-                BitmapDecoder decoder = (BitmapDecoder)_constructor.Invoke(_args);
-                ImageOutputResult result = new ImageOutputResult() { Image = new ImageOutput() };
-                if (thumbnail && decoder.Thumbnail != null)
-                {
-                    result.Image.bmp = decoder.Thumbnail; // todo how to generate
-                }
-                else
-                {
-                    result.Image.bmp = decoder.Frames[0]; // todo multiple images such as gif
-                }
-                return result;
-            });
+                result.Image.bmp = decoder.Thumbnail; // todo how to generate
+            }
+            else
+            {
+                result.Image.bmp = decoder.Frames[0]; // todo multiple images such as gif
+            }
+
+            return result;
 
             // fallback
             // またはプラグインを優先して、ビルトインをfallbackとして使う
-            // return await base.TryDecodeAsync(loader);
+            // return base.DecodeImage(loader, thumbnail);
         }
     }
 }

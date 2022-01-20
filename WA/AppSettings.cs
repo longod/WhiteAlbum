@@ -16,7 +16,6 @@
         public bool EnableLogging { get; set; } = true;
 
         public bool ScanSubDirectory { get; set; } = true;
-
     }
 
     public class AppSettings

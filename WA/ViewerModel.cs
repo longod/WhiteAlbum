@@ -18,26 +18,6 @@
     // {
     // }
 
-    // パス（ファイル、ディレクトリ、アーカイブ）を与えるとそれぞれに応じた処理をする
-    // class FileSystem
-    // {
-    //     void Open(string path);
-    //     bool IsDirectory { get; }
-    // }
-
-    // loaded raw binary image
-    // public class RawBinary
-    // {
-    //     string _path;
-    //     byte[] _bin;// or memory stream
-    // }
-
-    // management loader and raw binary
-    // 先読みとか
-    // public class FileManager
-    // {
-    // }
-
     public class ViewerModel : NotifyPropertyChangedBase
     {
         private readonly ILogger _logger;
@@ -91,12 +71,7 @@
         {
             LogicalPath = logicalPath;
             VirtualPath = virtualPath;
-            await ProcessAsync();
-        }
 
-        // todo obsolete no args
-        private async Task ProcessAsync()
-        {
             // load
             if (File.Exists(LogicalPath))
             {
@@ -141,16 +116,16 @@
                         ImageOutputResult result = null;
                         if (!string.IsNullOrEmpty(VirtualPath))
                         {
-                            result = await ProcessAsyncInArchive(loader, VirtualPath);
+                            result = ProcessAsyncInArchive(loader, VirtualPath);
                         }
                         else
                         {
-                            var decoder = await FindDecoderAsync(loader);
+                            var decoder = FindDecoder(loader);
                             if (decoder != null)
                             {
                                 using (new StopwatchScope("Decode a file", _logger))
                                 {
-                                    result = await decoder.DecodeImageAsync(loader);
+                                    result = decoder.DecodeImage(loader);
                                 }
                             }
                         }
@@ -207,12 +182,12 @@
             {
                 await loader.ReadAsync();
 
-                var decoder = await FindDecoderAsync(loader);
+                var decoder = FindDecoder(loader);
                 if (decoder != null)
                 {
                     using (new StopwatchScope("Decode a file", _logger))
                     {
-                        var result = await ProcessAsyncInArchive(loader, decoder, file, false);
+                        var result = ProcessAsyncInArchive(loader, decoder, file, false);
 
                         _cacheManager.Entry(LogicalPath, file.Path, result);
                         if (result.Image != null)
@@ -234,7 +209,7 @@
             }
         }
 
-        private async Task<ImageOutputResult> ProcessAsyncInArchive(FileLoader loader, string virtualPath)
+        private ImageOutputResult ProcessAsyncInArchive(FileLoader loader, string virtualPath)
         {
             var vpaths = SplitVirtualPath(virtualPath);
 
@@ -243,26 +218,26 @@
             {
                 for (int i = 0; i < vpaths.Length; ++i)
                 {
-                    var decoder = await FindDecoderAsync(loader);
-                    loader = await decoder.DecodeAsync(loader, vpaths[i]); // file handleを所有していないストリームなのでdisposeは不要
+                    var decoder = FindDecoder(loader);
+                    loader = decoder.Decode(loader, vpaths[i]); // file handleを所有していないストリームなのでdisposeは不要
                 }
 
                 // decode final image
-                var imageDecoder = await FindDecoderAsync(loader);
-                var result = await imageDecoder.DecodeImageAsync(loader);
+                var imageDecoder = FindDecoder(loader);
+                var result = imageDecoder.DecodeImage(loader);
                 return result;
             }
         }
 
-        private async Task<ImageOutputResult> ProcessAsyncInArchive(FileLoader loader, ImageDecoder decoder, PackedFile packedFile, bool thumbnail)
+        private ImageOutputResult ProcessAsyncInArchive(FileLoader loader, ImageDecoder decoder, PackedFile packedFile, bool thumbnail)
         {
             // nest
-            using (var extractedLoader = await decoder.DecodeAsync(loader, packedFile))
+            using (var extractedLoader = decoder.Decode(loader, packedFile))
             {
-                var extractedDecoder = await FindDecoderAsync(extractedLoader);
+                var extractedDecoder = FindDecoder(extractedLoader);
                 if (extractedDecoder != null)
                 {
-                    return await extractedDecoder.DecodeImageAsync(extractedLoader, thumbnail);
+                    return extractedDecoder.DecodeImage(extractedLoader, thumbnail);
                 }
             }
 
@@ -271,24 +246,33 @@
 
         public async Task LoadThumbnail(PackedFile file)
         {
-            //if (_cacheManager.TryQuery(LogicalPath, file.Path, out var hit))
-            //{
-            //    return; // todo
-            //}
+            if (_cacheManager.TryQuery(LogicalPath, file.Path, out var hit))
+            {
+                if (hit.Image != null)
+                {
+                    file.Thumbnail = hit.Image.bmp;
+                }
+                else if (hit.Files != null)
+                {
+                    // load file icon
+                }
 
-            // fixme todo reuse instance
+                return;
+            }
+
+            // fixme todo cache
             using (var loader = new FileLoader(LogicalPath, Susie.API.Constant.MinFileSize))
             {
                 await loader.ReadAsync();
 
-                var decoder = await FindDecoderAsync(loader);
+                var decoder = FindDecoder(loader);
                 if (decoder != null)
                 {
                     using (new StopwatchScope("Decode a file", _logger))
                     {
-                        var result = await ProcessAsyncInArchive(loader, decoder, file, true);
+                        var result = ProcessAsyncInArchive(loader, decoder, file, true);
 
-                        //_cacheManager.Entry(LogicalPath, file.Path, result);
+                        _cacheManager.Entry(LogicalPath, file.Path, result);
                         if (result.Image != null)
                         {
                             file.Thumbnail = result.Image.bmp;
@@ -303,10 +287,9 @@
         }
 
 
-        private async Task<ImageDecoder> FindDecoderAsync(FileLoader loader)
+        private ImageDecoder FindDecoder(FileLoader loader)
         {
             // find decoder extension and header
-            // todo async
 
             // 拡張子にマッピングされたデコーダーがヒットするかどうか
             var ext = loader.Extension;
@@ -323,7 +306,7 @@
             // ヒットしない、プラグインで該当するかどうか解決を試みる
             // 解決できる場合は、対応する拡張子にマッピングする
             // この拡張子でマッピング済みということがplugin maneger側にも分からないと、continueFinding時に同じものがでてくる
-            var decoder = await _pluginManager.FindDecodablePluginAsync(loader);
+            var decoder = _pluginManager.FindDecodablePlugin(loader);
             if (decoder != null)
             {
                 if (instance == null)
@@ -385,7 +368,6 @@
             }
 
             var file = new FileInfo(path);
-            // find encoder
             var ext = file.Extension;
             if (string.IsNullOrEmpty(ext))
             {
@@ -398,6 +380,7 @@
                 Directory.CreateDirectory(file.Directory.FullName);
             }
 
+            // find encoder
             // todo tweakable quality
             if (_imageEncoders.TryGetValue(ext, out var encoder))
             {
@@ -422,6 +405,7 @@
                         _imageEncoders = new Dictionary<string, BuiltInImageEncoder>();
                         RegisterBuiltinEncoders();
                     }
+
                     // | 区切りのフィルタ生成
                     // 複数拡張子は ; 区切り
                     // fixme 複数の拡張子を表現できない
