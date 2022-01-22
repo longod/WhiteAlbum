@@ -29,7 +29,7 @@
                     Text="{Binding Path=Path, Mode=OneTime}" />
                 <TextBlock
                     TextAlignment="Center"
-                    Text="{Binding Path=Date, Mode=OneTime}" />
+                    Text="{Binding Path=Date, Mode=OneTime, ConverterCulture=ja-JP}" />
                 <TextBlock
                     TextAlignment="Center"
                     Text="{Binding Path=FileSize, Mode=OneTime}" />
@@ -101,10 +101,10 @@
             </ListView.ItemTemplate>-->
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Header="Path" Width="Auto" DisplayMemberBinding="{Binding Path=Path}"/>
-                    <GridViewColumn Header="Date" Width="80" DisplayMemberBinding="{Binding Path=Date}" />
-                    <GridViewColumn Header="Size" Width="80" DisplayMemberBinding="{Binding Path=FileSize}" />
-                    <GridViewColumn Header="Packed Size" Width="80" DisplayMemberBinding="{Binding Path=PackedSize}" />
+                    <GridViewColumn Header="Path" Width="Auto" DisplayMemberBinding="{Binding Path=Path, Mode=OneTime}"/>
+                    <GridViewColumn Header="Date" Width="80" DisplayMemberBinding="{Binding Path=Date, Mode=OneTime, ConverterCulture=ja-JP}" />
+                    <GridViewColumn Header="Size" Width="80" DisplayMemberBinding="{Binding Path=FileSize, Mode=OneTime}" />
+                    <GridViewColumn Header="Packed Size" Width="80" DisplayMemberBinding="{Binding Path=PackedSize, Mode=OneTime}" />
                 </GridView>
             </ListView.View>
             <!--this event is not trigger per item-->

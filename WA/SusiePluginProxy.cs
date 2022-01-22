@@ -138,7 +138,7 @@
             packed.FileOffset = info.Position;
             packed.PackedSize = info.CompSize;
             packed.FileSize = info.FileSize;
-            packed.Date = info.Timestamp;
+            packed.Date = DateTimeOffset.FromUnixTimeSeconds(info.Timestamp).DateTime;
             return packed;
         }
 

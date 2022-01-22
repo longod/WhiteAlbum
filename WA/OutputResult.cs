@@ -1,5 +1,6 @@
 ﻿namespace WA
 {
+    using System;
     using System.Collections.Generic;
     using System.Windows.Media.Imaging;
 
@@ -44,7 +45,7 @@
 
         public long PackedSize { get; internal set; }
 
-        public long Date { get; internal set; } // todo datetime
+        public DateTime Date { get; internal set; } // todo datetime
 
         public BitmapSource Thumbnail
         {
