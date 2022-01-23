@@ -4,6 +4,7 @@
         xmlns:bh="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:prism="http://prismlibrary.com/"
         xmlns:wpftk="clr-namespace:WpfToolkit.Controls;assembly=VirtualizingWrapPanel"
+        xmlns:SystemGlobalization="clr-namespace:System.Globalization;assembly=mscorlib"
         prism:ViewModelLocator.AutoWireViewModel="True"
         x:Name="mainWindow"
         Title="{Binding Title}" Height="600" Width="600"
@@ -29,7 +30,7 @@
                     Text="{Binding Path=Path, Mode=OneTime}" />
                 <TextBlock
                     TextAlignment="Center"
-                    Text="{Binding Path=Date, Mode=OneTime, ConverterCulture=ja-JP}" />
+                    Text="{Binding Path=Date, Mode=OneTime, ConverterCulture={x:Static SystemGlobalization:CultureInfo.DefaultThreadCurrentCulture}}" />
                 <TextBlock
                     TextAlignment="Center"
                     Text="{Binding Path=FileSize, Mode=OneTime}" />
@@ -102,7 +103,7 @@
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="Path" Width="Auto" DisplayMemberBinding="{Binding Path=Path, Mode=OneTime}"/>
-                    <GridViewColumn Header="Date" Width="80" DisplayMemberBinding="{Binding Path=Date, Mode=OneTime, ConverterCulture=ja-JP}" />
+                    <GridViewColumn Header="Date" Width="80" DisplayMemberBinding="{Binding Path=Date, Mode=OneTime, ConverterCulture={x:Static SystemGlobalization:CultureInfo.DefaultThreadCurrentCulture}}" />
                     <GridViewColumn Header="Size" Width="80" DisplayMemberBinding="{Binding Path=FileSize, Mode=OneTime}" />
                     <GridViewColumn Header="Packed Size" Width="80" DisplayMemberBinding="{Binding Path=PackedSize, Mode=OneTime}" />
                 </GridView>

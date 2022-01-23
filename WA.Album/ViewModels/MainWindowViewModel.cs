@@ -56,6 +56,8 @@ namespace WA.Album.ViewModels
             _dialogService = dialogService;
 
             Files = _viewer.Files.ToReadOnlyReactiveCollection().AddTo(_disposable);
+
+            // CultureInfo.DefaultThreadCurrentCulture = CultureInfo.CurrentCulture; // if you want to change this
         }
 
         public void Dispose()
