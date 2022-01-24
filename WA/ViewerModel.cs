@@ -22,7 +22,7 @@
     {
         private readonly ILogger _logger;
         private readonly PluginManager _pluginManager;
-        private readonly CacheManager<ImageOutputResult> _cacheManager;
+        private readonly CacheManager _cacheManager;
 
         private Dictionary<string, ImageDecoder> _imageDecoders = new Dictionary<string, ImageDecoder>();
         private Dictionary<string, BuiltInImageEncoder> _imageEncoders = null;
@@ -53,11 +53,11 @@
         // x86 dllを読めるようにしないといけない 現実的にはx86アプリにする…x64がいいんだけれど
         // 一応、out-of-process com serverでいける https://qiita.com/mima_ita/items/57d7c1101543e214b1d6
 
-        public ViewerModel(AppSettings settings, PluginManager pluginManager, ILogger logger)
+        public ViewerModel(AppSettings settings, PluginManager pluginManager, CacheManager cacheManager, ILogger logger)
         {
             _logger = logger;
             _pluginManager = pluginManager;
-            _cacheManager = new CacheManager<ImageOutputResult>(settings, logger);
+            _cacheManager = cacheManager;
             using (new StopwatchScope("ViewerModel", _logger))
             {
                 if (settings.Data.EnableBuiltInDecoders)
@@ -83,7 +83,7 @@
                 using (new StopwatchScope("Process File", _logger))
                 {
                     // cache
-                    if (_cacheManager.TryQuery(LogicalPath, VirtualPath, out var hit))
+                    if (_cacheManager.TryQuery<ImageOutputResult>(LogicalPath, VirtualPath, out var hit))
                     {
                         if (hit.Image != null)
                         {
@@ -157,7 +157,7 @@
 
         public async Task ProcessAsync(PackedFile file)
         {
-            if (_cacheManager.TryQuery(LogicalPath, file.Path, out var hit))
+            if (_cacheManager.TryQuery<ImageOutputResult>(LogicalPath, file.Path, out var hit))
             {
                 if (hit.Image != null)
                 {
@@ -246,7 +246,7 @@
 
         public async Task LoadThumbnail(PackedFile file)
         {
-            if (_cacheManager.TryQuery(LogicalPath, file.Path, out var hit))
+            if (_cacheManager.TryQuery<ImageOutputResult>(LogicalPath, file.Path, out var hit))
             {
                 if (hit.Image != null)
                 {

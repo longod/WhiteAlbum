@@ -6,7 +6,7 @@
     using Microsoft.Extensions.Caching.Memory;
     using Microsoft.Extensions.Logging;
 
-    internal class CacheManager<T>
+    public class CacheManager
     {
         private readonly ILogger _logger;
 
@@ -51,7 +51,7 @@
             _cache = new MemoryCache(new MemoryCacheOptions());
         }
 
-        internal bool TryQuery(string logicalPath, string virtualPath, out T hit)
+        internal bool TryQuery<T>(string logicalPath, string virtualPath, out T hit)
         {
             using (new StopwatchScope("Query Cache", _logger))
             {
@@ -69,7 +69,7 @@
             }
         }
 
-        internal void Entry(string logicalPath, string virtualPath, T entry)
+        internal void Entry<T>(string logicalPath, string virtualPath, T entry)
         {
             using (new StopwatchScope("Entry Cache", _logger))
             {
