@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-
-namespace WA.Viewer
+﻿namespace WA
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using System.Windows;
+    using System.Windows.Controls;
+    using System.Windows.Media;
+
     // https://www.mesta-automation.com/tecniques-scaling-wpf-application/
-    internal class DpiAwareDecorator : Decorator
+    public class DpiAwareDecorator : Decorator
     {
         public DpiAwareDecorator()
         {
@@ -58,6 +58,7 @@ namespace WA.Viewer
             {
                 return (bool)GetValue(EnableProperty);
             }
+
             set
             {
                 SetValue(EnableProperty, value);

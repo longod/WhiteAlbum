@@ -4,6 +4,7 @@
         xmlns:bh="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:prism="http://prismlibrary.com/"
         xmlns:local="clr-namespace:WA.Viewer"
+        xmlns:wa="https://github.com/longod/WhiteAlbum"
         prism:ViewModelLocator.AutoWireViewModel="True"
         x:Name="mainWindow"
         Title="{Binding Title.Value}" Width="800" Height="600"
@@ -48,11 +49,11 @@
     </bh:Interaction.Triggers>
     <Grid>
         <Border x:Name="border" ClipToBounds="False">
-            <local:DpiAwareDecorator Enable="True" LayoutTransform="{Binding Path=ParentTransform.Value, Mode=OneWayToSource}">
+            <wa:DpiAwareDecorator Enable="True" LayoutTransform="{Binding Path=ParentTransform.Value, Mode=OneWayToSource}">
                 <Image x:Name="image" Stretch="None"
                    Source="{Binding Path=Image.Value}"  RenderTransform="{Binding Path=ImageTransform.Value, Mode=OneWay}"
                    RenderOptions.BitmapScalingMode="{Binding Path=ScalingMode.Value, Mode=OneWay}"/>
-            </local:DpiAwareDecorator>
+            </wa:DpiAwareDecorator>
         </Border>
         <!--<ContentControl prism:RegionManager.RegionName="ContentRegion" />-->
     </Grid>
