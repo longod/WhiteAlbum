@@ -62,6 +62,11 @@ namespace WA.Album
             containerRegistry.RegisterSingleton<PluginManager>();
             containerRegistry.RegisterSingleton<CacheManager>();
             containerRegistry.RegisterSingleton<ViewerModel>();
+
+            //containerRegistry.Register<Views.TestWindow>();
+            containerRegistry.RegisterDialog<Views.TestDialog>("TestDialog");
+            containerRegistry.RegisterDialogWindow<Views.TestWindow>("TestWindow");
+
         }
 
         private void PrismApplication_Startup(object sender, StartupEventArgs e)

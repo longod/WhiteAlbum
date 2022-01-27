@@ -1,11 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
 using Prism.Commands;
+using Prism.Ioc;
 using Prism.Mvvm;
 using Prism.Regions;
 using Prism.Services.Dialogs;
 using Reactive.Bindings;
 using Reactive.Bindings.Extensions;
 using System;
+using System.ComponentModel;
 using System.Reactive.Disposables;
 using System.Threading.Tasks;
 using System.Windows;
@@ -128,8 +130,17 @@ namespace WA.Album.ViewModels
                     foreach (var item in items)
                     {
                         var file = (PackedFile)item;
-                        await _viewer.ProcessAsync(file);
+                        //await _viewer.ProcessAsync(file);
                         // todo then switch navigate or new image window
+                        // todo passing parameter...
+                        // https://stackoverflow.com/questions/63369432/how-to-open-multiple-windows-using-wpf-prism-library
+                        // https://prismlibrary.com/docs/wpf/dialog-service.html
+                        IDialogParameters param = new DialogParameters();
+                        param.Add("Item", item);
+                        //_dialogService.Show("TestDialog");
+                        // windowはどこにuser controlを追加しているんだろう？
+                        // windowのelementはほとんどすべて無視される。titleとwindowくらい？
+                        _dialogService.Show("TestDialog", param, _ => { }, "TestWindow");
                     }
                 }
             }
