@@ -61,7 +61,7 @@ namespace WA.Viewer
             containerRegistry.RegisterSingleton<Susie.StringConverter>(() => Susie.StringConverter.SJIS);
             containerRegistry.RegisterSingleton<PluginManager>();
             containerRegistry.RegisterSingleton<CacheManager>();
-            containerRegistry.RegisterSingleton<ViewerModel>();
+            containerRegistry.Register<ViewerModel>();
 
             // https://prismlibrary.com/docs/wpf/dialog-service.html
             containerRegistry.RegisterDialog<Views.SettingsControl>("SettingsWindow");

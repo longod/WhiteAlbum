@@ -61,7 +61,7 @@ namespace WA.Album
             containerRegistry.RegisterSingleton<Susie.StringConverter>(() => Susie.StringConverter.SJIS);
             containerRegistry.RegisterSingleton<PluginManager>();
             containerRegistry.RegisterSingleton<CacheManager>();
-            containerRegistry.RegisterSingleton<ViewerModel>();
+            containerRegistry.Register<ViewerModel>();
 
             //containerRegistry.Register<Views.TestWindow>();
             containerRegistry.RegisterDialog<Views.TestDialog>("TestDialog");

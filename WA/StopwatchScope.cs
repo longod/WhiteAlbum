@@ -2,8 +2,8 @@
 {
     using System;
     using System.Diagnostics;
-    using ZLogger;
     using Microsoft.Extensions.Logging;
+    using ZLogger;
 
     public struct StopwatchScope : IDisposable
     {

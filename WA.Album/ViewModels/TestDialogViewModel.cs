@@ -93,7 +93,6 @@ namespace WA.Album.ViewModels
             {
                 // todo await
                 // ここではparameter処理だけの方がいいかも
-                // logical path情報もpackに含める必要がある
                 _viewer.ProcessAsync(item);
             }
 

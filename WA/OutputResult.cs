@@ -60,6 +60,9 @@
             }
         }
 
+        // fixme stringだと大量にあるとメモリ効率が悪いので、親情報をclassとして参照させるなど
+        public string LogicalPath { get; internal set; }
+
         // public FileLoader parent { get; internal set;}
         // thumbnail
         // 恐らく遅延で生成するが、 ObservableCollection内は通知されないので、このクラスを INotifyPropertyChanged する必要がある

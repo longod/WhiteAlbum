@@ -113,7 +113,7 @@
                 case SusiePlugin.PluginType.ArchiveExtractor:
                     if (GetFileInfo(loader, path, out var info))
                     {
-                        PackedFile packed = ToPackedFile(info);
+                        PackedFile packed = ToPackedFile(loader, info);
                         return Decode(loader, packed, out result);
                     }
 
@@ -131,7 +131,7 @@
             return _plugin.ConfigurationDlg(hWnd);
         }
 
-        private static PackedFile ToPackedFile(in FileInfo info)
+        private static PackedFile ToPackedFile(FileLoader loader, in FileInfo info)
         {
             var packed = new PackedFile();
             packed.Path = System.IO.Path.Combine(info.Path, info.FileName);
@@ -139,6 +139,7 @@
             packed.PackedSize = info.CompSize;
             packed.FileSize = info.FileSize;
             packed.Date = DateTimeOffset.FromUnixTimeSeconds(info.Timestamp).DateTime;
+            packed.LogicalPath = loader.Path;
             return packed;
         }
 
@@ -220,7 +221,7 @@
                 // todo optimize
                 for (int i = 0; i < result.files.Length; ++i)
                 {
-                    result.files[i] = ToPackedFile(infos[i]);
+                    result.files[i] = ToPackedFile(loader, infos[i]);
                 }
 
                 return true;

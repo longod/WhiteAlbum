@@ -24,10 +24,15 @@
         private readonly PluginManager _pluginManager;
         private readonly CacheManager _cacheManager;
 
+        // todo register di
         private Dictionary<string, ImageDecoder> _imageDecoders = new Dictionary<string, ImageDecoder>();
+
+        // todo register di
         private Dictionary<string, BuiltInImageEncoder> _imageEncoders = null;
+
         private BitmapSource _image;
 
+        // packed fileと統合的に扱いたい
         public BitmapSource Image
         {
             get
@@ -44,9 +49,11 @@
         public ObservableCollection<PackedFile> Files { get; internal set; } = new ObservableCollection<PackedFile>();
 
         // filesystem path
+        // 廃止したい packed fileと統合的に扱いたい
         private string LogicalPath { get; set; }
 
         // relative path in archive
+        // 廃止したい packed fileと統合的に扱いたい
         private string VirtualPath { get; set; }
 
         // 起動時に、全プラグインをロードすると致命的なので、対応フォーマットが判明したらその軽量なデータベースを作っておき、次回以降はそれをみて必要なやつのみロードするとかが必要か
@@ -157,7 +164,7 @@
 
         public async Task ProcessAsync(PackedFile file)
         {
-            if (_cacheManager.TryQuery<ImageOutputResult>(LogicalPath, file.Path, out var hit))
+            if (_cacheManager.TryQuery<ImageOutputResult>(file.LogicalPath, file.Path, out var hit))
             {
                 if (hit.Image != null)
                 {
@@ -178,7 +185,7 @@
             }
 
             // todo reuse instance
-            using (var loader = new FileLoader(LogicalPath, Susie.API.Constant.MinFileSize))
+            using (var loader = new FileLoader(file.LogicalPath, Susie.API.Constant.MinFileSize))
             {
                 await loader.ReadAsync();
 
@@ -189,7 +196,7 @@
                     {
                         var result = ProcessAsyncInArchive(loader, decoder, file, false);
 
-                        _cacheManager.Entry(LogicalPath, file.Path, result);
+                        _cacheManager.Entry(file.LogicalPath, file.Path, result);
                         if (result.Image != null)
                         {
                             Image = result.Image.bmp;
@@ -246,7 +253,7 @@
 
         public async Task LoadThumbnail(PackedFile file)
         {
-            if (_cacheManager.TryQuery<ImageOutputResult>(LogicalPath, file.Path, out var hit))
+            if (_cacheManager.TryQuery<ImageOutputResult>(file.LogicalPath, file.Path, out var hit))
             {
                 if (hit.Image != null)
                 {
@@ -261,7 +268,7 @@
             }
 
             // fixme todo cache
-            using (var loader = new FileLoader(LogicalPath, Susie.API.Constant.MinFileSize))
+            using (var loader = new FileLoader(file.LogicalPath, Susie.API.Constant.MinFileSize))
             {
                 await loader.ReadAsync();
 
@@ -272,7 +279,7 @@
                     {
                         var result = ProcessAsyncInArchive(loader, decoder, file, true);
 
-                        _cacheManager.Entry(LogicalPath, file.Path, result);
+                        _cacheManager.Entry(file.LogicalPath, file.Path, result);
                         if (result.Image != null)
                         {
                             file.Thumbnail = result.Image.bmp;
