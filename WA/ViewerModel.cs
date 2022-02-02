@@ -11,6 +11,7 @@
     using System.Threading.Tasks;
     using System.Windows.Media.Imaging;
     using Microsoft.Extensions.Logging;
+    using ZLogger;
 
     // backends
     // wpf, windowhost, d3d12
@@ -21,11 +22,8 @@
     public class ViewerModel : NotifyPropertyChangedBase
     {
         private readonly ILogger _logger;
-        private readonly PluginManager _pluginManager;
         private readonly CacheManager _cacheManager;
-
-        // todo register di
-        private Dictionary<string, ImageDecoder> _imageDecoders = new Dictionary<string, ImageDecoder>();
+        private readonly DecoderManager _decoderManager;
 
         // todo register di
         private Dictionary<string, BuiltInImageEncoder> _imageEncoders = null;
@@ -60,18 +58,11 @@
         // x86 dllを読めるようにしないといけない 現実的にはx86アプリにする…x64がいいんだけれど
         // 一応、out-of-process com serverでいける https://qiita.com/mima_ita/items/57d7c1101543e214b1d6
 
-        public ViewerModel(AppSettings settings, PluginManager pluginManager, CacheManager cacheManager, ILogger logger)
+        public ViewerModel(AppSettings settings, DecoderManager decoderManager, CacheManager cacheManager, ILogger logger)
         {
             _logger = logger;
-            _pluginManager = pluginManager;
             _cacheManager = cacheManager;
-            using (new StopwatchScope("ViewerModel", _logger))
-            {
-                if (settings.Data.EnableBuiltInDecoders)
-                {
-                    RegisterBuiltInDecoders();
-                }
-            }
+            _decoderManager = decoderManager;
         }
 
         public async Task ProcessAsync(string logicalPath, string virtualPath = null)
@@ -127,7 +118,7 @@
                         }
                         else
                         {
-                            var decoder = FindDecoder(loader);
+                            var decoder = _decoderManager.FindDecoder(loader);
                             if (decoder != null)
                             {
                                 using (new StopwatchScope("Decode a file", _logger))
@@ -189,7 +180,7 @@
             {
                 await loader.ReadAsync();
 
-                var decoder = FindDecoder(loader);
+                var decoder = _decoderManager.FindDecoder(loader);
                 if (decoder != null)
                 {
                     using (new StopwatchScope("Decode a file", _logger))
@@ -225,12 +216,20 @@
             {
                 for (int i = 0; i < vpaths.Length; ++i)
                 {
-                    var decoder = FindDecoder(loader);
+                    var decoder = _decoderManager.FindDecoder(loader);
+
+                    if (decoder == null)
+                    {
+                        // cant decode
+                        _logger.ZLogWarning("can't decode: {0}", loader.Path);
+                        return null; // todo
+                    }
+
                     loader = decoder.Decode(loader, vpaths[i]); // file handleを所有していないストリームなのでdisposeは不要
                 }
 
                 // decode final image
-                var imageDecoder = FindDecoder(loader);
+                var imageDecoder = _decoderManager.FindDecoder(loader);
                 var result = imageDecoder.DecodeImage(loader);
                 return result;
             }
@@ -241,7 +240,7 @@
             // nest
             using (var extractedLoader = decoder.Decode(loader, packedFile))
             {
-                var extractedDecoder = FindDecoder(extractedLoader);
+                var extractedDecoder = _decoderManager.FindDecoder(extractedLoader);
                 if (extractedDecoder != null)
                 {
                     return extractedDecoder.DecodeImage(extractedLoader, thumbnail);
@@ -272,7 +271,7 @@
             {
                 await loader.ReadAsync();
 
-                var decoder = FindDecoder(loader);
+                var decoder = _decoderManager.FindDecoder(loader);
                 if (decoder != null)
                 {
                     using (new StopwatchScope("Decode a file", _logger))
@@ -291,54 +290,6 @@
                     }
                 }
             }
-        }
-
-
-        private ImageDecoder FindDecoder(FileLoader loader)
-        {
-            // find decoder extension and header
-
-            // 拡張子にマッピングされたデコーダーがヒットするかどうか
-            var ext = loader.Extension;
-            ImageDecoder instance = null;
-            if (_imageDecoders.TryGetValue(ext, out instance))
-            {
-                bool continueFinding = false; // みつかっても残りのプラグインを調べるかどうか
-                if (!continueFinding)
-                {
-                    return instance;
-                }
-            }
-
-            // ヒットしない、プラグインで該当するかどうか解決を試みる
-            // 解決できる場合は、対応する拡張子にマッピングする
-            // この拡張子でマッピング済みということがplugin maneger側にも分からないと、continueFinding時に同じものがでてくる
-            var decoder = _pluginManager.FindDecodablePlugin(loader);
-            if (decoder != null)
-            {
-                if (instance == null)
-                {
-                    instance = new ImageDecoder();
-                }
-
-                instance.RegisterDecoder(decoder);
-                _imageDecoders.Add(ext, instance);
-            }
-
-            return instance;
-        }
-
-        private void RegisterBuiltInDecoders()
-        {
-            _imageDecoders.Add(".bmp", new BuiltInImageDecoder(typeof(BmpBitmapDecoder)));
-            _imageDecoders.Add(".png", new BuiltInImageDecoder(typeof(PngBitmapDecoder)));
-            _imageDecoders.Add(".jpg", new BuiltInImageDecoder(typeof(JpegBitmapDecoder)));
-            _imageDecoders.Add(".jpeg", _imageDecoders[".jpg"]);
-            _imageDecoders.Add(".gif", new BuiltInImageDecoder(typeof(GifBitmapDecoder)));
-            _imageDecoders.Add(".tif", new BuiltInImageDecoder(typeof(TiffBitmapDecoder)));
-            _imageDecoders.Add(".tiff", _imageDecoders[".tif"]);
-            _imageDecoders.Add(".hdp", new BuiltInImageDecoder(typeof(WmpBitmapDecoder)));
-            _imageDecoders.Add(".wdp", _imageDecoders[".hdp"]);
         }
 
         private void RegisterDecoders()
