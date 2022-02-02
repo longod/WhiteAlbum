@@ -10,7 +10,7 @@
     {
         private readonly ILogger _logger;
         private readonly PluginManager _pluginManager;
-        private Dictionary<string, ImageDecoder> _imageDecoders = new Dictionary<string, ImageDecoder>();
+        private Dictionary<string, ImageDecoder> _decoders = new Dictionary<string, ImageDecoder>();
 
         public DecoderManager(AppSettings settings, PluginManager pluginManager, ILogger logger)
         {
@@ -29,7 +29,7 @@
             // 拡張子にマッピングされたデコーダーがヒットするかどうか
             var ext = loader.Extension;
             ImageDecoder instance = null;
-            if (_imageDecoders.TryGetValue(ext, out instance))
+            if (_decoders.TryGetValue(ext, out instance))
             {
                 bool continueFinding = false; // みつかっても残りのプラグインを調べるかどうか
                 if (!continueFinding)
@@ -50,7 +50,7 @@
                 }
 
                 instance.RegisterDecoder(decoder);
-                _imageDecoders.Add(ext, instance);
+                _decoders.Add(ext, instance);
             }
 
             return instance;
@@ -58,15 +58,15 @@
 
         private void RegisterBuiltInDecoders()
         {
-            _imageDecoders.Add(".bmp", new BuiltInImageDecoder(typeof(BmpBitmapDecoder)));
-            _imageDecoders.Add(".png", new BuiltInImageDecoder(typeof(PngBitmapDecoder)));
-            _imageDecoders.Add(".jpg", new BuiltInImageDecoder(typeof(JpegBitmapDecoder)));
-            _imageDecoders.Add(".jpeg", _imageDecoders[".jpg"]);
-            _imageDecoders.Add(".gif", new BuiltInImageDecoder(typeof(GifBitmapDecoder)));
-            _imageDecoders.Add(".tif", new BuiltInImageDecoder(typeof(TiffBitmapDecoder)));
-            _imageDecoders.Add(".tiff", _imageDecoders[".tif"]);
-            _imageDecoders.Add(".hdp", new BuiltInImageDecoder(typeof(WmpBitmapDecoder)));
-            _imageDecoders.Add(".wdp", _imageDecoders[".hdp"]);
+            _decoders.Add(".bmp", new BuiltInImageDecoder(typeof(BmpBitmapDecoder)));
+            _decoders.Add(".png", new BuiltInImageDecoder(typeof(PngBitmapDecoder)));
+            _decoders.Add(".jpg", new BuiltInImageDecoder(typeof(JpegBitmapDecoder)));
+            _decoders.Add(".jpeg", _decoders[".jpg"]);
+            _decoders.Add(".gif", new BuiltInImageDecoder(typeof(GifBitmapDecoder)));
+            _decoders.Add(".tif", new BuiltInImageDecoder(typeof(TiffBitmapDecoder)));
+            _decoders.Add(".tiff", _decoders[".tif"]);
+            _decoders.Add(".hdp", new BuiltInImageDecoder(typeof(WmpBitmapDecoder)));
+            _decoders.Add(".wdp", _decoders[".hdp"]);
         }
 
     }

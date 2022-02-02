@@ -61,6 +61,7 @@ namespace WA.Viewer
             containerRegistry.RegisterSingleton<Susie.StringConverter>(() => Susie.StringConverter.SJIS);
             containerRegistry.RegisterSingleton<PluginManager>();
             containerRegistry.RegisterSingleton<DecoderManager>();
+            containerRegistry.RegisterSingleton<EncoderManager>();
             containerRegistry.RegisterSingleton<CacheManager>();
             containerRegistry.Register<ViewerModel>();
 

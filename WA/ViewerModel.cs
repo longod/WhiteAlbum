@@ -24,9 +24,7 @@
         private readonly ILogger _logger;
         private readonly CacheManager _cacheManager;
         private readonly DecoderManager _decoderManager;
-
-        // todo register di
-        private Dictionary<string, BuiltInImageEncoder> _imageEncoders = null;
+        private readonly EncoderManager _encoderManager;
 
         private BitmapSource _image;
 
@@ -46,6 +44,8 @@
 
         public ObservableCollection<PackedFile> Files { get; internal set; } = new ObservableCollection<PackedFile>();
 
+        public string ExportFilter => _encoderManager.ExportFilter;
+
         // filesystem path
         // 廃止したい packed fileと統合的に扱いたい
         private string LogicalPath { get; set; }
@@ -58,11 +58,12 @@
         // x86 dllを読めるようにしないといけない 現実的にはx86アプリにする…x64がいいんだけれど
         // 一応、out-of-process com serverでいける https://qiita.com/mima_ita/items/57d7c1101543e214b1d6
 
-        public ViewerModel(AppSettings settings, DecoderManager decoderManager, CacheManager cacheManager, ILogger logger)
+        public ViewerModel(AppSettings settings, DecoderManager decoderManager, EncoderManager encoderManager, CacheManager cacheManager, ILogger logger)
         {
             _logger = logger;
             _cacheManager = cacheManager;
             _decoderManager = decoderManager;
+            _encoderManager = encoderManager;
         }
 
         public async Task ProcessAsync(string logicalPath, string virtualPath = null)
@@ -318,71 +319,24 @@
                 throw new ArgumentNullException("image must be not null.");
             }
 
-            // initial registry
-            if (_imageEncoders == null)
-            {
-                _imageEncoders = new Dictionary<string, BuiltInImageEncoder>();
-                RegisterBuiltinEncoders();
-            }
-
             var file = new FileInfo(path);
             var ext = file.Extension;
-            if (string.IsNullOrEmpty(ext))
-            {
-                // default or failed
-                throw new ArgumentException();
-            }
 
-            if (!Directory.Exists(file.Directory.FullName))
+            var encoder = _encoderManager.FindEncoder(ext);
+            if (encoder != null)
             {
-                Directory.CreateDirectory(file.Directory.FullName);
-            }
+                if (!Directory.Exists(file.Directory.FullName))
+                {
+                    Directory.CreateDirectory(file.Directory.FullName);
+                }
 
-            // find encoder
-            // todo tweakable quality
-            if (_imageEncoders.TryGetValue(ext, out var encoder))
-            {
                 encoder.EncodeToFile(path, image);
             }
             else
             {
                 // todo error
+                _logger.ZLogWarning("Can't find encoder {0}", path);
             }
-        }
-
-        private string _exportFilter;
-
-        public string ExportFilter
-        {
-            get
-            {
-                if (_exportFilter == null)
-                {
-                    if (_imageEncoders == null)
-                    {
-                        _imageEncoders = new Dictionary<string, BuiltInImageEncoder>();
-                        RegisterBuiltinEncoders();
-                    }
-
-                    // | 区切りのフィルタ生成
-                    // 複数拡張子は ; 区切り
-                    // fixme 複数の拡張子を表現できない
-                    var filter = _imageEncoders.Select(x => string.Concat(x.Value.FormatName, "|", "*", x.Key));
-                    _exportFilter = string.Join('|', filter);
-                }
-
-                return _exportFilter;
-            }
-        }
-
-        private void RegisterBuiltinEncoders()
-        {
-            _imageEncoders.Add(".bmp", new BuiltInImageEncoder("Bitmap", new BmpBitmapEncoder()));
-            _imageEncoders.Add(".png", new BuiltInImageEncoder("PNG", new PngBitmapEncoder() { Interlace = PngInterlaceOption.Default }));
-            _imageEncoders.Add(".jpg", new BuiltInImageEncoder("Jpeg", new JpegBitmapEncoder() { QualityLevel = 100 }));
-            _imageEncoders.Add(".gif", new BuiltInImageEncoder("GIF", new GifBitmapEncoder()));
-            _imageEncoders.Add(".tif", new BuiltInImageEncoder("TIFF", new TiffBitmapEncoder() { Compression = TiffCompressOption.Default }));
-            _imageEncoders.Add(".hdp", new BuiltInImageEncoder("HDP", new WmpBitmapEncoder()));
         }
     }
 }
